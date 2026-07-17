@@ -38,20 +38,22 @@ export default function ThemeToggle() {
   ];
 
   return (
-    <div className="flex gap-1 rounded-md bg-neutral-800 p-1 text-xs">
+    <div className="flex gap-1 rounded-md bg-neutral-800 p-1">
       {options.map((option) => (
         <button
           key={option.value}
           type="button"
           onClick={() => choose(option.value)}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded px-2 py-1.5 transition ${
+          aria-label={option.label}
+          title={option.label}
+          aria-pressed={preference === option.value}
+          className={`flex flex-1 items-center justify-center rounded px-2 py-1.5 transition ${
             preference === option.value
               ? 'bg-neutral-100 text-neutral-900'
               : 'text-neutral-400 hover:text-neutral-100'
           }`}
         >
-          <option.icon size={13} strokeWidth={1.75} aria-hidden="true" />
-          {option.label}
+          <option.icon size={15} strokeWidth={1.75} aria-hidden="true" />
         </button>
       ))}
     </div>
