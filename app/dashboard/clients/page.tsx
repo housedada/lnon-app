@@ -61,22 +61,22 @@ export default async function ClientsPage({
         </div>
       </form>
 
-      <div className="mt-6 grid grid-cols-[2fr_2fr_1fr_1fr_1fr_auto] border-t border-l border-grid-border text-xs">
-        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">Nome</div>
-        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">Email</div>
-        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">Telefono</div>
-        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">Città</div>
-        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">P.IVA</div>
-        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">Azioni</div>
+      <div className="mt-6 grid grid-cols-[2fr_2fr_1fr_1fr_1fr_auto] gap-x-4 border-t border-grid-border text-xs">
+        <div className="border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">Nome</div>
+        <div className="border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">Email</div>
+        <div className="border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">Telefono</div>
+        <div className="border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">Città</div>
+        <div className="border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">P.IVA</div>
+        <div className="border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">Azioni</div>
 
         {clients.map((client) => (
           <div key={client.id} className="group contents">
-            <div className="border-r border-b border-grid-border p-3 font-medium text-primary group-hover:bg-row-hover">{client.name}</div>
-            <div className="border-r border-b border-grid-border p-3 text-secondary group-hover:bg-row-hover">{client.email ?? '—'}</div>
-            <div className="border-r border-b border-grid-border p-3 text-secondary group-hover:bg-row-hover">{client.phone ?? '—'}</div>
-            <div className="border-r border-b border-grid-border p-3 text-secondary group-hover:bg-row-hover">{client.city ?? '—'}</div>
-            <div className="border-r border-b border-grid-border p-3 text-secondary group-hover:bg-row-hover">{client.taxId ?? '—'}</div>
-            <div className="flex items-center gap-3 border-r border-b border-grid-border p-3 whitespace-nowrap group-hover:bg-row-hover">
+            <div className="border-b border-grid-border p-3 font-medium text-primary group-hover:bg-row-hover">{client.name}</div>
+            <div className="border-b border-grid-border p-3 text-secondary group-hover:bg-row-hover">{client.email ?? '—'}</div>
+            <div className="border-b border-grid-border p-3 text-secondary group-hover:bg-row-hover">{client.phone ?? '—'}</div>
+            <div className="border-b border-grid-border p-3 text-secondary group-hover:bg-row-hover">{client.city ?? '—'}</div>
+            <div className="border-b border-grid-border p-3 text-secondary group-hover:bg-row-hover">{client.taxId ?? '—'}</div>
+            <div className="flex items-center gap-3 border-b border-grid-border p-3 whitespace-nowrap group-hover:bg-row-hover">
               {canUpdate && (
                 <Link
                   href={`/dashboard/clients/${client.id}/edit`}
