@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import {
   Menu,
@@ -57,6 +58,7 @@ function shouldShowNavItem(resource: string, permissions: string[]): boolean {
 
 function SidebarContent({ role, userName, onNavigate }: SidebarProps & { onNavigate?: () => void }) {
   const permissions = getUserPermissions(role);
+  const pathname = usePathname();
 
   return (
     <div className="flex h-full flex-col bg-neutral-900 text-neutral-100">
@@ -66,17 +68,22 @@ function SidebarContent({ role, userName, onNavigate }: SidebarProps & { onNavig
 
       <nav className="flex-1 space-y-1 px-3 py-4">
         {NAV_ITEMS.filter((item) => shouldShowNavItem(item.resource, permissions[item.resource] ?? [])).map(
-          (item) => (
-            <Link
-              key={item.resource}
-              href={item.href}
-              onClick={onNavigate}
-              className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-neutral-300 transition hover:bg-neutral-800 hover:text-neutral-100"
-            >
-              <item.icon size={16} strokeWidth={1.75} aria-hidden="true" />
-              {item.label}
-            </Link>
-          )
+          (item) => {
+            const isActive = pathname?.startsWith(item.href);
+            return (
+              <Link
+                key={item.resource}
+                href={item.href}
+                onClick={onNavigate}
+                className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition hover:bg-neutral-800 hover:font-medium hover:text-neutral-100 ${
+                  isActive ? 'bg-neutral-800 font-medium text-neutral-100' : 'text-neutral-300'
+                }`}
+              >
+                <item.icon size={16} strokeWidth={1.75} aria-hidden="true" />
+                {item.label}
+              </Link>
+            );
+          }
         )}
       </nav>
 
