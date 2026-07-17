@@ -3,7 +3,7 @@
 import NextAuth from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
 import GoogleProvider from 'next-auth/providers/google';
-import { supabase } from '@/lib/db';
+import { supabaseServer } from '@/lib/db';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -14,10 +14,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
 
-  pages: {
-    signIn: '/auth/signin',
-    error: '/auth/error',
-  },
+  // NOTA: pages.signIn/error puntano a /auth/signin e /auth/error, pagine
+  // custom non ancora costruite (sviluppo futuro). Fino ad allora usiamo
+  // le pagine predefinite di NextAuth commentando questo blocco.
+  // pages: {
+  //   signIn: '/auth/signin',
+  //   error: '/auth/error',
+  // },
 
   callbacks: {
     /**
@@ -30,7 +33,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const email = user.email;
 
         // Verifica se l'utente esiste in Supabase
-        const { data: existingUser, error: fetchError } = await supabase
+        const { data: existingUser, error: fetchError } = await supabaseServer
           .from('users')
           .select('*')
           .eq('email', email)
@@ -38,7 +41,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (fetchError && fetchError.code === 'PGRST116') {
           // Utente non esiste - controllare se invitato
-          const { data: invitation } = await supabase
+          const { data: invitation } = await supabaseServer
             .from('invitations')
             .select('*')
             .eq('email', email)
@@ -48,7 +51,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
           if (invitation) {
             // Crea nuovo utente dal database con il ruolo dell'invito
-            const { error: createError } = await supabase
+            const { error: createError } = await supabaseServer
               .from('users')
               .insert([
                 {
@@ -62,7 +65,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
             if (!createError) {
               // Segna l'invito come usato
-              await supabase
+              await supabaseServer
                 .from('invitations')
                 .update({ used: true })
                 .eq('id', invitation.id);
@@ -88,7 +91,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
           // Aggiorna google_id se non lo aveva
           if (!existingUser.google_id && user.id) {
-            await supabase
+            await supabaseServer
               .from('users')
               .update({ google_id: user.id })
               .eq('id', existingUser.id);
