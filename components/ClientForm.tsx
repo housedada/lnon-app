@@ -1,5 +1,6 @@
 'use client';
 
+import { Save } from 'lucide-react';
 import type { Client } from '@/lib/types';
 
 interface ClientFormProps {
@@ -97,7 +98,8 @@ export default function ClientForm({ client, action }: ClientFormProps) {
       </Card>
 
       <div className="flex gap-3">
-        <button type="submit" className="rounded-md bg-button-bg px-4 py-2 text-sm font-medium text-button-text hover:bg-button-bg-hover">
+        <button type="submit" className="flex items-center gap-1.5 rounded-md bg-button-bg px-4 py-2 text-sm font-medium text-button-text hover:bg-button-bg-hover">
+          <Save size={16} strokeWidth={2} aria-hidden="true" />
           Salva
         </button>
       </div>

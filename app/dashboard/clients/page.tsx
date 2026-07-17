@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Plus, Search, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { getClients } from '@/lib/db';
 import { hasPermission, canDeleteResource } from '@/lib/permissions';
@@ -39,21 +40,25 @@ export default async function ClientsPage({
         {canCreate && (
           <Link
             href="/dashboard/clients/new"
-            className="rounded-md bg-button-bg px-4 py-2 text-sm font-medium text-button-text hover:bg-button-bg-hover"
+            className="flex items-center gap-1.5 rounded-md bg-button-bg px-4 py-2 text-sm font-medium text-button-text hover:bg-button-bg-hover"
           >
+            <Plus size={16} strokeWidth={2} aria-hidden="true" />
             Nuovo Cliente
           </Link>
         )}
       </div>
 
       <form className="px-6 pt-6" method="get">
-        <input
-          type="text"
-          name="q"
-          defaultValue={q ?? ''}
-          placeholder="Cerca per nome, email..."
-          className="w-full max-w-sm rounded-md border border-grid-border bg-card-bg px-3 py-2 text-sm text-primary"
-        />
+        <div className="relative max-w-sm">
+          <Search size={16} strokeWidth={1.75} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-secondary" aria-hidden="true" />
+          <input
+            type="text"
+            name="q"
+            defaultValue={q ?? ''}
+            placeholder="Cerca per nome, email..."
+            className="w-full rounded-md border border-grid-border bg-card-bg py-2 pl-9 pr-3 text-sm text-primary"
+          />
+        </div>
       </form>
 
       <div className="mt-6 grid grid-cols-[2fr_2fr_1fr_1fr_1fr_auto] border-t border-l border-grid-border text-xs">
@@ -71,17 +76,20 @@ export default async function ClientsPage({
             <div className="border-r border-b border-grid-border p-3 text-secondary group-hover:bg-row-hover">{client.phone ?? '—'}</div>
             <div className="border-r border-b border-grid-border p-3 text-secondary group-hover:bg-row-hover">{client.city ?? '—'}</div>
             <div className="border-r border-b border-grid-border p-3 text-secondary group-hover:bg-row-hover">{client.taxId ?? '—'}</div>
-            <div className="border-r border-b border-grid-border p-3 whitespace-nowrap group-hover:bg-row-hover">
+            <div className="flex items-center gap-3 border-r border-b border-grid-border p-3 whitespace-nowrap group-hover:bg-row-hover">
               {canUpdate && (
-                <Link href={`/dashboard/clients/${client.id}/edit`} className="text-primary underline">
-                  Modifica
+                <Link
+                  href={`/dashboard/clients/${client.id}/edit`}
+                  aria-label="Modifica cliente"
+                  className="text-secondary transition hover:text-primary"
+                >
+                  <Pencil size={15} strokeWidth={1.75} />
                 </Link>
               )}
-              {canUpdate && canDelete && <span className="mx-2 text-muted">|</span>}
               {canDelete && (
                 <form action={deleteClientAction.bind(null, client.id)} className="inline">
-                  <button type="submit" className="text-red-600 underline">
-                    Elimina
+                  <button type="submit" aria-label="Elimina cliente" className="text-red-600/70 transition hover:text-red-600">
+                    <Trash2 size={15} strokeWidth={1.75} />
                   </button>
                 </form>
               )}
@@ -99,17 +107,19 @@ export default async function ClientsPage({
           {currentPage > 1 && (
             <Link
               href={`/dashboard/clients?q=${encodeURIComponent(q ?? '')}&page=${currentPage - 1}`}
-              className="text-primary underline"
+              className="flex items-center gap-1 text-primary underline"
             >
+              <ChevronLeft size={14} strokeWidth={1.75} aria-hidden="true" />
               Precedente
             </Link>
           )}
           {currentPage < totalPages && (
             <Link
               href={`/dashboard/clients?q=${encodeURIComponent(q ?? '')}&page=${currentPage + 1}`}
-              className="text-primary underline"
+              className="flex items-center gap-1 text-primary underline"
             >
               Successiva
+              <ChevronRight size={14} strokeWidth={1.75} aria-hidden="true" />
             </Link>
           )}
         </div>

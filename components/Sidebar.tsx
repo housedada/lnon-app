@@ -4,6 +4,19 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
+import {
+  Menu,
+  Users,
+  Briefcase,
+  CheckSquare,
+  FileText,
+  UserCog,
+  BarChart2,
+  History,
+  Settings,
+  LogOut,
+  type LucideIcon,
+} from 'lucide-react';
 import type { UserRole } from '@/lib/types';
 import { getUserPermissions, getRoleLabel } from '@/lib/permissions';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -17,17 +30,18 @@ interface NavItem {
   resource: string;
   label: string;
   href: string;
+  icon: LucideIcon;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { resource: 'clients', label: 'Clienti', href: '/dashboard/clients' },
-  { resource: 'jobs', label: 'Lavori', href: '/dashboard/jobs' },
-  { resource: 'tasks', label: 'Task', href: '/dashboard/tasks' },
-  { resource: 'invoices', label: 'Fatture', href: '/dashboard/invoices' },
-  { resource: 'users', label: 'Utenti', href: '/dashboard/users' },
-  { resource: 'reports', label: 'Report', href: '/dashboard/reports' },
-  { resource: 'audit_logs', label: 'Log Attività', href: '/dashboard/audit-logs' },
-  { resource: 'settings', label: 'Impostazioni', href: '/dashboard/settings' },
+  { resource: 'clients', label: 'Clienti', href: '/dashboard/clients', icon: Users },
+  { resource: 'jobs', label: 'Lavori', href: '/dashboard/jobs', icon: Briefcase },
+  { resource: 'tasks', label: 'Task', href: '/dashboard/tasks', icon: CheckSquare },
+  { resource: 'invoices', label: 'Fatture', href: '/dashboard/invoices', icon: FileText },
+  { resource: 'users', label: 'Utenti', href: '/dashboard/users', icon: UserCog },
+  { resource: 'reports', label: 'Report', href: '/dashboard/reports', icon: BarChart2 },
+  { resource: 'audit_logs', label: 'Log Attività', href: '/dashboard/audit-logs', icon: History },
+  { resource: 'settings', label: 'Impostazioni', href: '/dashboard/settings', icon: Settings },
 ];
 
 // 'users' e 'settings' concedono sempre almeno 'read' a tutti i ruoli
@@ -57,8 +71,9 @@ function SidebarContent({ role, userName, onNavigate }: SidebarProps & { onNavig
               key={item.resource}
               href={item.href}
               onClick={onNavigate}
-              className="block rounded-md px-3 py-2 text-sm text-neutral-300 transition hover:bg-neutral-800 hover:text-neutral-100"
+              className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-neutral-300 transition hover:bg-neutral-800 hover:text-neutral-100"
             >
+              <item.icon size={16} strokeWidth={1.75} aria-hidden="true" />
               {item.label}
             </Link>
           )
@@ -71,8 +86,9 @@ function SidebarContent({ role, userName, onNavigate }: SidebarProps & { onNavig
         <p className="text-xs text-neutral-400">{getRoleLabel(role)}</p>
         <button
           onClick={() => signOut({ callbackUrl: '/auth/signin' })}
-          className="mt-3 text-sm text-neutral-400 underline transition hover:text-neutral-200"
+          className="mt-3 flex items-center gap-1.5 text-sm text-neutral-400 transition hover:text-neutral-200"
         >
+          <LogOut size={14} strokeWidth={1.75} aria-hidden="true" />
           Esci
         </button>
       </div>
@@ -93,9 +109,7 @@ export default function Sidebar({ role, userName }: SidebarProps) {
           aria-label="Apri menu"
           className="rounded-md p-2 text-neutral-300 hover:bg-neutral-800"
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
+          <Menu size={22} strokeWidth={1.75} aria-hidden="true" />
         </button>
       </div>
 

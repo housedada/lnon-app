@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Sun, Moon, Monitor, type LucideIcon } from 'lucide-react';
 
 type ThemePreference = 'light' | 'dark' | 'auto';
 
@@ -30,10 +31,10 @@ export default function ThemeToggle() {
     applyTheme(next);
   }
 
-  const options: { value: ThemePreference; label: string }[] = [
-    { value: 'light', label: 'Giorno' },
-    { value: 'dark', label: 'Notte' },
-    { value: 'auto', label: 'Auto' },
+  const options: { value: ThemePreference; label: string; icon: LucideIcon }[] = [
+    { value: 'light', label: 'Giorno', icon: Sun },
+    { value: 'dark', label: 'Notte', icon: Moon },
+    { value: 'auto', label: 'Auto', icon: Monitor },
   ];
 
   return (
@@ -43,12 +44,13 @@ export default function ThemeToggle() {
           key={option.value}
           type="button"
           onClick={() => choose(option.value)}
-          className={`flex-1 rounded px-2 py-1 transition ${
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded px-2 py-1.5 transition ${
             preference === option.value
               ? 'bg-neutral-100 text-neutral-900'
               : 'text-neutral-400 hover:text-neutral-100'
           }`}
         >
+          <option.icon size={13} strokeWidth={1.75} aria-hidden="true" />
           {option.label}
         </button>
       ))}
