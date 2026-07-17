@@ -29,6 +29,23 @@ export interface Client {
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;
+  internalCode?: string;
+  province?: string;
+  addressNotes?: string;
+  contactPerson?: string;
+  fiscalCode?: string;
+  pecEmail?: string;
+  iban?: string;
+  sdiCode?: string;
+  defaultVatRate?: number;
+  paymentTerms?: string;
+  defaultPaymentMethod?: string;
+  fax?: string;
+  shippingAddress?: string;
+  defaultDiscount?: number;
+  letterOfIntentEnabled?: boolean;
+  receiptProtocol?: string;
+  telematicReceiptDate?: Date;
 }
 
 export type JobStatus = 'draft' | 'pending_approval' | 'approved' | 'in_progress' | 'completed' | 'cancelled';

@@ -59,20 +59,92 @@ export async function getUserProfile(userId: string): Promise<User | null> {
   return data;
 }
 
+function clientRowToClient(row: Record<string, any>): Client {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email ?? undefined,
+    phone: row.phone ?? undefined,
+    companyName: row.company_name ?? undefined,
+    address: row.address ?? undefined,
+    city: row.city ?? undefined,
+    postalCode: row.postal_code ?? undefined,
+    country: row.country ?? undefined,
+    taxId: row.tax_id ?? undefined,
+    notes: row.notes ?? undefined,
+    createdBy: row.created_by,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+    deletedAt: row.deleted_at ? new Date(row.deleted_at) : undefined,
+    internalCode: row.internal_code ?? undefined,
+    province: row.province ?? undefined,
+    addressNotes: row.address_notes ?? undefined,
+    contactPerson: row.contact_person ?? undefined,
+    fiscalCode: row.fiscal_code ?? undefined,
+    pecEmail: row.pec_email ?? undefined,
+    iban: row.iban ?? undefined,
+    sdiCode: row.sdi_code ?? undefined,
+    defaultVatRate: row.default_vat_rate ?? undefined,
+    paymentTerms: row.payment_terms ?? undefined,
+    defaultPaymentMethod: row.default_payment_method ?? undefined,
+    fax: row.fax ?? undefined,
+    shippingAddress: row.shipping_address ?? undefined,
+    defaultDiscount: row.default_discount ?? undefined,
+    letterOfIntentEnabled: row.letter_of_intent_enabled ?? undefined,
+    receiptProtocol: row.receipt_protocol ?? undefined,
+    telematicReceiptDate: row.telematic_receipt_date ? new Date(row.telematic_receipt_date) : undefined,
+  };
+}
+
+function clientToRow(data: Partial<Omit<Client, 'id' | 'createdAt' | 'updatedAt'>>): Record<string, any> {
+  const row: Record<string, any> = {};
+  if (data.name !== undefined) row.name = data.name;
+  if (data.email !== undefined) row.email = data.email;
+  if (data.phone !== undefined) row.phone = data.phone;
+  if (data.companyName !== undefined) row.company_name = data.companyName;
+  if (data.address !== undefined) row.address = data.address;
+  if (data.city !== undefined) row.city = data.city;
+  if (data.postalCode !== undefined) row.postal_code = data.postalCode;
+  if (data.country !== undefined) row.country = data.country;
+  if (data.taxId !== undefined) row.tax_id = data.taxId;
+  if (data.notes !== undefined) row.notes = data.notes;
+  if (data.createdBy !== undefined) row.created_by = data.createdBy;
+  if (data.internalCode !== undefined) row.internal_code = data.internalCode;
+  if (data.province !== undefined) row.province = data.province;
+  if (data.addressNotes !== undefined) row.address_notes = data.addressNotes;
+  if (data.contactPerson !== undefined) row.contact_person = data.contactPerson;
+  if (data.fiscalCode !== undefined) row.fiscal_code = data.fiscalCode;
+  if (data.pecEmail !== undefined) row.pec_email = data.pecEmail;
+  if (data.iban !== undefined) row.iban = data.iban;
+  if (data.sdiCode !== undefined) row.sdi_code = data.sdiCode;
+  if (data.defaultVatRate !== undefined) row.default_vat_rate = data.defaultVatRate;
+  if (data.paymentTerms !== undefined) row.payment_terms = data.paymentTerms;
+  if (data.defaultPaymentMethod !== undefined) row.default_payment_method = data.defaultPaymentMethod;
+  if (data.fax !== undefined) row.fax = data.fax;
+  if (data.shippingAddress !== undefined) row.shipping_address = data.shippingAddress;
+  if (data.defaultDiscount !== undefined) row.default_discount = data.defaultDiscount;
+  if (data.letterOfIntentEnabled !== undefined) row.letter_of_intent_enabled = data.letterOfIntentEnabled;
+  if (data.receiptProtocol !== undefined) row.receipt_protocol = data.receiptProtocol;
+  if (data.telematicReceiptDate !== undefined) {
+    row.telematic_receipt_date = data.telematicReceiptDate.toISOString().slice(0, 10);
+  }
+  return row;
+}
+
 /**
  * Crea un nuovo cliente
  */
 export async function createDbClient(
   clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>
-) {
-  const { data, error } = await supabase
+): Promise<Client> {
+  const { data, error } = await supabaseServer
     .from('clients')
-    .insert([clientData])
+    .insert([clientToRow(clientData)])
     .select()
     .single();
 
   if (error) throw error;
-  return data;
+  return clientRowToClient(data);
 }
 
 /**
@@ -82,8 +154,8 @@ export async function getClients(filters?: {
   search?: string;
   limit?: number;
   offset?: number;
-}) {
-  let query = supabase
+}): Promise<{ data: Client[]; total: number }> {
+  let query = supabaseServer
     .from('clients')
     .select('*', { count: 'exact' })
     .is('deleted_at', null) // Non includiamo soft-deleted
@@ -106,7 +178,44 @@ export async function getClients(filters?: {
   const { data, error, count } = await query;
 
   if (error) throw error;
-  return { data, total: count };
+  return { data: (data ?? []).map(clientRowToClient), total: count ?? 0 };
+}
+
+/**
+ * Ottieni un cliente per id
+ */
+export async function getClientById(id: string): Promise<Client | null> {
+  const { data, error } = await supabaseServer
+    .from('clients')
+    .select('*')
+    .eq('id', id)
+    .is('deleted_at', null)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw error;
+  }
+
+  return clientRowToClient(data);
+}
+
+/**
+ * Aggiorna un cliente esistente
+ */
+export async function updateDbClient(
+  id: string,
+  clientData: Partial<Omit<Client, 'id' | 'createdBy' | 'createdAt' | 'updatedAt'>>
+): Promise<Client> {
+  const { data, error } = await supabaseServer
+    .from('clients')
+    .update(clientToRow(clientData))
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return clientRowToClient(data);
 }
 
 /**
@@ -362,8 +471,8 @@ export async function getActivityLogs(filters?: {
 /**
  * Soft delete di un cliente (non cancellare fisicamente)
  */
-export async function softDeleteClient(clientId: string) {
-  const { data, error } = await supabase
+export async function softDeleteClient(clientId: string): Promise<Client> {
+  const { data, error } = await supabaseServer
     .from('clients')
     .update({ deleted_at: new Date().toISOString() })
     .eq('id', clientId)
@@ -371,7 +480,7 @@ export async function softDeleteClient(clientId: string) {
     .single();
 
   if (error) throw error;
-  return data;
+  return clientRowToClient(data);
 }
 
 /**
