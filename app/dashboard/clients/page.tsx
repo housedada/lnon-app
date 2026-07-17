@@ -61,7 +61,7 @@ export default async function ClientsPage({
         </div>
       </form>
 
-      <div className="mt-6 grid grid-cols-[2fr_2fr_1fr_1fr_1fr_auto] gap-x-4 border-t border-grid-border text-xs">
+      <div className="mt-6 grid grid-cols-[2fr_2fr_1fr_1fr_1fr_auto] gap-x-[2px] border-t border-grid-border text-xs">
         <div className="border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">Nome</div>
         <div className="border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">Email</div>
         <div className="border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">Telefono</div>
@@ -71,7 +71,7 @@ export default async function ClientsPage({
 
         {clients.map((client) => (
           <div key={client.id} className="group contents">
-            <div className="border-b border-grid-border p-3 font-medium text-primary group-hover:bg-row-hover">{client.name}</div>
+            <div className="border-b border-grid-border p-3 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{client.name}</div>
             <div className="border-b border-grid-border p-3 text-secondary group-hover:bg-row-hover">{client.email ?? '—'}</div>
             <div className="border-b border-grid-border p-3 text-secondary group-hover:bg-row-hover">{client.phone ?? '—'}</div>
             <div className="border-b border-grid-border p-3 text-secondary group-hover:bg-row-hover">{client.city ?? '—'}</div>
