@@ -33,13 +33,13 @@ export default async function ClientsPage({
     <div>
       <div className="flex items-center justify-between p-6 pb-0">
         <div>
-          <h1 className="text-2xl font-semibold text-neutral-900">Clienti</h1>
-          <p className="mt-1 text-sm text-neutral-500">{total} clienti totali</p>
+          <h1 className="text-2xl font-semibold text-primary">Clienti</h1>
+          <p className="mt-1 text-sm text-secondary">{total} clienti totali</p>
         </div>
         {canCreate && (
           <Link
             href="/dashboard/clients/new"
-            className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800"
+            className="rounded-md bg-button-bg px-4 py-2 text-sm font-medium text-button-text hover:bg-button-bg-hover"
           >
             Nuovo Cliente
           </Link>
@@ -52,32 +52,32 @@ export default async function ClientsPage({
           name="q"
           defaultValue={q ?? ''}
           placeholder="Cerca per nome, email..."
-          className="w-full max-w-sm rounded-md border border-grid-border bg-white px-3 py-2 text-sm"
+          className="w-full max-w-sm rounded-md border border-grid-border bg-card-bg px-3 py-2 text-sm text-primary"
         />
       </form>
 
       <div className="mt-6 grid grid-cols-[2fr_2fr_1fr_1fr_1fr_auto] border-t border-l border-grid-border text-xs">
-        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-neutral-600">Nome</div>
-        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-neutral-600">Email</div>
-        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-neutral-600">Telefono</div>
-        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-neutral-600">Città</div>
-        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-neutral-600">P.IVA</div>
-        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-neutral-600">Azioni</div>
+        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">Nome</div>
+        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">Email</div>
+        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">Telefono</div>
+        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">Città</div>
+        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">P.IVA</div>
+        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">Azioni</div>
 
         {clients.map((client) => (
           <div key={client.id} className="group contents">
-            <div className="border-r border-b border-grid-border p-3 font-medium text-neutral-900 group-hover:bg-neutral-50">{client.name}</div>
-            <div className="border-r border-b border-grid-border p-3 text-neutral-500 group-hover:bg-neutral-50">{client.email ?? '—'}</div>
-            <div className="border-r border-b border-grid-border p-3 text-neutral-500 group-hover:bg-neutral-50">{client.phone ?? '—'}</div>
-            <div className="border-r border-b border-grid-border p-3 text-neutral-500 group-hover:bg-neutral-50">{client.city ?? '—'}</div>
-            <div className="border-r border-b border-grid-border p-3 text-neutral-500 group-hover:bg-neutral-50">{client.taxId ?? '—'}</div>
-            <div className="border-r border-b border-grid-border p-3 whitespace-nowrap group-hover:bg-neutral-50">
+            <div className="border-r border-b border-grid-border p-3 font-medium text-primary group-hover:bg-row-hover">{client.name}</div>
+            <div className="border-r border-b border-grid-border p-3 text-secondary group-hover:bg-row-hover">{client.email ?? '—'}</div>
+            <div className="border-r border-b border-grid-border p-3 text-secondary group-hover:bg-row-hover">{client.phone ?? '—'}</div>
+            <div className="border-r border-b border-grid-border p-3 text-secondary group-hover:bg-row-hover">{client.city ?? '—'}</div>
+            <div className="border-r border-b border-grid-border p-3 text-secondary group-hover:bg-row-hover">{client.taxId ?? '—'}</div>
+            <div className="border-r border-b border-grid-border p-3 whitespace-nowrap group-hover:bg-row-hover">
               {canUpdate && (
-                <Link href={`/dashboard/clients/${client.id}/edit`} className="text-neutral-700 underline">
+                <Link href={`/dashboard/clients/${client.id}/edit`} className="text-primary underline">
                   Modifica
                 </Link>
               )}
-              {canUpdate && canDelete && <span className="mx-2 text-neutral-300">|</span>}
+              {canUpdate && canDelete && <span className="mx-2 text-muted">|</span>}
               {canDelete && (
                 <form action={deleteClientAction.bind(null, client.id)} className="inline">
                   <button type="submit" className="text-red-600 underline">
@@ -85,21 +85,21 @@ export default async function ClientsPage({
                   </button>
                 </form>
               )}
-              {!canUpdate && !canDelete && <span className="text-neutral-300">—</span>}
+              {!canUpdate && !canDelete && <span className="text-muted">—</span>}
             </div>
           </div>
         ))}
       </div>
 
       <div className="flex items-center justify-between p-6 text-sm">
-        <span className="text-neutral-500">
+        <span className="text-secondary">
           Pagina {currentPage} di {totalPages}
         </span>
         <div className="flex gap-3">
           {currentPage > 1 && (
             <Link
               href={`/dashboard/clients?q=${encodeURIComponent(q ?? '')}&page=${currentPage - 1}`}
-              className="underline"
+              className="text-primary underline"
             >
               Precedente
             </Link>
@@ -107,7 +107,7 @@ export default async function ClientsPage({
           {currentPage < totalPages && (
             <Link
               href={`/dashboard/clients?q=${encodeURIComponent(q ?? '')}&page=${currentPage + 1}`}
-              className="underline"
+              className="text-primary underline"
             >
               Successiva
             </Link>

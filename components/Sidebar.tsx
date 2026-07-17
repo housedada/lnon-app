@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import type { UserRole } from '@/lib/types';
 import { getUserPermissions, getRoleLabel } from '@/lib/permissions';
+import ThemeToggle from '@/components/ThemeToggle';
 
 interface SidebarProps {
   role: UserRole;
@@ -65,7 +66,8 @@ function SidebarContent({ role, userName, onNavigate }: SidebarProps & { onNavig
       </nav>
 
       <div className="border-t border-neutral-800 px-6 py-4">
-        <p className="text-sm font-medium text-neutral-100">{userName}</p>
+        <ThemeToggle />
+        <p className="mt-4 text-sm font-medium text-neutral-100">{userName}</p>
         <p className="text-xs text-neutral-400">{getRoleLabel(role)}</p>
         <button
           onClick={() => signOut({ callbackUrl: '/auth/signin' })}

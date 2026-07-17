@@ -20,7 +20,7 @@ function Field({
 }) {
   return (
     <label className="flex flex-col gap-1 text-sm">
-      <span className="font-medium text-neutral-700">{label}</span>
+      <span className="field-label text-primary">{label}</span>
       <input
         type={type}
         name={name}
@@ -33,8 +33,8 @@ function Field({
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="space-y-4 rounded-lg border border-grid-border bg-white p-6 shadow-sm">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">{title}</h2>
+    <section className="card-shadow space-y-4 rounded-lg border border-grid-border bg-card-bg p-6">
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-secondary">{title}</h2>
       {children}
     </section>
   );
@@ -86,7 +86,7 @@ export default function ClientForm({ client, action }: ClientFormProps) {
 
       <Card title="Note">
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-neutral-700">Note</span>
+          <span className="field-label text-primary">Note</span>
           <textarea
             name="notes"
             defaultValue={client?.notes}
@@ -97,7 +97,7 @@ export default function ClientForm({ client, action }: ClientFormProps) {
       </Card>
 
       <div className="flex gap-3">
-        <button type="submit" className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800">
+        <button type="submit" className="rounded-md bg-button-bg px-4 py-2 text-sm font-medium text-button-text hover:bg-button-bg-hover">
           Salva
         </button>
       </div>
