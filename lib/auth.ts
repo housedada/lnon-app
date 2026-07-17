@@ -14,13 +14,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
 
-  // NOTA: pages.signIn/error puntano a /auth/signin e /auth/error, pagine
-  // custom non ancora costruite (sviluppo futuro). Fino ad allora usiamo
-  // le pagine predefinite di NextAuth commentando questo blocco.
-  // pages: {
-  //   signIn: '/auth/signin',
-  //   error: '/auth/error',
-  // },
+  pages: {
+    signIn: '/auth/signin',
+    error: '/auth/error',
+  },
 
   callbacks: {
     /**
