@@ -31,12 +31,20 @@ function Field({
   );
 }
 
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="space-y-4 rounded-lg border border-grid-border bg-white p-6 shadow-sm">
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
 export default function ClientForm({ client, action }: ClientFormProps) {
   return (
-    <form action={action} className="max-w-3xl space-y-8 p-6">
-      <section className="space-y-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Anagrafica</h2>
-        <div className="grid grid-cols-2 gap-4">
+    <form action={action} className="w-full space-y-6 p-6">
+      <Card title="Anagrafica">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Field label="Nome / Denominazione *" name="name" defaultValue={client?.name} />
           <Field label="Referente" name="contactPerson" defaultValue={client?.contactPerson} />
           <Field label="Email" name="email" defaultValue={client?.email} type="email" />
@@ -44,11 +52,10 @@ export default function ClientForm({ client, action }: ClientFormProps) {
           <Field label="Fax" name="fax" defaultValue={client?.fax} />
           <Field label="Codice interno" name="internalCode" defaultValue={client?.internalCode} />
         </div>
-      </section>
+      </Card>
 
-      <section className="space-y-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Indirizzo</h2>
-        <div className="grid grid-cols-2 gap-4">
+      <Card title="Indirizzo">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Field label="Indirizzo" name="address" defaultValue={client?.address} />
           <Field label="Indirizzo di spedizione" name="shippingAddress" defaultValue={client?.shippingAddress} />
           <Field label="Comune" name="city" defaultValue={client?.city} />
@@ -57,11 +64,10 @@ export default function ClientForm({ client, action }: ClientFormProps) {
           <Field label="Paese" name="country" defaultValue={client?.country} />
           <Field label="Note indirizzo" name="addressNotes" defaultValue={client?.addressNotes} />
         </div>
-      </section>
+      </Card>
 
-      <section className="space-y-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Fatturazione</h2>
-        <div className="grid grid-cols-2 gap-4">
+      <Card title="Fatturazione">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Field label="P.IVA" name="taxId" defaultValue={client?.taxId} />
           <Field label="Codice Fiscale" name="fiscalCode" defaultValue={client?.fiscalCode} />
           <Field label="PEC" name="pecEmail" defaultValue={client?.pecEmail} type="email" />
@@ -76,10 +82,9 @@ export default function ClientForm({ client, action }: ClientFormProps) {
           <input type="checkbox" name="letterOfIntentEnabled" defaultChecked={client?.letterOfIntentEnabled} />
           Lettera d&apos;intento abilitata
         </label>
-      </section>
+      </Card>
 
-      <section className="space-y-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Note</h2>
+      <Card title="Note">
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium text-neutral-700">Note</span>
           <textarea
@@ -89,7 +94,7 @@ export default function ClientForm({ client, action }: ClientFormProps) {
             className="rounded-md border border-grid-border px-3 py-2 text-sm"
           />
         </label>
-      </section>
+      </Card>
 
       <div className="flex gap-3">
         <button type="submit" className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800">

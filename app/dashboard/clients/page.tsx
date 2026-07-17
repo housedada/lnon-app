@@ -56,22 +56,22 @@ export default async function ClientsPage({
         />
       </form>
 
-      <div className="mt-6 grid grid-cols-[2fr_2fr_1fr_1fr_1fr_auto] border-t border-l border-grid-border text-sm">
-        <div className="border-r border-b border-grid-border bg-white p-3 font-medium">Nome</div>
-        <div className="border-r border-b border-grid-border bg-white p-3 font-medium">Email</div>
-        <div className="border-r border-b border-grid-border bg-white p-3 font-medium">Telefono</div>
-        <div className="border-r border-b border-grid-border bg-white p-3 font-medium">Città</div>
-        <div className="border-r border-b border-grid-border bg-white p-3 font-medium">P.IVA</div>
-        <div className="border-r border-b border-grid-border bg-white p-3 font-medium">Azioni</div>
+      <div className="mt-6 grid grid-cols-[2fr_2fr_1fr_1fr_1fr_auto] border-t border-l border-grid-border text-xs">
+        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-neutral-600">Nome</div>
+        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-neutral-600">Email</div>
+        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-neutral-600">Telefono</div>
+        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-neutral-600">Città</div>
+        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-neutral-600">P.IVA</div>
+        <div className="border-r border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-neutral-600">Azioni</div>
 
         {clients.map((client) => (
-          <div key={client.id} className="contents">
-            <div className="border-r border-b border-grid-border p-3">{client.name}</div>
-            <div className="border-r border-b border-grid-border p-3 text-neutral-500">{client.email ?? '—'}</div>
-            <div className="border-r border-b border-grid-border p-3 text-neutral-500">{client.phone ?? '—'}</div>
-            <div className="border-r border-b border-grid-border p-3 text-neutral-500">{client.city ?? '—'}</div>
-            <div className="border-r border-b border-grid-border p-3 text-neutral-500">{client.taxId ?? '—'}</div>
-            <div className="border-r border-b border-grid-border p-3 whitespace-nowrap">
+          <div key={client.id} className="group contents">
+            <div className="border-r border-b border-grid-border p-3 font-medium text-neutral-900 group-hover:bg-neutral-50">{client.name}</div>
+            <div className="border-r border-b border-grid-border p-3 text-neutral-500 group-hover:bg-neutral-50">{client.email ?? '—'}</div>
+            <div className="border-r border-b border-grid-border p-3 text-neutral-500 group-hover:bg-neutral-50">{client.phone ?? '—'}</div>
+            <div className="border-r border-b border-grid-border p-3 text-neutral-500 group-hover:bg-neutral-50">{client.city ?? '—'}</div>
+            <div className="border-r border-b border-grid-border p-3 text-neutral-500 group-hover:bg-neutral-50">{client.taxId ?? '—'}</div>
+            <div className="border-r border-b border-grid-border p-3 whitespace-nowrap group-hover:bg-neutral-50">
               {canUpdate && (
                 <Link href={`/dashboard/clients/${client.id}/edit`} className="text-neutral-700 underline">
                   Modifica

@@ -7,6 +7,7 @@
   /* Design tokens - area dashboard/contenuto */
   --color-content-bg: #f7f6f1; /* grigio leggermente caldo per l'area autenticata */
   --color-grid-border: #e1e1e1; /* bordi delle celle a griglia edge-to-edge */
+  --color-grid-header-bg: #f5f5f4; /* sfondo intestazione griglie/tabelle */
   --color-version-label: #333333; /* numero versione in pagina login */
 }
 
@@ -15,6 +16,7 @@
   --color-foreground: var(--foreground);
   --color-content-bg: var(--color-content-bg);
   --color-grid-border: var(--color-grid-border);
+  --color-grid-header-bg: var(--color-grid-header-bg);
   --color-version-label: var(--color-version-label);
   --font-sans: var(--font-inter);
 }
@@ -30,4 +32,10 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #8a8a8a; /* contrasto migliore del grigio troppo chiaro di default */
+  opacity: 1;
 }

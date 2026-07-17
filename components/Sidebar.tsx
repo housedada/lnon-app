@@ -82,7 +82,7 @@ export default function Sidebar({ role, userName }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <>
+    <div className="md:contents">
       {/* Header mobile con hamburger */}
       <div className="flex items-center justify-between border-b border-neutral-800 bg-neutral-900 px-4 py-3 md:hidden">
         <Image src="/logo.png" alt="Housedada" width={90} height={18} />
@@ -115,6 +115,6 @@ export default function Sidebar({ role, userName }: SidebarProps) {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
