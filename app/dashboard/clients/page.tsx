@@ -61,7 +61,7 @@ export default async function ClientsPage({
         </div>
       </form>
 
-      <div className="mt-6 grid grid-cols-[2fr_2fr_1fr_1fr_1fr_auto] gap-x-[2px] border-t border-grid-border text-xs">
+      <div className="mx-6 mt-6 grid grid-cols-[2fr_2fr_1fr_1fr_1fr_auto] gap-x-[2px] border-t border-grid-border text-xs">
         <div className="border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">Nome</div>
         <div className="border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">Email</div>
         <div className="border-b border-grid-border bg-grid-header-bg p-3 font-semibold uppercase tracking-wide text-secondary">Telefono</div>
