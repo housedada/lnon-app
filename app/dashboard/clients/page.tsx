@@ -103,24 +103,38 @@ export default async function ClientsPage({
         <span className="text-secondary">
           Pagina {currentPage} di {totalPages}
         </span>
-        <div className="flex gap-3">
-          {currentPage > 1 && (
+        <div className="flex items-center gap-2">
+          {currentPage > 1 ? (
             <Link
               href={`/dashboard/clients?q=${encodeURIComponent(q ?? '')}&page=${currentPage - 1}`}
-              className="flex items-center gap-1 text-primary underline"
+              aria-label="Pagina precedente"
+              className="flex items-center justify-center rounded-md border border-grid-border p-1.5 text-primary transition hover:bg-row-hover"
             >
-              <ChevronLeft size={14} strokeWidth={1.75} aria-hidden="true" />
-              Precedente
+              <ChevronLeft size={16} strokeWidth={1.75} />
             </Link>
+          ) : (
+            <span
+              aria-hidden="true"
+              className="flex cursor-not-allowed items-center justify-center rounded-md border border-grid-border p-1.5 text-muted"
+            >
+              <ChevronLeft size={16} strokeWidth={1.75} />
+            </span>
           )}
-          {currentPage < totalPages && (
+          {currentPage < totalPages ? (
             <Link
               href={`/dashboard/clients?q=${encodeURIComponent(q ?? '')}&page=${currentPage + 1}`}
-              className="flex items-center gap-1 text-primary underline"
+              aria-label="Pagina successiva"
+              className="flex items-center justify-center rounded-md border border-grid-border p-1.5 text-primary transition hover:bg-row-hover"
             >
-              Successiva
-              <ChevronRight size={14} strokeWidth={1.75} aria-hidden="true" />
+              <ChevronRight size={16} strokeWidth={1.75} />
             </Link>
+          ) : (
+            <span
+              aria-hidden="true"
+              className="flex cursor-not-allowed items-center justify-center rounded-md border border-grid-border p-1.5 text-muted"
+            >
+              <ChevronRight size={16} strokeWidth={1.75} />
+            </span>
           )}
         </div>
       </div>
