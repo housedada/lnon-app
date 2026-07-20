@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import Sidebar from '@/components/Sidebar';
+import PageTransition from '@/components/PageTransition';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -20,9 +21,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-content-bg md:flex-row">
+    <div className="content-area flex min-h-screen flex-col md:flex-row">
       <Sidebar role={user.role} userName={user.name ?? user.email ?? ''} />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1">
+        <PageTransition>{children}</PageTransition>
+      </main>
     </div>
   );
 }

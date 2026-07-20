@@ -61,9 +61,11 @@ function SidebarContent({ role, userName, onNavigate }: SidebarProps & { onNavig
   const pathname = usePathname();
 
   return (
-    <div className="flex h-full flex-col bg-neutral-900 text-neutral-100">
+    <div className="sidebar-edge flex h-full flex-col bg-neutral-900 text-neutral-100">
       <div className="border-b border-neutral-800 px-5 py-5">
-        <Image src="/logo.png" alt="Housedada" width={100} height={20} />
+        <Link href="/dashboard" onClick={onNavigate}>
+          <Image src="/logo.png" alt="Housedada" width={100} height={20} />
+        </Link>
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-4">
@@ -75,8 +77,8 @@ function SidebarContent({ role, userName, onNavigate }: SidebarProps & { onNavig
                 key={item.resource}
                 href={item.href}
                 onClick={onNavigate}
-                className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition hover:bg-neutral-800 hover:font-medium hover:text-neutral-100 ${
-                  isActive ? 'bg-neutral-800 font-medium text-neutral-100' : 'text-neutral-300'
+                className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-semibold transition hover:bg-neutral-800 hover:text-neutral-100 ${
+                  isActive ? 'bg-neutral-800 font-bold text-neutral-100' : 'text-neutral-300'
                 }`}
               >
                 <item.icon size={16} strokeWidth={1.75} aria-hidden="true" />
@@ -110,7 +112,9 @@ export default function Sidebar({ role, userName }: SidebarProps) {
     <div className="md:contents">
       {/* Header mobile con hamburger */}
       <div className="flex items-center justify-between border-b border-neutral-800 bg-neutral-900 px-4 py-3 md:hidden">
-        <Image src="/logo.png" alt="Housedada" width={90} height={18} />
+        <Link href="/dashboard">
+          <Image src="/logo.png" alt="Housedada" width={90} height={18} />
+        </Link>
         <button
           onClick={() => setMobileOpen(true)}
           aria-label="Apri menu"
@@ -121,7 +125,7 @@ export default function Sidebar({ role, userName }: SidebarProps) {
       </div>
 
       {/* Sidebar fissa desktop */}
-      <aside className="hidden md:block md:w-44 md:shrink-0">
+      <aside className="hidden md:sticky md:top-0 md:block md:h-screen md:w-44 md:shrink-0">
         <SidebarContent role={role} userName={userName} />
       </aside>
 

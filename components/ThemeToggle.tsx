@@ -49,7 +49,7 @@ export default function ThemeToggle() {
           aria-pressed={preference === option.value}
           className={`flex flex-1 items-center justify-center rounded px-2 py-1.5 transition ${
             preference === option.value
-              ? 'bg-neutral-100 text-neutral-900'
+              ? 'btn-accent'
               : 'text-neutral-400 hover:text-neutral-100'
           }`}
         >

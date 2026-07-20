@@ -40,7 +40,7 @@ export default async function ClientsPage({
         {canCreate && (
           <Link
             href="/dashboard/clients/new"
-            className="flex items-center gap-1.5 rounded-md bg-button-bg px-4 py-2 text-sm font-medium text-button-text hover:bg-button-bg-hover"
+            className="btn-accent flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
           >
             <Plus size={16} strokeWidth={2} aria-hidden="true" />
             Nuovo Cliente
@@ -56,7 +56,7 @@ export default async function ClientsPage({
             name="q"
             defaultValue={q ?? ''}
             placeholder="Cerca per nome, email..."
-            className="w-full rounded-md border border-grid-border bg-card-bg py-2 pl-9 pr-3 text-sm text-primary"
+            className="w-full rounded-lg border border-grid-border bg-card-bg py-2 pl-9 pr-3 text-sm text-primary"
           />
         </div>
       </form>
@@ -88,7 +88,7 @@ export default async function ClientsPage({
               )}
               {canDelete && (
                 <form action={deleteClientAction.bind(null, client.id)} className="inline">
-                  <button type="submit" aria-label="Elimina cliente" className="text-red-600/70 transition hover:text-red-600">
+                  <button type="submit" aria-label="Elimina cliente" className="relative top-[2px] text-red-600/70 transition hover:text-red-600">
                     <Trash2 size={15} strokeWidth={1.75} />
                   </button>
                 </form>
@@ -108,14 +108,14 @@ export default async function ClientsPage({
             <Link
               href={`/dashboard/clients?q=${encodeURIComponent(q ?? '')}&page=${currentPage - 1}`}
               aria-label="Pagina precedente"
-              className="flex items-center justify-center rounded-md border border-grid-border p-1.5 text-primary transition hover:bg-row-hover"
+              className="flex items-center justify-center rounded-lg border border-muted p-1.5 text-primary transition hover:bg-row-hover"
             >
               <ChevronLeft size={16} strokeWidth={1.75} />
             </Link>
           ) : (
             <span
               aria-hidden="true"
-              className="flex cursor-not-allowed items-center justify-center rounded-md border border-grid-border p-1.5 text-muted"
+              className="flex cursor-not-allowed items-center justify-center rounded-lg border border-muted p-1.5 text-muted"
             >
               <ChevronLeft size={16} strokeWidth={1.75} />
             </span>
@@ -124,14 +124,14 @@ export default async function ClientsPage({
             <Link
               href={`/dashboard/clients?q=${encodeURIComponent(q ?? '')}&page=${currentPage + 1}`}
               aria-label="Pagina successiva"
-              className="flex items-center justify-center rounded-md border border-grid-border p-1.5 text-primary transition hover:bg-row-hover"
+              className="flex items-center justify-center rounded-lg border border-muted p-1.5 text-primary transition hover:bg-row-hover"
             >
               <ChevronRight size={16} strokeWidth={1.75} />
             </Link>
           ) : (
             <span
               aria-hidden="true"
-              className="flex cursor-not-allowed items-center justify-center rounded-md border border-grid-border p-1.5 text-muted"
+              className="flex cursor-not-allowed items-center justify-center rounded-lg border border-muted p-1.5 text-muted"
             >
               <ChevronRight size={16} strokeWidth={1.75} />
             </span>

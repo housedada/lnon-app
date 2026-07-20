@@ -15,7 +15,7 @@ export default async function EditClientPage({ params }: { params: Promise<{ id:
 
   return (
     <div>
-      <h1 className="p-6 pb-0 text-2xl font-semibold text-neutral-900">Modifica Cliente</h1>
+      <h1 className="p-6 pb-0 text-2xl font-semibold text-primary">Modifica Cliente</h1>
       <ClientForm client={client} action={boundAction} />
     </div>
   );

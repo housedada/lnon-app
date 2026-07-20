@@ -5,7 +5,7 @@ import type { JWT } from 'next-auth/jwt';
 import GoogleProvider from 'next-auth/providers/google';
 import { supabaseServer } from '@/lib/db';
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+const { handlers, auth: realAuth, signIn, signOut } = NextAuth({
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
@@ -154,3 +154,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
   secret: process.env.NEXTAUTH_SECRET,
 });
+
+export { handlers, signIn, signOut };
+
+// Bypass locale della sessione per test UI senza login reale.
+// Attivo SOLO se LOCAL_AUTH_BYPASS='true' in .env.local (gitignored):
+// la versione committata non ha questa var, quindi il login resta obbligatorio.
+const DEV_BYPASS_AUTH = process.env.LOCAL_AUTH_BYPASS === 'true';
+
+const DEV_SESSION = {
+  user: {
+    id: 'dev-local-user',
+    name: 'Dev Locale',
+    email: 'dev@local.test',
+    role: 'superadmin' as const,
+    active: true,
+  },
+  expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+};
+
+export async function auth(...args: any[]) {
+  if (DEV_BYPASS_AUTH) {
+    return DEV_SESSION as any;
+  }
+  return (realAuth as any)(...args);
+}
