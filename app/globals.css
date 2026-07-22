@@ -359,22 +359,3 @@ input[type='radio']:focus-visible {
 .modal-panel {
   animation: modal-panel-in 180ms ease-out;
 }
-
-/* Logo: pensato per sfondo scuro, va invertito in tema chiaro (default) */
-.topbar-logo {
-  filter: invert(1);
-}
-
-@media (prefers-color-scheme: dark) {
-  .topbar-logo {
-    filter: none;
-  }
-}
-
-:root[data-theme='dark'] .topbar-logo {
-  filter: none;
-}
-
-:root[data-theme='light'] .topbar-logo {
-  filter: invert(1);
-}

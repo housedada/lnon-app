@@ -97,7 +97,7 @@ export default function Sidebar({ role }: SidebarProps) {
       </div>
 
       {/* Sidebar fissa desktop */}
-      <aside className="hidden md:sticky md:top-[50px] md:block md:h-[calc(100vh-50px)] md:w-44 md:shrink-0">
+      <aside className="hidden md:sticky md:top-0 md:block md:h-[calc(100vh-50px)] md:w-44 md:shrink-0">
         <SidebarContent role={role} />
       </aside>
 

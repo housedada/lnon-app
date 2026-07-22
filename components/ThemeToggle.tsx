@@ -18,7 +18,7 @@ function applyTheme(preference: ThemePreference) {
   }
 }
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ dark = false }: { dark?: boolean }) {
   const [preference, setPreference] = useState<ThemePreference>('auto');
 
   useEffect(() => {
@@ -43,7 +43,11 @@ export default function ThemeToggle() {
       onClick={cycle}
       aria-label={`Tema: ${LABELS[preference]} (clicca per cambiare)`}
       title={`Tema: ${LABELS[preference]}`}
-      className="flex h-8 w-8 items-center justify-center rounded-md text-secondary transition hover:bg-row-hover hover:text-primary"
+      className={`flex h-8 w-8 items-center justify-center rounded-md transition ${
+        dark
+          ? 'text-neutral-300 hover:bg-neutral-800 hover:text-neutral-100'
+          : 'text-secondary hover:bg-row-hover hover:text-primary'
+      }`}
     >
       <Icon size={17} strokeWidth={1.75} aria-hidden="true" />
     </button>

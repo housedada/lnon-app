@@ -108,7 +108,7 @@ export default function ClientRow({
           {ficBadge(client.ficSyncStatus)}
         </div>
       )}
-      <div className="flex items-center gap-3 border-b border-grid-border px-3 py-2 whitespace-nowrap group-hover:bg-row-hover">
+      <div className="flex items-center justify-end gap-3 border-b border-grid-border px-3 py-2 whitespace-nowrap group-hover:bg-row-hover">
         <button
           type="button"
           onClick={() => setDetailOpen(true)}

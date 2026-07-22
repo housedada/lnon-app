@@ -9,11 +9,19 @@ import { getRoleLabel } from '@/lib/permissions';
 import ThemeToggle from '@/components/ThemeToggle';
 import Popover from '@/components/Popover';
 
-export default function TopBar({ role, userName }: { role: UserRole; userName: string }) {
+export default function TopBar({
+  role,
+  userName,
+  userImage,
+}: {
+  role: UserRole;
+  userName: string;
+  userImage?: string | null;
+}) {
   return (
-    <header className="flex h-[50px] shrink-0 items-center justify-between border-b border-grid-border bg-card-bg px-4">
+    <header className="fixed inset-x-0 top-0 z-40 flex h-[50px] items-center justify-between border-b border-neutral-800 bg-neutral-900 px-4">
       <Link href="/dashboard" className="flex items-center">
-        <Image src="/logo.png" alt="Housedada" width={84} height={17} className="topbar-logo" />
+        <Image src="/logo.png" alt="Housedada" width={84} height={17} />
       </Link>
 
       <div className="flex items-center gap-1">
@@ -23,7 +31,7 @@ export default function TopBar({ role, userName }: { role: UserRole; userName: s
               type="button"
               onClick={toggle}
               aria-label="Notifiche"
-              className="flex h-8 w-8 items-center justify-center rounded-md text-secondary transition hover:bg-row-hover hover:text-primary"
+              className="flex h-8 w-8 items-center justify-center rounded-md text-neutral-300 transition hover:bg-neutral-800 hover:text-neutral-100"
             >
               <Bell size={17} strokeWidth={1.75} aria-hidden="true" />
             </button>
@@ -38,7 +46,7 @@ export default function TopBar({ role, userName }: { role: UserRole; userName: s
               type="button"
               onClick={toggle}
               aria-label="Log attività"
-              className="flex h-8 w-8 items-center justify-center rounded-md text-secondary transition hover:bg-row-hover hover:text-primary"
+              className="flex h-8 w-8 items-center justify-center rounded-md text-neutral-300 transition hover:bg-neutral-800 hover:text-neutral-100"
             >
               <History size={17} strokeWidth={1.75} aria-hidden="true" />
             </button>
@@ -47,7 +55,7 @@ export default function TopBar({ role, userName }: { role: UserRole; userName: s
           <p className="px-3 py-2 text-xs text-secondary">Log attività in arrivo.</p>
         </Popover>
 
-        <ThemeToggle />
+        <ThemeToggle dark />
 
         <Popover
           trigger={({ toggle }) => (
@@ -55,9 +63,15 @@ export default function TopBar({ role, userName }: { role: UserRole; userName: s
               type="button"
               onClick={toggle}
               aria-label="Menu utente"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-grid-header-bg text-secondary transition hover:text-primary"
+              className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full shadow-sm"
             >
-              <User size={16} strokeWidth={1.75} aria-hidden="true" />
+              {userImage ? (
+                <Image src={userImage} alt="" width={32} height={32} className="h-8 w-8 rounded-full object-cover" />
+              ) : (
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-800 text-neutral-300">
+                  <User size={16} strokeWidth={1.75} aria-hidden="true" />
+                </span>
+              )}
             </button>
           )}
         >
