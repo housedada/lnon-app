@@ -280,7 +280,7 @@ textarea::placeholder {
 }
 
 .group:hover .list-row-cell {
-  transform: scale(1.26);
+  transform: scaleY(1.2);
   z-index: 2;
 }
 
