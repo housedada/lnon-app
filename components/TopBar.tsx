@@ -4,12 +4,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
-import { User, LogOut, History, Bell, SlidersHorizontal } from 'lucide-react';
+import { User, LogOut, History, Bell, SlidersHorizontal, BarChart3 } from 'lucide-react';
 import type { UserRole } from '@/lib/types';
 import { getRoleLabel } from '@/lib/permissions';
 import ThemeToggle from '@/components/ThemeToggle';
 import Popover from '@/components/Popover';
 import { useContractsFilterStore } from '@/lib/store/contractsFilterStore';
+import { useContractsStatsStore } from '@/lib/store/contractsStatsStore';
 
 export default function TopBar({
   role,
@@ -24,6 +25,8 @@ export default function TopBar({
   const isContractsPage = pathname?.startsWith('/dashboard/contracts');
   const contractsFilterVisible = useContractsFilterStore((s) => s.visible);
   const toggleContractsFilter = useContractsFilterStore((s) => s.toggle);
+  const contractsStatsVisible = useContractsStatsStore((s) => s.visible);
+  const toggleContractsStats = useContractsStatsStore((s) => s.toggle);
 
   return (
     <header className="fixed inset-x-0 top-0 z-40 flex h-[50px] items-center justify-between border-b border-neutral-800 bg-neutral-900 px-4">
@@ -33,17 +36,30 @@ export default function TopBar({
 
       <div className="flex items-center gap-1">
         {isContractsPage && (
-          <button
-            type="button"
-            onClick={toggleContractsFilter}
-            aria-label="Mostra/nascondi filtri contratti"
-            aria-pressed={contractsFilterVisible}
-            className={`flex h-8 w-8 items-center justify-center rounded-md transition ${
-              contractsFilterVisible ? 'bg-amber-500/15 text-amber-500' : 'text-amber-500/80 hover:bg-neutral-800 hover:text-amber-500'
-            }`}
-          >
-            <SlidersHorizontal size={17} strokeWidth={1.75} aria-hidden="true" />
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={toggleContractsStats}
+              aria-label="Mostra/nascondi riepilogo contratti"
+              aria-pressed={contractsStatsVisible}
+              className={`flex h-8 w-8 items-center justify-center rounded-md transition ${
+                contractsStatsVisible ? 'bg-sky-500/15 text-sky-500' : 'text-sky-500/80 hover:bg-neutral-800 hover:text-sky-500'
+              }`}
+            >
+              <BarChart3 size={17} strokeWidth={1.75} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={toggleContractsFilter}
+              aria-label="Mostra/nascondi filtri contratti"
+              aria-pressed={contractsFilterVisible}
+              className={`flex h-8 w-8 items-center justify-center rounded-md transition ${
+                contractsFilterVisible ? 'bg-amber-500/15 text-amber-500' : 'text-amber-500/80 hover:bg-neutral-800 hover:text-amber-500'
+              }`}
+            >
+              <SlidersHorizontal size={17} strokeWidth={1.75} aria-hidden="true" />
+            </button>
+          </>
         )}
 
         <Popover

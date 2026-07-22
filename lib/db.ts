@@ -1118,4 +1118,38 @@ export async function getAllClientNames(): Promise<{ id: string; name: string }[
   return data ?? [];
 }
 
+export interface ContractsStats {
+  count: number;
+  maintenanceTotal: number;
+  hostingTotal: number;
+  analyticsTotal: number;
+  cookieTotal: number;
+  providerCostTotal: number;
+}
+
+/**
+ * Statistiche aggregate su tutti i contratti (totale generale, non filtrato).
+ * Dataset piccolo (~150 righe): somma lato JS invece di aggregazione SQL.
+ */
+export async function getContractsStats(): Promise<ContractsStats> {
+  const { data, error } = await supabaseServer
+    .from('contracts')
+    .select('maintenance_wp_amount, hosting_amount, analytics_gdpr_amount, cookie_amount, provider_cost')
+    .is('deleted_at', null);
+
+  if (error) throw error;
+
+  const rows = data ?? [];
+  const sum = (key: string) => rows.reduce((acc, row: any) => acc + (row[key] ?? 0), 0);
+
+  return {
+    count: rows.length,
+    maintenanceTotal: sum('maintenance_wp_amount'),
+    hostingTotal: sum('hosting_amount'),
+    analyticsTotal: sum('analytics_gdpr_amount'),
+    cookieTotal: sum('cookie_amount'),
+    providerCostTotal: sum('provider_cost'),
+  };
+}
+
 export type { User, Client, Job, Task, Invoice, Invitation, ActivityLog, Product, Contract };

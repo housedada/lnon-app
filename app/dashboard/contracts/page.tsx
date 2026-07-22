@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import { Plus, Pencil } from 'lucide-react';
 import { auth } from '@/lib/auth';
-import { getContracts } from '@/lib/db';
+import { getContracts, getContractsStats } from '@/lib/db';
 import { hasPermission } from '@/lib/permissions';
 import ListNavigator from '@/components/ListNavigator';
 import ContractsFilterWidget from '@/components/ContractsFilterWidget';
+import ContractsStatsWidget from '@/components/ContractsStatsWidget';
 import SyncContractsClientsButton from '@/components/SyncContractsClientsButton';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import type { ContractStatus } from '@/lib/types';
@@ -38,13 +39,10 @@ export default async function ContractsPage({
   const session = await auth();
   const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role ?? 'dipendente';
 
-  const { data: contracts, total } = await getContracts({
-    search: q,
-    status,
-    categories: categoryList,
-    limit: PAGE_SIZE,
-    offset,
-  });
+  const [{ data: contracts, total }, stats] = await Promise.all([
+    getContracts({ search: q, status, categories: categoryList, limit: PAGE_SIZE, offset }),
+    getContractsStats(),
+  ]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const canCreate = hasPermission(role, 'contracts', 'create');
@@ -80,6 +78,7 @@ export default async function ContractsPage({
         </div>
       </div>
 
+      <ContractsStatsWidget stats={stats} />
       <ContractsFilterWidget />
 
       <ListNavigator
