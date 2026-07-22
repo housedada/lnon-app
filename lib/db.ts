@@ -11,6 +11,7 @@ import type {
   ActivityLog,
   FicConnection,
   Product,
+  Contract,
 } from './types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -57,8 +58,55 @@ export async function getUserProfile(userId: string): Promise<User | null> {
     console.error('Error fetching user profile:', error);
     return null;
   }
-
   return data;
+}
+
+function userRowToUser(row: Record<string, any>): User {
+  return {
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    googleId: row.google_id ?? undefined,
+    role: row.role,
+    isActive: row.is_active,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
+}
+
+/**
+ * Ottieni tutti gli utenti (per la gestione accessi)
+ */
+export async function getUsers(): Promise<User[]> {
+  const { data, error } = await supabaseServer.from('users').select('*').order('name', { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []).map(userRowToUser);
+}
+
+/**
+ * Ottieni un utente per email
+ */
+export async function getUserByEmail(email: string): Promise<User | null> {
+  const { data, error } = await supabaseServer.from('users').select('*').eq('email', email).maybeSingle();
+
+  if (error) throw error;
+  return data ? userRowToUser(data) : null;
+}
+
+/**
+ * Aggiorna il ruolo di un utente esistente
+ */
+export async function updateUserRole(userId: string, role: User['role']): Promise<User> {
+  const { data, error } = await supabaseServer
+    .from('users')
+    .update({ role })
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return userRowToUser(data);
 }
 
 function clientRowToClient(row: Record<string, any>): Client {
@@ -861,4 +909,213 @@ export async function getAllClientsWithTaxIds(): Promise<
   }));
 }
 
-export type { User, Client, Job, Task, Invoice, Invitation, ActivityLog, Product };
+function contractRowToContract(row: Record<string, any>): Contract {
+  return {
+    id: row.id,
+    clientId: row.client_id ?? undefined,
+    clientNameRaw: row.client_name_raw,
+    site: row.site ?? undefined,
+    status: row.status,
+    billingMonth: row.billing_month ?? undefined,
+    maintenanceWpAmount: row.maintenance_wp_amount ?? undefined,
+    hostingAmount: row.hosting_amount ?? undefined,
+    analyticsGdprAmount: row.analytics_gdpr_amount ?? undefined,
+    cookieAmount: row.cookie_amount ?? undefined,
+    totalAmount: row.total_amount ?? undefined,
+    serviceDescription: row.service_description ?? undefined,
+    package: row.package ?? undefined,
+    notes: row.notes ?? undefined,
+    provider: row.provider ?? undefined,
+    providerPlan: row.provider_plan ?? undefined,
+    providerExpiryDate: row.provider_expiry_date ? new Date(row.provider_expiry_date) : undefined,
+    providerCost: row.provider_cost ?? undefined,
+    createdBy: row.created_by ?? undefined,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+    deletedAt: row.deleted_at ? new Date(row.deleted_at) : undefined,
+    clientName: row.clients?.name ?? undefined,
+  };
+}
+
+function contractToRow(data: Partial<Omit<Contract, 'id' | 'createdAt' | 'updatedAt' | 'clientName'>>): Record<string, any> {
+  const row: Record<string, any> = {};
+  if (data.clientId !== undefined) row.client_id = data.clientId;
+  if (data.clientNameRaw !== undefined) row.client_name_raw = data.clientNameRaw;
+  if (data.site !== undefined) row.site = data.site;
+  if (data.status !== undefined) row.status = data.status;
+  if (data.billingMonth !== undefined) row.billing_month = data.billingMonth;
+  if (data.maintenanceWpAmount !== undefined) row.maintenance_wp_amount = data.maintenanceWpAmount;
+  if (data.hostingAmount !== undefined) row.hosting_amount = data.hostingAmount;
+  if (data.analyticsGdprAmount !== undefined) row.analytics_gdpr_amount = data.analyticsGdprAmount;
+  if (data.cookieAmount !== undefined) row.cookie_amount = data.cookieAmount;
+  if (data.totalAmount !== undefined) row.total_amount = data.totalAmount;
+  if (data.serviceDescription !== undefined) row.service_description = data.serviceDescription;
+  if (data.package !== undefined) row.package = data.package;
+  if (data.notes !== undefined) row.notes = data.notes;
+  if (data.provider !== undefined) row.provider = data.provider;
+  if (data.providerPlan !== undefined) row.provider_plan = data.providerPlan;
+  if (data.providerExpiryDate !== undefined) {
+    row.provider_expiry_date = data.providerExpiryDate ? data.providerExpiryDate.toISOString().slice(0, 10) : null;
+  }
+  if (data.providerCost !== undefined) row.provider_cost = data.providerCost;
+  if (data.createdBy !== undefined) row.created_by = data.createdBy;
+  return row;
+}
+
+/**
+ * Crea un nuovo contratto
+ */
+export async function createDbContract(
+  contractData: Omit<Contract, 'id' | 'createdAt' | 'updatedAt' | 'clientName'>
+): Promise<Contract> {
+  const { data, error } = await supabaseServer
+    .from('contracts')
+    .insert([contractToRow(contractData)])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return contractRowToContract(data);
+}
+
+/**
+ * Ottieni contratti (con filtri opzionali)
+ */
+export async function getContracts(filters?: {
+  search?: string;
+  status?: string;
+  categories?: string[]; // 'maintenance' | 'hosting' | 'analytics' | 'cookie'
+  limit?: number;
+  offset?: number;
+}): Promise<{ data: Contract[]; total: number }> {
+  let query = supabaseServer
+    .from('contracts')
+    .select('*, clients(name)', { count: 'exact' })
+    .is('deleted_at', null)
+    .order('client_name_raw', { ascending: true });
+
+  if (filters?.search) {
+    query = query.or(`client_name_raw.ilike.%${filters.search}%,site.ilike.%${filters.search}%`);
+  }
+
+  if (filters?.status) {
+    query = query.eq('status', filters.status);
+  }
+
+  const categoryColumns: Record<string, string> = {
+    maintenance: 'maintenance_wp_amount',
+    hosting: 'hosting_amount',
+    analytics: 'analytics_gdpr_amount',
+    cookie: 'cookie_amount',
+  };
+  if (filters?.categories?.length) {
+    const clauses = filters.categories
+      .map((c) => categoryColumns[c])
+      .filter(Boolean)
+      .map((col) => `${col}.not.is.null`);
+    if (clauses.length) query = query.or(clauses.join(','));
+  }
+
+  if (filters?.limit) {
+    query = query.limit(filters.limit);
+  }
+
+  if (filters?.offset) {
+    query = query.range(filters.offset, filters.offset + (filters.limit || 10) - 1);
+  }
+
+  const { data, error, count } = await query;
+
+  if (error) throw error;
+  return { data: (data ?? []).map(contractRowToContract), total: count ?? 0 };
+}
+
+/**
+ * Ottieni un contratto per id
+ */
+export async function getContractById(id: string): Promise<Contract | null> {
+  const { data, error } = await supabaseServer
+    .from('contracts')
+    .select('*, clients(name)')
+    .eq('id', id)
+    .is('deleted_at', null)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw error;
+  }
+
+  return contractRowToContract(data);
+}
+
+/**
+ * Aggiorna un contratto esistente
+ */
+export async function updateDbContract(
+  id: string,
+  contractData: Partial<Omit<Contract, 'id' | 'createdBy' | 'createdAt' | 'updatedAt' | 'clientName'>>
+): Promise<Contract> {
+  const { data, error } = await supabaseServer
+    .from('contracts')
+    .update(contractToRow(contractData))
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return contractRowToContract(data);
+}
+
+/**
+ * Soft delete di un contratto
+ */
+export async function softDeleteContract(contractId: string): Promise<Contract> {
+  const { data, error } = await supabaseServer
+    .from('contracts')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', contractId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return contractRowToContract(data);
+}
+
+/**
+ * Ottieni tutti i contratti non ancora collegati a un cliente (per il match iniziale)
+ */
+export async function getUnlinkedContracts(): Promise<{ id: string; clientNameRaw: string }[]> {
+  const { data, error } = await supabaseServer
+    .from('contracts')
+    .select('id, client_name_raw')
+    .is('deleted_at', null)
+    .is('client_id', null);
+
+  if (error) throw error;
+  return (data ?? []).map((row) => ({ id: row.id, clientNameRaw: row.client_name_raw }));
+}
+
+/**
+ * Collega un contratto a un cliente LNON esistente
+ */
+export async function linkContractToClient(contractId: string, clientId: string): Promise<void> {
+  const { error } = await supabaseServer.from('contracts').update({ client_id: clientId }).eq('id', contractId);
+  if (error) throw error;
+}
+
+/**
+ * Ottieni id+nome di tutti i clienti attivi, per select e match per nome
+ */
+export async function getAllClientNames(): Promise<{ id: string; name: string }[]> {
+  const { data, error } = await supabaseServer
+    .from('clients')
+    .select('id, name')
+    .is('deleted_at', null)
+    .order('name', { ascending: true });
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export type { User, Client, Job, Task, Invoice, Invitation, ActivityLog, Product, Contract };

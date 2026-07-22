@@ -1,0 +1,143 @@
+import Link from 'next/link';
+import { Plus, Pencil } from 'lucide-react';
+import { auth } from '@/lib/auth';
+import { getContracts } from '@/lib/db';
+import { hasPermission } from '@/lib/permissions';
+import ListNavigator from '@/components/ListNavigator';
+import ContractsFilterWidget from '@/components/ContractsFilterWidget';
+import SyncContractsClientsButton from '@/components/SyncContractsClientsButton';
+import NotifyFromQuery from '@/components/NotifyFromQuery';
+import type { ContractStatus } from '@/lib/types';
+
+export const metadata = { title: 'Contratti' };
+
+const PAGE_SIZE = 25;
+
+const STATUS_LABEL: Record<ContractStatus, string> = {
+  attivo: 'Attivo',
+  da_definire: 'Da definire',
+  disattivo: 'Disattivo',
+};
+
+const STATUS_BADGE: Record<ContractStatus, string> = {
+  attivo: 'bg-green-600/10 text-green-700',
+  da_definire: 'bg-grid-header-bg text-secondary',
+  disattivo: 'bg-red-600/10 text-red-700',
+};
+
+export default async function ContractsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; page?: string; status?: string; categories?: string }>;
+}) {
+  const { q, page, status, categories } = await searchParams;
+  const currentPage = Math.max(1, Number(page) || 1);
+  const offset = (currentPage - 1) * PAGE_SIZE;
+  const categoryList = categories ? categories.split(',').filter(Boolean) : undefined;
+
+  const session = await auth();
+  const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role ?? 'dipendente';
+
+  const { data: contracts, total } = await getContracts({
+    search: q,
+    status,
+    categories: categoryList,
+    limit: PAGE_SIZE,
+    offset,
+  });
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const canCreate = hasPermission(role, 'contracts', 'create');
+  const canUpdate = hasPermission(role, 'contracts', 'update');
+
+  function formatAmount(value?: number) {
+    return value != null ? `€ ${value.toFixed(2)}` : '—';
+  }
+
+  function formatDate(value?: Date) {
+    return value ? value.toLocaleDateString('it-IT') : '—';
+  }
+
+  return (
+    <div>
+      <NotifyFromQuery param="saved" message="Contratto salvato." />
+      <div className="flex items-center justify-between p-6 pb-0">
+        <div>
+          <h1 className="text-2xl font-semibold text-primary">Contratti</h1>
+          <p className="mt-1 text-sm text-secondary">{total} contratti totali</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {canCreate && (
+            <Link
+              href="/dashboard/contracts/new"
+              className="btn-accent flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
+            >
+              <Plus size={16} strokeWidth={2} aria-hidden="true" />
+              Nuovo Contratto
+            </Link>
+          )}
+          {canUpdate && <SyncContractsClientsButton />}
+        </div>
+      </div>
+
+      <ContractsFilterWidget />
+
+      <ListNavigator
+        basePath="/dashboard/contracts"
+        searchPlaceholder="Cerca per cliente o sito..."
+        q={q}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        showSyncFilter={false}
+      >
+        <div className="mx-6 mt-6 grid grid-cols-[2fr_2fr_1fr_1fr_1fr_1fr_auto] gap-x-[2px] border-t border-grid-border text-[10px]">
+          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Cliente</div>
+          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Sito</div>
+          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Stato</div>
+          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Totale</div>
+          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Provider</div>
+          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Scadenza</div>
+          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Azioni</div>
+
+          {contracts.length === 0 && (
+            <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
+              Nessun contratto trovato{q ? ` per “${q}”` : ''}.
+            </div>
+          )}
+
+          {contracts.map((contract) => (
+            <div key={contract.id} className="group contents">
+              <div className="flex items-center gap-1.5 border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">
+                {contract.clientName ?? contract.clientNameRaw}
+                {!contract.clientId && (
+                  <span className="rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-medium text-amber-700">non collegato</span>
+                )}
+              </div>
+              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">{contract.site ?? '—'}</div>
+              <div className="flex items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
+                <span className={`rounded-full px-2 py-0.5 text-[9px] font-medium ${STATUS_BADGE[contract.status]}`}>
+                  {STATUS_LABEL[contract.status]}
+                </span>
+              </div>
+              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">{formatAmount(contract.totalAmount)}</div>
+              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">{contract.provider ?? '—'}</div>
+              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">{formatDate(contract.providerExpiryDate)}</div>
+              <div className="flex items-center justify-end gap-3 border-b border-grid-border px-3 py-2 whitespace-nowrap group-hover:bg-row-hover">
+                {canUpdate && (
+                  <Link
+                    href={`/dashboard/contracts/${contract.id}/edit`}
+                    aria-label="Modifica contratto"
+                    className="text-secondary transition hover:text-primary"
+                  >
+                    <Pencil size={15} strokeWidth={1.75} />
+                  </Link>
+                )}
+                {!canUpdate && <span className="text-muted">—</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </ListNavigator>
+    </div>
+  );
+}

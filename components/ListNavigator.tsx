@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 
 const SYNC_OPTIONS: { value: string; label: string }[] = [
@@ -31,18 +31,26 @@ export default function ListNavigator({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [query, setQuery] = useState(q ?? '');
 
+  // Riparte sempre dai searchParams correnti per non perdere eventuali filtri
+  // extra gestiti da altri componenti sulla stessa pagina (es. ContractsFilterWidget).
   function navigate(next: { q?: string; page?: number; sync?: string }) {
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams.toString());
     const nextQ = next.q !== undefined ? next.q : q;
     const nextSync = next.sync !== undefined ? next.sync : sync;
     const nextPage = next.page ?? 1;
 
     if (nextQ) params.set('q', nextQ);
+    else params.delete('q');
+
     if (nextSync) params.set('sync', nextSync);
+    else params.delete('sync');
+
     if (nextPage > 1) params.set('page', String(nextPage));
+    else params.delete('page');
 
     const target = params.toString() ? `${basePath}?${params.toString()}` : basePath;
     startTransition(() => {

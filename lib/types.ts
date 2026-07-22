@@ -102,6 +102,35 @@ export interface FicProductSummary {
   code?: string;
 }
 
+export type ContractStatus = 'attivo' | 'disattivo' | 'da_definire';
+
+export interface Contract {
+  id: string;
+  clientId?: string;
+  clientNameRaw: string;
+  site?: string;
+  status: ContractStatus;
+  billingMonth?: string;
+  maintenanceWpAmount?: number;
+  hostingAmount?: number;
+  analyticsGdprAmount?: number;
+  cookieAmount?: number;
+  totalAmount?: number;
+  serviceDescription?: string;
+  package?: string;
+  notes?: string;
+  provider?: string;
+  providerPlan?: string;
+  providerExpiryDate?: Date;
+  providerCost?: number;
+  createdBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt?: Date;
+  // Popolato solo dalla lista, se collegato a un cliente
+  clientName?: string;
+}
+
 export type JobStatus = 'draft' | 'pending_approval' | 'approved' | 'in_progress' | 'completed' | 'cancelled';
 
 export interface Job {

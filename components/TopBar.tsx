@@ -2,12 +2,14 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
-import { User, LogOut, History, Bell } from 'lucide-react';
+import { User, LogOut, History, Bell, SlidersHorizontal } from 'lucide-react';
 import type { UserRole } from '@/lib/types';
 import { getRoleLabel } from '@/lib/permissions';
 import ThemeToggle from '@/components/ThemeToggle';
 import Popover from '@/components/Popover';
+import { useContractsFilterStore } from '@/lib/store/contractsFilterStore';
 
 export default function TopBar({
   role,
@@ -18,6 +20,11 @@ export default function TopBar({
   userName: string;
   userImage?: string | null;
 }) {
+  const pathname = usePathname();
+  const isContractsPage = pathname?.startsWith('/dashboard/contracts');
+  const contractsFilterVisible = useContractsFilterStore((s) => s.visible);
+  const toggleContractsFilter = useContractsFilterStore((s) => s.toggle);
+
   return (
     <header className="fixed inset-x-0 top-0 z-40 flex h-[50px] items-center justify-between border-b border-neutral-800 bg-neutral-900 px-4">
       <Link href="/dashboard" className="flex items-center">
@@ -25,6 +32,20 @@ export default function TopBar({
       </Link>
 
       <div className="flex items-center gap-1">
+        {isContractsPage && (
+          <button
+            type="button"
+            onClick={toggleContractsFilter}
+            aria-label="Mostra/nascondi filtri contratti"
+            aria-pressed={contractsFilterVisible}
+            className={`flex h-8 w-8 items-center justify-center rounded-md transition ${
+              contractsFilterVisible ? 'bg-amber-500/15 text-amber-500' : 'text-amber-500/80 hover:bg-neutral-800 hover:text-amber-500'
+            }`}
+          >
+            <SlidersHorizontal size={17} strokeWidth={1.75} aria-hidden="true" />
+          </button>
+        )}
+
         <Popover
           trigger={({ toggle }) => (
             <button

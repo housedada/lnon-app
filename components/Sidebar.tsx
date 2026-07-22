@@ -11,6 +11,7 @@ import {
   Briefcase,
   CheckSquare,
   FileText,
+  FileSignature,
   UserCog,
   BarChart2,
   History,
@@ -33,6 +34,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { resource: 'clients', label: 'Clienti', href: '/dashboard/clients', icon: Users },
+  { resource: 'contracts', label: 'Contratti', href: '/dashboard/contracts', icon: FileSignature },
   { resource: 'jobs', label: 'Lavori', href: '/dashboard/jobs', icon: Briefcase },
   { resource: 'tasks', label: 'Task', href: '/dashboard/tasks', icon: CheckSquare },
   { resource: 'invoices', label: 'Fatture', href: '/dashboard/invoices', icon: FileText },
