@@ -9,6 +9,7 @@ import type {
   Invoice,
   Invitation,
   ActivityLog,
+  FicConnection,
 } from './types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -93,6 +94,9 @@ function clientRowToClient(row: Record<string, any>): Client {
     letterOfIntentEnabled: row.letter_of_intent_enabled ?? undefined,
     receiptProtocol: row.receipt_protocol ?? undefined,
     telematicReceiptDate: row.telematic_receipt_date ? new Date(row.telematic_receipt_date) : undefined,
+    ficId: row.fic_id ?? undefined,
+    ficSyncStatus: row.fic_sync_status ?? 'not_synced',
+    ficLastSyncedAt: row.fic_last_synced_at ? new Date(row.fic_last_synced_at) : undefined,
   };
 }
 
@@ -481,6 +485,136 @@ export async function softDeleteClient(clientId: string): Promise<Client> {
 
   if (error) throw error;
   return clientRowToClient(data);
+}
+
+function ficConnectionRowToFicConnection(row: Record<string, any>): FicConnection {
+  return {
+    id: row.id,
+    ficCompanyId: row.fic_company_id,
+    ficCompanyName: row.fic_company_name ?? undefined,
+    accessToken: row.access_token,
+    refreshToken: row.refresh_token,
+    expiresAt: new Date(row.expires_at),
+    webhookSubscriptionId: row.webhook_subscription_id ?? undefined,
+    connectedBy: row.connected_by ?? undefined,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
+}
+
+/**
+ * Ottieni la connessione a Fatture in Cloud (unica per l'azienda), se esiste
+ */
+export async function getFicConnection(): Promise<FicConnection | null> {
+  const { data, error } = await supabaseServer
+    .from('fic_connection')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data ? ficConnectionRowToFicConnection(data) : null;
+}
+
+/**
+ * Salva una nuova connessione a Fatture in Cloud, sostituendo l'eventuale precedente
+ */
+export async function saveFicConnection(connection: {
+  ficCompanyId: number;
+  ficCompanyName?: string;
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: Date;
+  connectedBy: string;
+}): Promise<FicConnection> {
+  await supabaseServer.from('fic_connection').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
+  const { data, error } = await supabaseServer
+    .from('fic_connection')
+    .insert([
+      {
+        fic_company_id: connection.ficCompanyId,
+        fic_company_name: connection.ficCompanyName,
+        access_token: connection.accessToken,
+        refresh_token: connection.refreshToken,
+        expires_at: connection.expiresAt.toISOString(),
+        connected_by: connection.connectedBy,
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return ficConnectionRowToFicConnection(data);
+}
+
+/**
+ * Aggiorna i token della connessione FiC esistente (dopo un refresh)
+ */
+export async function updateFicConnectionTokens(
+  id: string,
+  tokens: { accessToken: string; refreshToken: string; expiresAt: Date }
+): Promise<FicConnection> {
+  const { data, error } = await supabaseServer
+    .from('fic_connection')
+    .update({
+      access_token: tokens.accessToken,
+      refresh_token: tokens.refreshToken,
+      expires_at: tokens.expiresAt.toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return ficConnectionRowToFicConnection(data);
+}
+
+/**
+ * Salva l'id della subscription webhook registrata su FiC
+ */
+export async function setFicWebhookSubscriptionId(id: string, subscriptionId: string): Promise<void> {
+  const { error } = await supabaseServer
+    .from('fic_connection')
+    .update({ webhook_subscription_id: subscriptionId, updated_at: new Date().toISOString() })
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+/**
+ * Collega un cliente LNON a un cliente Fatture in Cloud esistente (o appena creato)
+ */
+export async function linkClientToFic(clientId: string, ficId: number): Promise<Client> {
+  const { data, error } = await supabaseServer
+    .from('clients')
+    .update({
+      fic_id: ficId,
+      fic_sync_status: 'synced',
+      fic_last_synced_at: new Date().toISOString(),
+    })
+    .eq('id', clientId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return clientRowToClient(data);
+}
+
+/**
+ * Segna come "orfani" tutti i clienti collegati a un fic_id cancellato su FiC.
+ * Il record LNON e i job collegati non vengono toccati: cambia solo lo stato di sync.
+ */
+export async function markClientsOrphanedByFicId(ficId: number): Promise<void> {
+  const { error } = await supabaseServer
+    .from('clients')
+    .update({ fic_sync_status: 'orphaned' })
+    .eq('fic_id', ficId)
+    .eq('fic_sync_status', 'synced');
+
+  if (error) throw error;
 }
 
 /**

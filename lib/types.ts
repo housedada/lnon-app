@@ -46,6 +46,33 @@ export interface Client {
   letterOfIntentEnabled?: boolean;
   receiptProtocol?: string;
   telematicReceiptDate?: Date;
+  ficId?: number;
+  ficSyncStatus: FicSyncStatus;
+  ficLastSyncedAt?: Date;
+}
+
+export type FicSyncStatus = 'not_synced' | 'synced' | 'orphaned';
+
+export interface FicConnection {
+  id: string;
+  ficCompanyId: number;
+  ficCompanyName?: string;
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: Date;
+  webhookSubscriptionId?: string;
+  connectedBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Rappresentazione minima di un cliente Fatture in Cloud, per ricerca/collegamento
+export interface FicClientSummary {
+  id: number;
+  name: string;
+  vatNumber?: string;
+  taxCode?: string;
+  email?: string;
 }
 
 export type JobStatus = 'draft' | 'pending_approval' | 'approved' | 'in_progress' | 'completed' | 'cancelled';
