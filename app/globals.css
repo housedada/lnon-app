@@ -263,20 +263,24 @@ textarea::placeholder {
   box-shadow: 0 0 0 3px rgba(111, 95, 146, 0.16), 0 0 0 1px rgba(111, 95, 146, 0.35);
 }
 
-/* Hover righe liste: zoom verticale morbido (più padding verticale) +
-   ingrandimento testo via transform (non font-size, per non far ricalcolare
-   le colonne della grid ed evitare qualsiasi movimento laterale delle celle),
-   sempre animato in/out senza scatti. */
+/* Hover righe liste: zoom SOLO verticale (scaleY, mai orizzontale) via
+   transform, quindi puramente visivo e senza mai far ricalcolare le
+   colonne della grid né spostare le celle lateralmente. Applicata a
+   tutte le celle della riga, azioni incluse, così l'intera linea si
+   ingrandisce insieme, sempre animato in/out senza scatti. */
 .list-row-cell {
+  transform-origin: center;
+  transition: transform 160ms cubic-bezier(0.4, 0, 0.2, 1), color 160ms ease, background-color 160ms ease;
+}
+
+/* Le celle sticky (colonne azioni fixed) mantengono position:sticky di
+   Tailwind: z-index vi funziona già senza bisogno di position:relative. */
+.list-row-cell:not(.sticky) {
   position: relative;
-  transform-origin: left center;
-  transition: padding-block 160ms cubic-bezier(0.4, 0, 0.2, 1), transform 160ms cubic-bezier(0.4, 0, 0.2, 1),
-    color 160ms ease, background-color 160ms ease;
 }
 
 .group:hover .list-row-cell {
-  padding-block: 0.625rem;
-  transform: scale(1.2);
+  transform: scaleY(1.2);
   z-index: 2;
 }
 
