@@ -63,7 +63,7 @@ export async function createClientAction(formData: FormData) {
 
   const data = parseClientFormData(formData);
   await createDbClient({ ...data, createdBy: userId });
-  redirect('/dashboard/clients');
+  redirect('/dashboard/clients?saved=1');
 }
 
 export async function updateClientAction(id: string, formData: FormData) {
@@ -76,7 +76,7 @@ export async function updateClientAction(id: string, formData: FormData) {
 
   const data = parseClientFormData(formData);
   await updateDbClient(id, data);
-  redirect('/dashboard/clients');
+  redirect('/dashboard/clients?saved=1');
 }
 
 export async function deleteClientAction(id: string) {

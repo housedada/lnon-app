@@ -6,6 +6,7 @@ import type { Product } from '@/lib/types';
 interface ProductFormProps {
   product?: Product;
   action: (formData: FormData) => void;
+  secondaryAction?: React.ReactNode;
 }
 
 function Field({
@@ -48,7 +49,7 @@ function Field({
   );
 }
 
-export default function ProductForm({ product, action }: ProductFormProps) {
+export default function ProductForm({ product, action, secondaryAction }: ProductFormProps) {
   return (
     <form action={action} className="w-full space-y-6 p-6">
       <section className="card-shadow space-y-4 rounded-xl border border-grid-border bg-card-bg p-6">
@@ -89,11 +90,12 @@ export default function ProductForm({ product, action }: ProductFormProps) {
         </div>
       </section>
 
-      <div className="flex gap-3">
+      <div className="flex items-center justify-between gap-3">
         <button type="submit" className="btn-accent flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium">
           <Save size={16} strokeWidth={2} aria-hidden="true" />
           Salva
         </button>
+        {secondaryAction}
       </div>
     </form>
   );

@@ -1,9 +1,12 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { AlertTriangle } from 'lucide-react';
+import { auth } from '@/lib/auth';
 import ClientForm from '@/components/ClientForm';
+import DangerActionModal from '@/components/DangerActionModal';
 import { getClientById, getFicConnection } from '@/lib/db';
-import { updateClientAction } from '@/lib/actions/clients';
+import { updateClientAction, deleteClientAction } from '@/lib/actions/clients';
+import { canDeleteResource } from '@/lib/permissions';
 
 export const metadata = { title: 'Modifica Cliente' };
 
@@ -11,12 +14,15 @@ export default async function EditClientPage({ params }: { params: Promise<{ id:
   const { id } = await params;
   const client = await getClientById(id);
   const ficConnection = await getFicConnection();
+  const session = await auth();
+  const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role ?? 'dipendente';
 
   if (!client) {
     notFound();
   }
 
   const boundAction = updateClientAction.bind(null, id);
+  const canDelete = canDeleteResource(role, '', '', 'clients');
 
   return (
     <div>
@@ -34,7 +40,19 @@ export default async function EditClientPage({ params }: { params: Promise<{ id:
         </div>
       )}
 
-      <ClientForm client={client} action={boundAction} />
+      <ClientForm
+        client={client}
+        action={boundAction}
+        secondaryAction={
+          canDelete && (
+            <DangerActionModal
+              action={deleteClientAction.bind(null, client.id)}
+              resourceLabel={`il cliente “${client.name}”`}
+              successMessage="Cliente eliminato."
+            />
+          )
+        }
+      />
     </div>
   );
 }

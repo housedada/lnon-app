@@ -21,6 +21,7 @@ import type { Client } from '@/lib/types';
 interface ClientFormProps {
   client?: Client;
   action: (formData: FormData) => void;
+  secondaryAction?: React.ReactNode;
 }
 
 function Field({
@@ -72,7 +73,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   );
 }
 
-export default function ClientForm({ client, action }: ClientFormProps) {
+export default function ClientForm({ client, action, secondaryAction }: ClientFormProps) {
   return (
     <form action={action} className="w-full space-y-6 p-6">
       <Card title="Anagrafica">
@@ -132,11 +133,12 @@ export default function ClientForm({ client, action }: ClientFormProps) {
         </div>
       </Card>
 
-      <div className="flex gap-3">
+      <div className="flex items-center justify-between gap-3">
         <button type="submit" className="btn-accent flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium">
           <Save size={16} strokeWidth={2} aria-hidden="true" />
           Salva
         </button>
+        {secondaryAction}
       </div>
     </form>
   );

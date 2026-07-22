@@ -305,3 +305,57 @@ input[type='checkbox']:focus-visible,
 input[type='radio']:focus-visible {
   box-shadow: 0 0 0 3px rgba(111, 95, 146, 0.16), 0 0 0 1px rgba(111, 95, 146, 0.35);
 }
+
+/* Label per griglie di dettaglio (modali): piccola, opaca, spaziata */
+.detail-label {
+  font-size: 8px;
+  letter-spacing: 1px;
+  opacity: 0.5;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+/* Notifiche push: fade + slide (destra -> sinistra), ingresso lento */
+@keyframes notify-in {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.notify-toast {
+  animation: notify-in 480ms ease-out;
+}
+
+/* Backdrop e pannello modale generico */
+@keyframes modal-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-backdrop {
+  animation: modal-backdrop-in 150ms ease-out;
+}
+
+.modal-panel {
+  animation: modal-panel-in 180ms ease-out;
+}

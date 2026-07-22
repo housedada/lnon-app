@@ -6,6 +6,9 @@ import { Sun, Moon, Monitor, type LucideIcon } from 'lucide-react';
 type ThemePreference = 'light' | 'dark' | 'auto';
 
 const STORAGE_KEY = 'theme-preference';
+const ORDER: ThemePreference[] = ['light', 'dark', 'auto'];
+const ICONS: Record<ThemePreference, LucideIcon> = { light: Sun, dark: Moon, auto: Monitor };
+const LABELS: Record<ThemePreference, string> = { light: 'Giorno', dark: 'Notte', auto: 'Automatico' };
 
 function applyTheme(preference: ThemePreference) {
   if (preference === 'auto') {
@@ -25,37 +28,24 @@ export default function ThemeToggle() {
     }
   }, []);
 
-  function choose(next: ThemePreference) {
+  function cycle() {
+    const next = ORDER[(ORDER.indexOf(preference) + 1) % ORDER.length];
     setPreference(next);
     localStorage.setItem(STORAGE_KEY, next);
     applyTheme(next);
   }
 
-  const options: { value: ThemePreference; label: string; icon: LucideIcon }[] = [
-    { value: 'light', label: 'Giorno', icon: Sun },
-    { value: 'dark', label: 'Notte', icon: Moon },
-    { value: 'auto', label: 'Auto', icon: Monitor },
-  ];
+  const Icon = ICONS[preference];
 
   return (
-    <div className="flex gap-1 rounded-md bg-neutral-800 p-1">
-      {options.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          onClick={() => choose(option.value)}
-          aria-label={option.label}
-          title={option.label}
-          aria-pressed={preference === option.value}
-          className={`flex flex-1 items-center justify-center rounded px-2 py-1.5 transition ${
-            preference === option.value
-              ? 'btn-accent'
-              : 'text-neutral-400 hover:text-neutral-100'
-          }`}
-        >
-          <option.icon size={15} strokeWidth={1.75} aria-hidden="true" />
-        </button>
-      ))}
-    </div>
+    <button
+      type="button"
+      onClick={cycle}
+      aria-label={`Tema: ${LABELS[preference]} (clicca per cambiare)`}
+      title={`Tema: ${LABELS[preference]}`}
+      className="flex h-8 w-8 items-center justify-center rounded-md text-secondary transition hover:bg-row-hover hover:text-primary"
+    >
+      <Icon size={17} strokeWidth={1.75} aria-hidden="true" />
+    </button>
   );
 }

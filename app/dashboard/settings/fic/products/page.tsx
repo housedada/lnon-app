@@ -1,10 +1,10 @@
 import Link from 'next/link';
-import { Plus, Search, Pencil, Trash2, ChevronLeft, ChevronRight, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Pencil, ChevronLeft, ChevronRight, RefreshCw, AlertTriangle } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { getProducts, getFicConnection } from '@/lib/db';
-import { hasPermission, canDeleteResource } from '@/lib/permissions';
-import { deleteProductAction } from '@/lib/actions/products';
+import { hasPermission } from '@/lib/permissions';
 import ImportFicProductsButton from '@/components/ImportFicProductsButton';
+import NotifyFromQuery from '@/components/NotifyFromQuery';
 
 export const metadata = { title: 'Prodotti' };
 
@@ -28,7 +28,6 @@ export default async function ProductsPage({
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const canCreate = hasPermission(role, 'products', 'create');
   const canUpdate = hasPermission(role, 'products', 'update');
-  const canDelete = canDeleteResource(role, '', '', 'products');
 
   const ficBadge = (status: 'not_synced' | 'synced' | 'orphaned') => {
     if (status === 'synced') {
@@ -47,6 +46,7 @@ export default async function ProductsPage({
 
   return (
     <div>
+      <NotifyFromQuery param="saved" message="Prodotto salvato." />
       <div className="flex items-center justify-between p-6 pb-0">
         <div>
           <h1 className="text-2xl font-semibold text-primary">Prodotti</h1>
@@ -133,14 +133,7 @@ export default async function ProductsPage({
                   <Pencil size={15} strokeWidth={1.75} />
                 </Link>
               )}
-              {canDelete && (
-                <form action={deleteProductAction.bind(null, product.id)} className="inline">
-                  <button type="submit" aria-label="Elimina prodotto" className="relative top-[2px] text-red-600/70 transition hover:text-red-600">
-                    <Trash2 size={15} strokeWidth={1.75} />
-                  </button>
-                </form>
-              )}
-              {!canUpdate && !canDelete && <span className="text-muted">—</span>}
+              {!canUpdate && <span className="text-muted">—</span>}
             </div>
           </div>
         ))}

@@ -1,10 +1,11 @@
 import Link from 'next/link';
-import { Plus, Search, Pencil, Trash2, ChevronLeft, ChevronRight, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { getClients, getFicConnection } from '@/lib/db';
 import { hasPermission, canDeleteResource } from '@/lib/permissions';
-import { deleteClientAction } from '@/lib/actions/clients';
 import BulkMatchClientsButton from '@/components/BulkMatchClientsButton';
+import ClientRow from '@/components/ClientRow';
+import NotifyFromQuery from '@/components/NotifyFromQuery';
 
 export const metadata = { title: 'Clienti' };
 
@@ -34,23 +35,9 @@ export default async function ClientsPage({
   const canUpdate = hasPermission(role, 'clients', 'update');
   const canDelete = canDeleteResource(role, '', '', 'clients');
 
-  const ficBadge = (status: 'not_synced' | 'synced' | 'orphaned') => {
-    if (status === 'synced') {
-      return <span className="rounded-full bg-green-600/10 px-2 py-0.5 text-xs font-medium text-green-700">Sync</span>;
-    }
-    if (status === 'orphaned') {
-      return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-700">
-          <AlertTriangle size={11} strokeWidth={2} aria-hidden="true" />
-          Orfano
-        </span>
-      );
-    }
-    return <span className="rounded-full bg-grid-header-bg px-2 py-0.5 text-xs font-medium text-secondary">No Sync</span>;
-  };
-
   return (
     <div>
+      <NotifyFromQuery param="saved" message="Cliente salvato." />
       <div className="flex items-center justify-between p-6 pb-0">
         <div>
           <h1 className="text-2xl font-semibold text-primary">Clienti</h1>
@@ -85,12 +72,10 @@ export default async function ClientsPage({
 
       <div
         className={`mx-6 mt-6 grid gap-x-[2px] border-t border-grid-border text-xs ${
-          ficConnection ? 'grid-cols-[2fr_2fr_1fr_1fr_1fr_1fr_auto]' : 'grid-cols-[2fr_2fr_1fr_1fr_1fr_auto]'
+          ficConnection ? 'grid-cols-[2fr_1fr_1fr_1fr_auto]' : 'grid-cols-[2fr_1fr_1fr_auto]'
         }`}
       >
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Nome</div>
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Email</div>
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Telefono</div>
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Città</div>
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">P.IVA</div>
         {ficConnection && (
@@ -105,46 +90,13 @@ export default async function ClientsPage({
         )}
 
         {clients.map((client) => (
-          <div key={client.id} className="group contents">
-            <div className="flex items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{client.name}</div>
-            <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">{client.email ?? '—'}</div>
-            <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">{client.phone ?? '—'}</div>
-            <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">{client.city ?? '—'}</div>
-            <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">{client.taxId ?? '—'}</div>
-            {ficConnection && (
-              <div className="flex items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
-                {ficBadge(client.ficSyncStatus)}
-              </div>
-            )}
-            <div className="flex items-center gap-3 border-b border-grid-border px-3 py-2 whitespace-nowrap group-hover:bg-row-hover">
-              {ficConnection && canUpdate && client.ficSyncStatus !== 'synced' && (
-                <Link
-                  href={`/dashboard/clients/${client.id}/sync-fic`}
-                  aria-label="Sincronizza con Fatture in Cloud"
-                  className="text-secondary transition hover:text-primary"
-                >
-                  <RefreshCw size={15} strokeWidth={1.75} />
-                </Link>
-              )}
-              {canUpdate && (
-                <Link
-                  href={`/dashboard/clients/${client.id}/edit`}
-                  aria-label="Modifica cliente"
-                  className="text-secondary transition hover:text-primary"
-                >
-                  <Pencil size={15} strokeWidth={1.75} />
-                </Link>
-              )}
-              {canDelete && (
-                <form action={deleteClientAction.bind(null, client.id)} className="inline">
-                  <button type="submit" aria-label="Elimina cliente" className="relative top-[2px] text-red-600/70 transition hover:text-red-600">
-                    <Trash2 size={15} strokeWidth={1.75} />
-                  </button>
-                </form>
-              )}
-              {!canUpdate && !canDelete && <span className="text-muted">—</span>}
-            </div>
-          </div>
+          <ClientRow
+            key={client.id}
+            client={client}
+            canUpdate={canUpdate}
+            canDelete={canDelete}
+            ficConnection={Boolean(ficConnection)}
+          />
         ))}
       </div>
 
