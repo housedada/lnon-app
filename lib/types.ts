@@ -136,6 +136,7 @@ export type JobStatus = 'draft' | 'pending_approval' | 'approved' | 'in_progress
 export interface Job {
   id: string;
   clientId: string;
+  contractId?: string;
   title: string;
   description?: string;
   status: JobStatus;
@@ -148,8 +149,14 @@ export interface Job {
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
+  deletedAt?: Date;
   approvedAt?: Date;
   approvedBy?: string;
+  productIds?: string[];
+  // Popolati solo dalla lista/dettaglio, se collegati
+  clientName?: string;
+  contractLabel?: string;
+  assignedToName?: string;
 }
 
 export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'done';
