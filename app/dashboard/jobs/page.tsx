@@ -60,7 +60,7 @@ export default async function JobsPage({
     getAllClientNames(),
     getUsers(),
   ]);
-  const userOptions = allUsers.filter((u) => u.isActive).map((u) => ({ id: u.id, name: u.name }));
+  const userOptions = allUsers.filter((u) => u.isActive).map((u) => ({ id: u.id, name: u.name, color: u.color }));
   const canCreateProjects = hasPermission(role, 'projects', 'create');
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));

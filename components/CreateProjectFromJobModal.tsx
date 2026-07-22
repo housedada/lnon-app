@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { X, FolderPlus, Loader2 } from 'lucide-react';
@@ -15,10 +15,11 @@ export default function CreateProjectFromJobModal({
 }: {
   jobId: string;
   jobTitle: string;
-  userOptions: { id: string; name: string }[];
+  userOptions: { id: string; name: string; color?: string }[];
   onClose: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
+  const [assignedTo, setAssignedTo] = useState('');
   const router = useRouter();
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -39,9 +40,9 @@ export default function CreateProjectFromJobModal({
       <form
         onSubmit={handleSubmit}
         onClick={(e) => e.stopPropagation()}
-        className="modal-panel card-shadow w-full max-w-sm rounded-xl border border-grid-border bg-card-bg p-8"
+        className="modal-panel card-shadow w-full max-w-lg overflow-hidden rounded-xl border border-grid-border bg-card-bg"
       >
-        <div className="flex items-start justify-between gap-3">
+        <div className="card-header-gradient flex items-center justify-between gap-3 border-b border-grid-border px-8 py-5">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-primary">
             <FolderPlus size={16} strokeWidth={1.75} className="text-secondary" aria-hidden="true" />
             Genera progetto
@@ -51,37 +52,60 @@ export default function CreateProjectFromJobModal({
           </button>
         </div>
 
-        <div className="field-wrap mt-4">
-          <input
-            type="text"
-            name="title"
-            id="project-title"
-            defaultValue={jobTitle}
-            placeholder=" "
-            className="field-input w-full border border-grid-border bg-transparent px-3 pb-2 pt-4 text-sm text-primary placeholder-transparent"
-          />
-          <label htmlFor="project-title" className="field-floating-label">
-            Titolo progetto
-          </label>
-        </div>
-
-        <div className="mt-5">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-secondary">Assegna a</p>
-          <div className="flex flex-col gap-2 rounded-lg border border-grid-border p-3">
-            <label className="flex items-center gap-2 text-sm text-primary">
-              <input type="radio" name="assignedTo" value="" defaultChecked />
-              — Non assegnato —
+        <div className="p-8">
+          <div className="field-wrap">
+            <input
+              type="text"
+              name="title"
+              id="project-title"
+              defaultValue={jobTitle}
+              placeholder=" "
+              className="field-input w-full border border-grid-border bg-transparent px-3 pb-2 pt-4 text-sm text-primary placeholder-transparent"
+            />
+            <label htmlFor="project-title" className="field-floating-label">
+              Titolo progetto
             </label>
-            {userOptions.map((u) => (
-              <label key={u.id} className="flex items-center gap-2 text-sm text-primary">
-                <input type="radio" name="assignedTo" value={u.id} />
-                {u.name}
-              </label>
-            ))}
+          </div>
+
+          <div className="mt-6">
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-secondary">Assegna a</p>
+            <input type="hidden" name="assignedTo" value={assignedTo} />
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setAssignedTo('')}
+                aria-pressed={assignedTo === ''}
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                  assignedTo === '' ? 'border-transparent bg-grid-header-bg text-primary' : 'border-grid-border text-secondary hover:text-primary'
+                }`}
+              >
+                Non assegnato
+              </button>
+              {userOptions.map((u) => {
+                const selected = assignedTo === u.id;
+                const color = u.color ?? '#e5e5e5';
+                return (
+                  <button
+                    key={u.id}
+                    type="button"
+                    onClick={() => setAssignedTo(u.id)}
+                    aria-pressed={selected}
+                    className="rounded-full px-3 py-1.5 text-xs font-medium text-neutral-800 transition"
+                    style={{
+                      background: color,
+                      outline: selected ? '2px solid var(--accent-to)' : 'none',
+                      outlineOffset: '1px',
+                    }}
+                  >
+                    {u.name}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        <div className="mt-5 flex justify-end gap-3">
+        <div className="flex justify-end gap-3 border-t border-grid-border px-8 py-5">
           <button
             type="button"
             onClick={onClose}

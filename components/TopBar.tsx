@@ -9,6 +9,7 @@ import type { UserRole } from '@/lib/types';
 import { getRoleLabel } from '@/lib/permissions';
 import ThemeToggle from '@/components/ThemeToggle';
 import Popover from '@/components/Popover';
+import UserColorPicker from '@/components/UserColorPicker';
 import { useContractsFilterStore } from '@/lib/store/contractsFilterStore';
 import { useContractsStatsStore } from '@/lib/store/contractsStatsStore';
 
@@ -16,10 +17,12 @@ export default function TopBar({
   role,
   userName,
   userImage,
+  userColor,
 }: {
   role: UserRole;
   userName: string;
   userImage?: string | null;
+  userColor?: string;
 }) {
   const pathname = usePathname();
   const isContractsPage = pathname?.startsWith('/dashboard/contracts');
@@ -116,6 +119,9 @@ export default function TopBar({
             <p className="text-sm font-medium text-primary">{userName}</p>
             <p className="text-xs text-secondary">{getRoleLabel(role)}</p>
           </div>
+          <div className="my-1 border-t border-grid-border" />
+          <p className="px-3 pt-1 text-[10px] font-medium uppercase tracking-wide text-secondary">Colore tag</p>
+          <UserColorPicker currentColor={userColor} />
           <div className="my-1 border-t border-grid-border" />
           <button
             type="button"

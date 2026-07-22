@@ -9,9 +9,25 @@ export interface User {
   googleId?: string;
   role: UserRole;
   isActive: boolean;
+  color?: string;
   createdAt: Date;
   updatedAt: Date;
 }
+
+export const USER_TAG_COLORS = [
+  '#F8B4B4',
+  '#F8CBAD',
+  '#FCE38A',
+  '#D4F0C0',
+  '#A8E6CF',
+  '#B5DEFF',
+  '#C3B1E1',
+  '#E0BBE4',
+  '#FFC9DE',
+  '#FFDAC1',
+  '#C7CEEA',
+  '#B8E0D2',
+] as const;
 
 export interface Client {
   id: string;

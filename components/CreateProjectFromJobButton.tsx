@@ -11,7 +11,7 @@ export default function CreateProjectFromJobButton({
 }: {
   jobId: string;
   jobTitle: string;
-  userOptions: { id: string; name: string }[];
+  userOptions: { id: string; name: string; color?: string }[];
 }) {
   const [open, setOpen] = useState(false);
 

@@ -70,6 +70,7 @@ function userRowToUser(row: Record<string, any>): User {
     googleId: row.google_id ?? undefined,
     role: row.role,
     isActive: row.is_active,
+    color: row.color ?? undefined,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
@@ -102,6 +103,21 @@ export async function updateUserRole(userId: string, role: User['role']): Promis
   const { data, error } = await supabaseServer
     .from('users')
     .update({ role })
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return userRowToUser(data);
+}
+
+/**
+ * Aggiorna il colore tag scelto dall'utente
+ */
+export async function updateUserColor(userId: string, color: string): Promise<User> {
+  const { data, error } = await supabaseServer
+    .from('users')
+    .update({ color })
     .eq('id', userId)
     .select()
     .single();
