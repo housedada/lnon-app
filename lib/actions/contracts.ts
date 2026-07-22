@@ -126,16 +126,35 @@ export async function suggestContractClientMatchesAction(): Promise<ContractClie
     byName.set(key, list);
   }
 
+  const normalizedClients = clients.map((c) => ({ ...c, key: normalizeName(c.name) })).filter((c) => c.key);
+
   const suggestions: ContractClientMatchSuggestion[] = [];
   for (const contract of unlinked) {
     const key = normalizeName(contract.clientNameRaw);
-    const candidates = byName.get(key);
-    if (candidates && candidates.length === 1) {
+    if (!key) continue;
+
+    // Primo giro: corrispondenza esatta univoca.
+    const exact = byName.get(key);
+    if (exact && exact.length === 1) {
       suggestions.push({
         contractId: contract.id,
         contractClientName: contract.clientNameRaw,
-        clientId: candidates[0].id,
-        clientName: candidates[0].name,
+        clientId: exact[0].id,
+        clientName: exact[0].name,
+      });
+      continue;
+    }
+    if (exact && exact.length > 1) continue; // ambiguo, salta
+
+    // Secondo giro (più permissivo): nome contratto contenuto nel nome cliente
+    // o viceversa, solo se porta a un unico candidato univoco.
+    const partial = normalizedClients.filter((c) => c.key.includes(key) || key.includes(c.key));
+    if (partial.length === 1) {
+      suggestions.push({
+        contractId: contract.id,
+        contractClientName: contract.clientNameRaw,
+        clientId: partial[0].id,
+        clientName: partial[0].name,
       });
     }
   }
