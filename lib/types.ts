@@ -135,7 +135,8 @@ export type JobStatus = 'draft' | 'pending_approval' | 'approved' | 'in_progress
 
 export interface Job {
   id: string;
-  clientId: string;
+  clientId?: string;
+  clientNameRaw?: string;
   contractId?: string;
   title: string;
   description?: string;

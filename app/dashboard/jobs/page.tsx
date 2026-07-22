@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { Plus, Pencil } from 'lucide-react';
 import { auth } from '@/lib/auth';
-import { getJobs } from '@/lib/db';
+import { getJobs, getAllClientNames } from '@/lib/db';
 import { hasPermission, canDeleteResource } from '@/lib/permissions';
 import ListNavigator from '@/components/ListNavigator';
 import ApproveJobButton from '@/components/ApproveJobButton';
+import SyncJobsClientsButton from '@/components/SyncJobsClientsButton';
+import JobLinkButton from '@/components/JobLinkButton';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import type { JobStatus } from '@/lib/types';
 
@@ -43,12 +45,15 @@ export default async function JobsPage({
   const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role ?? 'dipendente';
   const userId = (session?.user as { id?: string } | undefined)?.id;
 
-  const { data: jobs, total } = await getJobs({
-    search: q,
-    assignedTo: role === 'dipendente' ? userId : undefined,
-    limit: PAGE_SIZE,
-    offset,
-  });
+  const [{ data: jobs, total }, clientOptions] = await Promise.all([
+    getJobs({
+      search: q,
+      assignedTo: role === 'dipendente' ? userId : undefined,
+      limit: PAGE_SIZE,
+      offset,
+    }),
+    getAllClientNames(),
+  ]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const canCreate = hasPermission(role, 'jobs', 'create');
@@ -72,15 +77,18 @@ export default async function JobsPage({
           <h1 className="text-2xl font-semibold text-primary">Lavori</h1>
           <p className="mt-1 text-sm text-secondary">{total} lavori totali</p>
         </div>
-        {canCreate && (
-          <Link
-            href="/dashboard/jobs/new"
-            className="btn-accent flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
-          >
-            <Plus size={16} strokeWidth={2} aria-hidden="true" />
-            Nuovo Lavoro
-          </Link>
-        )}
+        <div className="flex items-center gap-3">
+          {canCreate && (
+            <Link
+              href="/dashboard/jobs/new"
+              className="btn-accent flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
+            >
+              <Plus size={16} strokeWidth={2} aria-hidden="true" />
+              Nuovo Lavoro
+            </Link>
+          )}
+          {canUpdate && <SyncJobsClientsButton />}
+        </div>
       </div>
 
       <ListNavigator
@@ -91,9 +99,10 @@ export default async function JobsPage({
         totalPages={totalPages}
         showSyncFilter={false}
       >
-        <div className="mx-6 mt-6 grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr_1fr_auto] gap-x-[2px] border-t border-grid-border text-[12px]">
+        <div className="mx-6 mt-6 grid grid-cols-[2fr_1.5fr_auto_1fr_1fr_1fr_1fr_auto] gap-x-[2px] border-t border-grid-border text-[12px]">
           <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Titolo</div>
           <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Cliente</div>
+          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Sync</div>
           <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Stato</div>
           <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Assegnato a</div>
           <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Budget stimato</div>
@@ -109,7 +118,16 @@ export default async function JobsPage({
           {jobs.map((job) => (
             <div key={job.id} className="group contents">
               <div className="flex items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{job.title}</div>
-              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary">{job.clientName ?? '—'}</div>
+              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary">
+                {job.clientName ?? job.clientNameRaw ?? '—'}
+              </div>
+              <div className="flex items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
+                {job.clientId ? (
+                  <span className="rounded-full bg-green-600/10 px-2 py-0.5 text-xs font-medium text-green-700">Sync</span>
+                ) : (
+                  <span className="rounded-full bg-grid-header-bg px-2 py-0.5 text-xs font-medium text-secondary">No Sync</span>
+                )}
+              </div>
               <div className="flex items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE[job.status]}`}>{STATUS_LABEL[job.status]}</span>
               </div>
@@ -117,6 +135,9 @@ export default async function JobsPage({
               <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary">{formatAmount(job.estimatedBudget)}</div>
               <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary">{formatDate(job.endDate)}</div>
               <div className="flex items-center justify-end gap-3 border-b border-grid-border px-3 py-2 whitespace-nowrap group-hover:bg-row-hover">
+                {canUpdate && !job.clientId && job.clientNameRaw && (
+                  <JobLinkButton jobId={job.id} jobClientName={job.clientNameRaw} clientOptions={clientOptions} />
+                )}
                 {canApprove && job.status === 'pending_approval' && <ApproveJobButton jobId={job.id} />}
                 {canUpdate && (
                   <Link href={`/dashboard/jobs/${job.id}/edit`} aria-label="Modifica lavoro" className="text-secondary transition hover:text-primary">

@@ -279,7 +279,8 @@ export async function updateDbClient(
 function jobRowToJob(row: Record<string, any>): Job {
   return {
     id: row.id,
-    clientId: row.client_id,
+    clientId: row.client_id ?? undefined,
+    clientNameRaw: row.client_name_raw ?? undefined,
     contractId: row.contract_id ?? undefined,
     title: row.title,
     description: row.description ?? undefined,
@@ -304,7 +305,8 @@ function jobRowToJob(row: Record<string, any>): Job {
 
 function jobToRow(data: Partial<Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'clientName' | 'contractLabel' | 'assignedToName' | 'productIds'>>): Record<string, any> {
   const row: Record<string, any> = {};
-  if (data.clientId !== undefined) row.client_id = data.clientId;
+  if (data.clientId !== undefined) row.client_id = data.clientId || null;
+  if (data.clientNameRaw !== undefined) row.client_name_raw = data.clientNameRaw;
   if (data.contractId !== undefined) row.contract_id = data.contractId || null;
   if (data.title !== undefined) row.title = data.title;
   if (data.description !== undefined) row.description = data.description;
@@ -1233,6 +1235,29 @@ export async function getUnlinkedContracts(): Promise<{ id: string; clientNameRa
  */
 export async function linkContractToClient(contractId: string, clientId: string): Promise<void> {
   const { error } = await supabaseServer.from('contracts').update({ client_id: clientId }).eq('id', contractId);
+  if (error) throw error;
+}
+
+/**
+ * Ottieni i lavori (import storico) senza cliente collegato
+ */
+export async function getUnlinkedJobs(): Promise<{ id: string; clientNameRaw: string }[]> {
+  const { data, error } = await supabaseServer
+    .from('jobs')
+    .select('id, client_name_raw')
+    .is('deleted_at', null)
+    .is('client_id', null)
+    .not('client_name_raw', 'is', null);
+
+  if (error) throw error;
+  return (data ?? []).map((row) => ({ id: row.id, clientNameRaw: row.client_name_raw }));
+}
+
+/**
+ * Collega un lavoro a un cliente LNON esistente
+ */
+export async function linkJobToClient(jobId: string, clientId: string): Promise<void> {
+  const { error } = await supabaseServer.from('jobs').update({ client_id: clientId }).eq('id', jobId);
   if (error) throw error;
 }
 

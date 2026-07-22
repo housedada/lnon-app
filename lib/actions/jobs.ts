@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { hasPermission, canDeleteResource } from '@/lib/permissions';
-import { createDbJob, updateDbJob, softDeleteJob, approveJob } from '@/lib/db';
+import { createDbJob, updateDbJob, softDeleteJob, approveJob, getUnlinkedJobs, getAllClientNames, linkJobToClient } from '@/lib/db';
 import type { Job } from '@/lib/types';
 
 type JobFormData = Omit<Job, 'id' | 'createdBy' | 'createdAt' | 'updatedAt' | 'clientName' | 'contractLabel' | 'assignedToName' | 'approvedAt' | 'approvedBy'>;
@@ -97,4 +97,77 @@ export async function approveJobAction(jobId: string): Promise<{ success: boolea
   await approveJob(jobId, userId);
   revalidatePath('/dashboard/jobs');
   return { success: true, message: 'Lavoro approvato.' };
+}
+
+function normalizeName(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+export interface JobClientMatchSuggestion {
+  jobId: string;
+  jobClientName: string;
+  clientId: string;
+  clientName: string;
+}
+
+/**
+ * Propone corrispondenze univoche per nome tra i lavori senza cliente collegato
+ * e l'anagrafica clienti (stesso meccanismo già usato per i Contratti). Non
+ * collega nulla: serve solo per la revisione manuale (import storico).
+ */
+export async function suggestJobClientMatchesAction(): Promise<JobClientMatchSuggestion[]> {
+  await requireRole('jobs', 'update');
+
+  const [unlinked, clients] = await Promise.all([getUnlinkedJobs(), getAllClientNames()]);
+
+  const byName = new Map<string, { id: string; name: string }[]>();
+  for (const client of clients) {
+    const key = normalizeName(client.name);
+    if (!key) continue;
+    const list = byName.get(key) ?? [];
+    list.push(client);
+    byName.set(key, list);
+  }
+  const normalizedClients = clients.map((c) => ({ ...c, key: normalizeName(c.name) })).filter((c) => c.key);
+
+  const suggestions: JobClientMatchSuggestion[] = [];
+  for (const job of unlinked) {
+    const key = normalizeName(job.clientNameRaw);
+    if (!key) continue;
+
+    const exact = byName.get(key);
+    if (exact && exact.length === 1) {
+      suggestions.push({ jobId: job.id, jobClientName: job.clientNameRaw, clientId: exact[0].id, clientName: exact[0].name });
+      continue;
+    }
+    if (exact && exact.length > 1) continue;
+
+    const partial = normalizedClients.filter((c) => c.key.includes(key) || key.includes(c.key));
+    if (partial.length === 1) {
+      suggestions.push({ jobId: job.id, jobClientName: job.clientNameRaw, clientId: partial[0].id, clientName: partial[0].name });
+    }
+  }
+
+  return suggestions;
+}
+
+/**
+ * Collega in blocco le coppie lavoro/cliente confermate dopo la revisione.
+ */
+export async function confirmJobClientMatchesAction(pairs: { jobId: string; clientId: string }[]): Promise<number> {
+  await requireRole('jobs', 'update');
+  for (const pair of pairs) {
+    await linkJobToClient(pair.jobId, pair.clientId);
+  }
+  revalidatePath('/dashboard/jobs');
+  return pairs.length;
+}
+
+/**
+ * Collega manualmente un singolo lavoro a un cliente scelto dall'utente.
+ */
+export async function linkJobToClientAction(jobId: string, clientId: string): Promise<void> {
+  await requireRole('jobs', 'update');
+  await linkJobToClient(jobId, clientId);
+  revalidatePath('/dashboard/jobs');
 }
