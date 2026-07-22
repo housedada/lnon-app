@@ -157,6 +157,7 @@ export async function createDbClient(
  */
 export async function getClients(filters?: {
   search?: string;
+  ficSyncStatus?: string;
   limit?: number;
   offset?: number;
 }): Promise<{ data: Client[]; total: number }> {
@@ -170,6 +171,10 @@ export async function getClients(filters?: {
     query = query.or(
       `name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,company_name.ilike.%${filters.search}%`
     );
+  }
+
+  if (filters?.ficSyncStatus) {
+    query = query.eq('fic_sync_status', filters.ficSyncStatus);
   }
 
   if (filters?.limit) {
@@ -702,6 +707,7 @@ export async function createDbProduct(
  */
 export async function getProducts(filters?: {
   search?: string;
+  ficSyncStatus?: string;
   limit?: number;
   offset?: number;
 }): Promise<{ data: Product[]; total: number }> {
@@ -713,6 +719,10 @@ export async function getProducts(filters?: {
 
   if (filters?.search) {
     query = query.or(`name.ilike.%${filters.search}%,code.ilike.%${filters.search}%`);
+  }
+
+  if (filters?.ficSyncStatus) {
+    query = query.eq('fic_sync_status', filters.ficSyncStatus);
   }
 
   if (filters?.limit) {
