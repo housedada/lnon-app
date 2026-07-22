@@ -1120,6 +1120,7 @@ export async function getAllClientNames(): Promise<{ id: string; name: string }[
 
 export interface ContractsStats {
   count: number;
+  generalTotal: number;
   maintenanceTotal: number;
   hostingTotal: number;
   analyticsTotal: number;
@@ -1134,7 +1135,7 @@ export interface ContractsStats {
 export async function getContractsStats(): Promise<ContractsStats> {
   const { data, error } = await supabaseServer
     .from('contracts')
-    .select('maintenance_wp_amount, hosting_amount, analytics_gdpr_amount, cookie_amount, provider_cost')
+    .select('total_amount, maintenance_wp_amount, hosting_amount, analytics_gdpr_amount, cookie_amount, provider_cost')
     .is('deleted_at', null);
 
   if (error) throw error;
@@ -1144,6 +1145,7 @@ export async function getContractsStats(): Promise<ContractsStats> {
 
   return {
     count: rows.length,
+    generalTotal: sum('total_amount'),
     maintenanceTotal: sum('maintenance_wp_amount'),
     hostingTotal: sum('hosting_amount'),
     analyticsTotal: sum('analytics_gdpr_amount'),
