@@ -12,6 +12,7 @@ import type {
   FicConnection,
   Product,
   Contract,
+  Project,
 } from './types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -1349,4 +1350,135 @@ export async function getContractsStats(): Promise<ContractsStats> {
   };
 }
 
-export type { User, Client, Job, Task, Invoice, Invitation, ActivityLog, Product, Contract };
+function projectRowToProject(row: Record<string, any>): Project {
+  return {
+    id: row.id,
+    jobId: row.job_id ?? undefined,
+    title: row.title,
+    description: row.description ?? undefined,
+    assignedTo: row.assigned_to ?? undefined,
+    createdBy: row.created_by,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+    deletedAt: row.deleted_at ? new Date(row.deleted_at) : undefined,
+    jobTitle: row.jobs?.title ?? undefined,
+    assignedToName: row.assigned_user?.name ?? undefined,
+  };
+}
+
+function projectToRow(data: Partial<Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'jobTitle' | 'assignedToName'>>): Record<string, any> {
+  const row: Record<string, any> = {};
+  if (data.jobId !== undefined) row.job_id = data.jobId || null;
+  if (data.title !== undefined) row.title = data.title;
+  if (data.description !== undefined) row.description = data.description;
+  if (data.assignedTo !== undefined) row.assigned_to = data.assignedTo || null;
+  if (data.createdBy !== undefined) row.created_by = data.createdBy;
+  return row;
+}
+
+/**
+ * Crea un nuovo progetto
+ */
+export async function createDbProject(
+  projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'jobTitle' | 'assignedToName'>
+): Promise<Project> {
+  const { data, error } = await supabaseServer.from('projects').insert([projectToRow(projectData)]).select().single();
+  if (error) throw error;
+  return projectRowToProject(data);
+}
+
+/**
+ * Tutti i progetti (non eliminati) con l'assegnatario valorizzato, per la board Team
+ */
+export async function getAllAssignedProjects(): Promise<Project[]> {
+  const { data, error } = await supabaseServer
+    .from('projects')
+    .select('*, jobs(title)')
+    .is('deleted_at', null)
+    .not('assigned_to', 'is', null)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []).map(projectRowToProject);
+}
+
+/**
+ * Progetti assegnati a un utente specifico, per la board Personale
+ */
+export async function getProjectsByAssignee(userId: string): Promise<Project[]> {
+  const { data, error } = await supabaseServer
+    .from('projects')
+    .select('*, jobs(title)')
+    .is('deleted_at', null)
+    .eq('assigned_to', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []).map(projectRowToProject);
+}
+
+/**
+ * Ottieni un progetto per id
+ */
+export async function getProjectById(id: string): Promise<Project | null> {
+  const { data, error } = await supabaseServer
+    .from('projects')
+    .select('*, jobs(title)')
+    .eq('id', id)
+    .is('deleted_at', null)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw error;
+  }
+  return projectRowToProject(data);
+}
+
+/**
+ * Aggiorna un progetto esistente
+ */
+export async function updateDbProject(
+  id: string,
+  projectData: Partial<Omit<Project, 'id' | 'createdBy' | 'createdAt' | 'updatedAt' | 'jobTitle' | 'assignedToName'>>
+): Promise<Project> {
+  const { data, error } = await supabaseServer.from('projects').update(projectToRow(projectData)).eq('id', id).select().single();
+  if (error) throw error;
+  return projectRowToProject(data);
+}
+
+/**
+ * Soft delete di un progetto
+ */
+export async function softDeleteProject(projectId: string): Promise<void> {
+  const { error } = await supabaseServer.from('projects').update({ deleted_at: new Date().toISOString() }).eq('id', projectId);
+  if (error) throw error;
+}
+
+/**
+ * Ordine colonne preferito dall'utente per la board Team (array di user id)
+ */
+export async function getTeamColumnOrder(userId: string): Promise<string[]> {
+  const { data, error } = await supabaseServer
+    .from('board_column_orders')
+    .select('team_column_order')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data?.team_column_order ?? [];
+}
+
+/**
+ * Salva l'ordine colonne preferito dall'utente per la board Team
+ */
+export async function saveTeamColumnOrder(userId: string, orderedUserIds: string[]): Promise<void> {
+  const { error } = await supabaseServer
+    .from('board_column_orders')
+    .upsert([{ user_id: userId, team_column_order: orderedUserIds, updated_at: new Date().toISOString() }], {
+      onConflict: 'user_id',
+    });
+  if (error) throw error;
+}
+
+export type { User, Client, Job, Task, Invoice, Invitation, ActivityLog, Product, Contract, Project };

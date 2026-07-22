@@ -1,13 +1,14 @@
 import Link from 'next/link';
 import { Plus, Pencil } from 'lucide-react';
 import { auth } from '@/lib/auth';
-import { getJobs, getAllClientNames } from '@/lib/db';
+import { getJobs, getAllClientNames, getUsers } from '@/lib/db';
 import { hasPermission, canDeleteResource } from '@/lib/permissions';
 import ListNavigator from '@/components/ListNavigator';
 import ApproveJobButton from '@/components/ApproveJobButton';
 import SyncJobsClientsButton from '@/components/SyncJobsClientsButton';
 import JobLinkButton from '@/components/JobLinkButton';
 import JobsFilterBar from '@/components/JobsFilterBar';
+import CreateProjectFromJobButton from '@/components/CreateProjectFromJobButton';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import type { JobStatus } from '@/lib/types';
 
@@ -46,7 +47,7 @@ export default async function JobsPage({
   const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role ?? 'dipendente';
   const userId = (session?.user as { id?: string } | undefined)?.id;
 
-  const [{ data: jobs, total }, clientOptions] = await Promise.all([
+  const [{ data: jobs, total }, clientOptions, allUsers] = await Promise.all([
     getJobs({
       search: q,
       clientId,
@@ -57,7 +58,10 @@ export default async function JobsPage({
       offset,
     }),
     getAllClientNames(),
+    getUsers(),
   ]);
+  const userOptions = allUsers.filter((u) => u.isActive).map((u) => ({ id: u.id, name: u.name }));
+  const canCreateProjects = hasPermission(role, 'projects', 'create');
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const canCreate = hasPermission(role, 'jobs', 'create');
@@ -141,6 +145,9 @@ export default async function JobsPage({
               <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary">{formatAmount(job.estimatedBudget)}</div>
               <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary">{formatDate(job.endDate)}</div>
               <div className="flex items-center justify-end gap-3 border-b border-grid-border px-3 py-2 whitespace-nowrap group-hover:bg-row-hover">
+                {canCreateProjects && (
+                  <CreateProjectFromJobButton jobId={job.id} jobTitle={job.title} userOptions={userOptions} />
+                )}
                 {canUpdate && !job.clientId && job.clientNameRaw && (
                   <JobLinkButton jobId={job.id} jobClientName={job.clientNameRaw} clientOptions={clientOptions} />
                 )}

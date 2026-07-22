@@ -13,6 +13,7 @@ export const PERMISSION_MATRIX: Record<UserRole, Record<string, string[]>> = {
     clients: ['read', 'create', 'update', 'delete', 'export'],
     products: ['read', 'create', 'update', 'delete', 'export'],
     contracts: ['read', 'create', 'update', 'delete', 'export'],
+    projects: ['read', 'create', 'update', 'delete'],
     jobs: ['read', 'create', 'update', 'delete', 'approve', 'assign', 'export'],
     tasks: ['read', 'create', 'update', 'delete', 'reassign'],
     invoices: ['read', 'create', 'update', 'delete', 'send', 'cancel'],
@@ -25,6 +26,7 @@ export const PERMISSION_MATRIX: Record<UserRole, Record<string, string[]>> = {
     clients: ['read', 'create', 'update', 'export'],
     products: ['read', 'create', 'update', 'export'],
     contracts: ['read', 'create', 'update', 'export'],
+    projects: ['read', 'create', 'update'],
     jobs: ['read', 'create', 'update', 'approve', 'assign', 'export'],
     tasks: ['read', 'create', 'update', 'reassign'],
     invoices: ['read', 'create', 'update', 'send'],
@@ -37,6 +39,7 @@ export const PERMISSION_MATRIX: Record<UserRole, Record<string, string[]>> = {
     clients: ['read'], // Vede solo clienti dei lavori assegnati
     products: ['read'],
     contracts: ['read'],
+    projects: ['read', 'create', 'update'],
     jobs: ['read'], // Vede solo lavori assegnati a lui
     tasks: ['read', 'update'], // Può aggiornare status dei suoi task
     invoices: ['read'], // Lettura sola

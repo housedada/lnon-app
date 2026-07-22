@@ -160,6 +160,21 @@ export interface Job {
   assignedToName?: string;
 }
 
+export interface Project {
+  id: string;
+  jobId?: string;
+  title: string;
+  description?: string;
+  assignedTo?: string;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt?: Date;
+  // Popolati solo in lettura, se collegati
+  jobTitle?: string;
+  assignedToName?: string;
+}
+
 export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'done';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 
