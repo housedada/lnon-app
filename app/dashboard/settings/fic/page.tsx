@@ -4,7 +4,7 @@ import { CheckCircle2, XCircle, Link2, Package } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { getFicConnection } from '@/lib/db';
-import { getFicDeleteWebhookStatus } from '@/lib/fattureincloud';
+import { getFicDeleteWebhookStatus, FIC_WEBHOOK_DELETE_TYPES } from '@/lib/fattureincloud';
 import { registerFicWebhookAction } from '@/lib/actions/fic';
 import SubmitButton from '@/components/SubmitButton';
 
@@ -28,6 +28,9 @@ export default async function FicSettingsPage({
   const appBaseUrl = host ? `${protocol}://${host}` : '';
 
   const boundRegisterWebhook = registerFicWebhookAction.bind(null, appBaseUrl);
+  const webhookComplete = Boolean(
+    webhookStatus?.verified && FIC_WEBHOOK_DELETE_TYPES.every((t) => webhookStatus.types.includes(t))
+  );
 
   return (
     <div>
@@ -60,8 +63,8 @@ export default async function FicSettingsPage({
             </p>
             {connection && (
               <p className="text-xs text-secondary">
-                Webhook cancellazione clienti:{' '}
-                {webhookStatus?.verified ? 'attivo' : webhookStatus ? 'in attesa di verifica' : 'non registrato'}
+                Webhook cancellazioni (clienti + prodotti):{' '}
+                {webhookComplete ? 'attivo' : webhookStatus ? 'incompleto / da verificare' : 'non registrato'}
               </p>
             )}
           </div>
@@ -77,7 +80,7 @@ export default async function FicSettingsPage({
               {connection ? 'Ricollega account' : 'Connetti a Fatture in Cloud'}
             </a>
 
-            {connection && !webhookStatus?.verified && (
+            {connection && !webhookComplete && (
               <form action={boundRegisterWebhook}>
                 <SubmitButton
                   pendingLabel="Verifica in corso..."

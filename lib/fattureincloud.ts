@@ -290,6 +290,7 @@ export async function registerFicDeleteWebhooks(sinkUrl: string): Promise<string
   const api = new WebhooksApi(new Configuration({ accessToken }));
 
   const existing = await getFicDeleteWebhookStatus();
+  const missingTypes = existing ? FIC_WEBHOOK_DELETE_TYPES.filter((t) => !existing.types.includes(t)) : [];
 
   let subscriptionId: string | undefined;
   if (!existing) {
@@ -302,7 +303,11 @@ export async function registerFicDeleteWebhooks(sinkUrl: string): Promise<string
     subscriptionId = response.data.data?.id ?? undefined;
   } else {
     subscriptionId = existing.id;
-    if (!existing.verified) {
+    if (missingTypes.length > 0) {
+      await api.modifyWebhooksSubscription(companyId, existing.id, {
+        data: { sink: sinkUrl, types: [...existing.types, ...missingTypes] as typeof FIC_WEBHOOK_DELETE_TYPES },
+      });
+    } else if (!existing.verified) {
       await api.verifyWebhooksSubscription(companyId, existing.id);
     }
   }
