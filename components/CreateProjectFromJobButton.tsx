@@ -22,10 +22,9 @@ export default function CreateProjectFromJobButton({
         onClick={() => setOpen(true)}
         aria-label="Genera progetto da questo lavoro"
         title="Genera progetto da questo lavoro"
-        className="relative flex h-6 w-6 items-center justify-center rounded-full transition hover:brightness-110"
-        style={{ background: 'linear-gradient(180deg, var(--accent-from), var(--accent-to))' }}
+        className="relative flex h-6 w-6 items-center justify-center rounded-full bg-neutral-500/10 transition hover:bg-neutral-500/20"
       >
-        <FolderPlus size={12} strokeWidth={2} className="text-primary opacity-90" aria-hidden="true" />
+        <FolderPlus size={12} strokeWidth={2} style={{ color: 'var(--accent-to)' }} aria-hidden="true" />
       </button>
       {open && (
         <CreateProjectFromJobModal jobId={jobId} jobTitle={jobTitle} userOptions={userOptions} onClose={() => setOpen(false)} />

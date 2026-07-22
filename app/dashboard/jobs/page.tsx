@@ -109,7 +109,7 @@ export default async function JobsPage({
         totalPages={totalPages}
         showSyncFilter={false}
       >
-        <div className="mx-6 mt-6 grid grid-cols-[2fr_1.5fr_auto_1fr_1fr_1fr_1fr_auto] gap-x-[2px] border-t border-grid-border text-[12px]">
+        <div className="mx-6 mt-6 grid grid-cols-[2fr_1.5fr_auto_1fr_1fr_1fr_1fr_auto_auto] gap-x-[2px] border-t border-grid-border text-[12px]">
           <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Titolo</div>
           <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Cliente</div>
           <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Sync</div>
@@ -117,6 +117,7 @@ export default async function JobsPage({
           <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Assegnato a</div>
           <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Budget stimato</div>
           <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Scadenza</div>
+          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary" />
           <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary" />
 
           {jobs.length === 0 && (
@@ -144,10 +145,12 @@ export default async function JobsPage({
               <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary">{job.assignedToName ?? '—'}</div>
               <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary">{formatAmount(job.estimatedBudget)}</div>
               <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary">{formatDate(job.endDate)}</div>
-              <div className="flex items-center justify-end gap-3 border-b border-grid-border px-3 py-2 whitespace-nowrap group-hover:bg-row-hover">
+              <div className="flex items-center justify-center border-b border-grid-border px-3 py-2 whitespace-nowrap group-hover:bg-row-hover">
                 {canCreateProjects && (
                   <CreateProjectFromJobButton jobId={job.id} jobTitle={job.title} userOptions={userOptions} />
                 )}
+              </div>
+              <div className="flex items-center justify-end gap-3 border-b border-grid-border px-3 py-2 whitespace-nowrap group-hover:bg-row-hover">
                 {canUpdate && !job.clientId && job.clientNameRaw && (
                   <JobLinkButton jobId={job.id} jobClientName={job.clientNameRaw} clientOptions={clientOptions} />
                 )}
