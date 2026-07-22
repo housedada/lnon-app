@@ -39,7 +39,7 @@ export default function CreateProjectFromJobModal({
       <form
         onSubmit={handleSubmit}
         onClick={(e) => e.stopPropagation()}
-        className="modal-panel card-shadow w-full max-w-sm rounded-xl border border-grid-border bg-card-bg p-6"
+        className="modal-panel card-shadow w-full max-w-sm rounded-xl border border-grid-border bg-card-bg p-8"
       >
         <div className="flex items-start justify-between gap-3">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-primary">
@@ -65,23 +65,20 @@ export default function CreateProjectFromJobModal({
           </label>
         </div>
 
-        <div className="field-wrap mt-4">
-          <select
-            name="assignedTo"
-            id="project-assignedTo"
-            defaultValue=""
-            className="field-input w-full border border-grid-border bg-transparent px-3 pb-2 pt-4 text-sm text-primary"
-          >
-            <option value="">— Non assegnato —</option>
+        <div className="mt-5">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-secondary">Assegna a</p>
+          <div className="flex flex-col gap-2 rounded-lg border border-grid-border p-3">
+            <label className="flex items-center gap-2 text-sm text-primary">
+              <input type="radio" name="assignedTo" value="" defaultChecked />
+              — Non assegnato —
+            </label>
             {userOptions.map((u) => (
-              <option key={u.id} value={u.id}>
+              <label key={u.id} className="flex items-center gap-2 text-sm text-primary">
+                <input type="radio" name="assignedTo" value={u.id} />
                 {u.name}
-              </option>
+              </label>
             ))}
-          </select>
-          <label htmlFor="project-assignedTo" className="field-floating-label">
-            Assegna a
-          </label>
+          </div>
         </div>
 
         <div className="mt-5 flex justify-end gap-3">
