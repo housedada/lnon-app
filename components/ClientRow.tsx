@@ -92,13 +92,13 @@ export default function ClientRow({
       </div>
       <div
         onClick={() => setDetailOpen(true)}
-        className="flex cursor-pointer items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover"
+        className="flex cursor-pointer items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary"
       >
         {client.city ?? '—'}
       </div>
       <div
         onClick={() => setDetailOpen(true)}
-        className="flex cursor-pointer items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover"
+        className="flex cursor-pointer items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary"
       >
         {client.taxId ?? '—'}
       </div>

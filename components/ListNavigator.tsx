@@ -58,6 +58,29 @@ export default function ListNavigator({
     });
   }
 
+  const paginationControls = (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={() => navigate({ page: currentPage - 1 })}
+        disabled={currentPage <= 1}
+        aria-label="Pagina precedente"
+        className="flex items-center justify-center rounded-lg border border-muted p-1.5 text-primary transition hover:bg-row-hover disabled:cursor-not-allowed disabled:text-muted disabled:hover:bg-transparent"
+      >
+        <ChevronLeft size={16} strokeWidth={1.75} />
+      </button>
+      <button
+        type="button"
+        onClick={() => navigate({ page: currentPage + 1 })}
+        disabled={currentPage >= totalPages}
+        aria-label="Pagina successiva"
+        className="flex items-center justify-center rounded-lg border border-muted p-1.5 text-primary transition hover:bg-row-hover disabled:cursor-not-allowed disabled:text-muted disabled:hover:bg-transparent"
+      >
+        <ChevronRight size={16} strokeWidth={1.75} />
+      </button>
+    </div>
+  );
+
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-4 px-6 pt-6">
@@ -83,26 +106,7 @@ export default function ListNavigator({
           <span className="text-[9px] text-secondary whitespace-nowrap">
             Pagina {currentPage} di {totalPages}
           </span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => navigate({ page: currentPage - 1 })}
-              disabled={currentPage <= 1}
-              aria-label="Pagina precedente"
-              className="flex items-center justify-center rounded-lg border border-muted p-1.5 text-primary transition hover:bg-row-hover disabled:cursor-not-allowed disabled:text-muted disabled:hover:bg-transparent"
-            >
-              <ChevronLeft size={16} strokeWidth={1.75} />
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate({ page: currentPage + 1 })}
-              disabled={currentPage >= totalPages}
-              aria-label="Pagina successiva"
-              className="flex items-center justify-center rounded-lg border border-muted p-1.5 text-primary transition hover:bg-row-hover disabled:cursor-not-allowed disabled:text-muted disabled:hover:bg-transparent"
-            >
-              <ChevronRight size={16} strokeWidth={1.75} />
-            </button>
-          </div>
+          {paginationControls}
           {showSyncFilter && (
             <select
               value={sync ?? ''}
@@ -130,6 +134,13 @@ export default function ListNavigator({
             <Loader2 size={20} strokeWidth={1.75} className="animate-spin text-secondary" aria-hidden="true" />
           </div>
         )}
+      </div>
+
+      <div className="flex items-center justify-end gap-3 p-6 text-sm">
+        <span className="text-[9px] text-secondary whitespace-nowrap">
+          Pagina {currentPage} di {totalPages}
+        </span>
+        {paginationControls}
       </div>
     </>
   );

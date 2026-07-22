@@ -80,7 +80,7 @@ export default async function ClientsPage({
           {ficConnection && (
             <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">FIC</div>
           )}
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Azioni</div>
+          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary" />
 
           {clients.length === 0 && (
             <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">

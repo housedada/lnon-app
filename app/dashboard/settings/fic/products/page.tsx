@@ -89,7 +89,7 @@ export default async function ProductsPage({
           {ficConnection && (
             <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">FIC</div>
           )}
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Azioni</div>
+          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary" />
 
           {products.length === 0 && (
             <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
@@ -100,11 +100,11 @@ export default async function ProductsPage({
           {products.map((product) => (
             <div key={product.id} className="group contents">
               <div className="flex items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{product.name}</div>
-              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">{product.code ?? '—'}</div>
-              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">
+              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary">{product.code ?? '—'}</div>
+              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary">
                 {product.netPrice != null ? `€ ${product.netPrice.toFixed(2)}` : '—'}
               </div>
-              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">
+              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary">
                 {product.defaultVatRate != null ? `${product.defaultVatRate}%` : '—'}
               </div>
               {ficConnection && (
