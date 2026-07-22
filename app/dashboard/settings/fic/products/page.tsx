@@ -1,12 +1,11 @@
 import Link from 'next/link';
-import { Plus, Search, Pencil, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Plus, Pencil, RefreshCw, AlertTriangle } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { getProducts, getFicConnection } from '@/lib/db';
 import { hasPermission } from '@/lib/permissions';
 import ImportFicProductsButton from '@/components/ImportFicProductsButton';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
-import Pagination from '@/components/Pagination';
-import FicSyncFilter from '@/components/FicSyncFilter';
+import ListNavigator from '@/components/ListNavigator';
 
 export const metadata = { title: 'Prodotti' };
 
@@ -30,14 +29,6 @@ export default async function ProductsPage({
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const canCreate = hasPermission(role, 'products', 'create');
   const canUpdate = hasPermission(role, 'products', 'update');
-
-  const buildHref = (targetPage: number) => {
-    const params = new URLSearchParams();
-    if (q) params.set('q', q);
-    if (sync) params.set('sync', sync);
-    params.set('page', String(targetPage));
-    return `/dashboard/settings/fic/products?${params.toString()}`;
-  };
 
   const ficBadge = (status: 'not_synced' | 'synced' | 'orphaned') => {
     if (status === 'synced') {
@@ -76,92 +67,75 @@ export default async function ProductsPage({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-4 px-6 pt-6">
-        <form method="get">
-          <div className="relative max-w-sm">
-            <Search size={16} strokeWidth={1.75} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-secondary" aria-hidden="true" />
-            <input
-              type="text"
-              name="q"
-              defaultValue={q ?? ''}
-              placeholder="Cerca per nome o codice..."
-              className="w-full rounded-lg border border-grid-border bg-card-bg py-2 pl-9 pr-3 text-sm text-primary"
-            />
-          </div>
-        </form>
-        <div className="flex items-center">
-          <Pagination currentPage={currentPage} totalPages={totalPages} buildHref={buildHref} />
+      <ListNavigator
+        basePath="/dashboard/settings/fic/products"
+        searchPlaceholder="Cerca per nome o codice..."
+        q={q}
+        sync={sync}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        showSyncFilter={Boolean(ficConnection)}
+      >
+        <div
+          className={`mx-6 mt-6 grid gap-x-[2px] border-t border-grid-border text-xs ${
+            ficConnection ? 'grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]' : 'grid-cols-[2fr_1fr_1fr_1fr_auto]'
+          }`}
+        >
+          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Nome</div>
+          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Codice</div>
+          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Prezzo netto</div>
+          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">IVA</div>
           {ficConnection && (
-            <div className="ml-3">
-              <FicSyncFilter />
+            <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">FIC</div>
+          )}
+          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Azioni</div>
+
+          {products.length === 0 && (
+            <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
+              Nessun prodotto trovato{q ? ` per “${q}”` : ''}.
             </div>
           )}
-        </div>
-      </div>
 
-      <div
-        className={`mx-6 mt-6 grid gap-x-[2px] border-t border-grid-border text-xs ${
-          ficConnection ? 'grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]' : 'grid-cols-[2fr_1fr_1fr_1fr_auto]'
-        }`}
-      >
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Nome</div>
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Codice</div>
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Prezzo netto</div>
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">IVA</div>
-        {ficConnection && (
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">FIC</div>
-        )}
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Azioni</div>
-
-        {products.length === 0 && (
-          <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
-            Nessun prodotto trovato{q ? ` per “${q}”` : ''}.
-          </div>
-        )}
-
-        {products.map((product) => (
-          <div key={product.id} className="group contents">
-            <div className="flex items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{product.name}</div>
-            <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">{product.code ?? '—'}</div>
-            <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">
-              {product.netPrice != null ? `€ ${product.netPrice.toFixed(2)}` : '—'}
-            </div>
-            <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">
-              {product.defaultVatRate != null ? `${product.defaultVatRate}%` : '—'}
-            </div>
-            {ficConnection && (
-              <div className="flex items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
-                {ficBadge(product.ficSyncStatus)}
+          {products.map((product) => (
+            <div key={product.id} className="group contents">
+              <div className="flex items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{product.name}</div>
+              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">{product.code ?? '—'}</div>
+              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">
+                {product.netPrice != null ? `€ ${product.netPrice.toFixed(2)}` : '—'}
               </div>
-            )}
-            <div className="flex items-center justify-end gap-3 border-b border-grid-border px-3 py-2 whitespace-nowrap group-hover:bg-row-hover">
-              {ficConnection && canUpdate && product.ficSyncStatus !== 'synced' && (
-                <Link
-                  href={`/dashboard/settings/fic/products/${product.id}/sync-fic`}
-                  aria-label="Sincronizza con Fatture in Cloud"
-                  className="text-secondary transition hover:text-primary"
-                >
-                  <RefreshCw size={15} strokeWidth={1.75} />
-                </Link>
+              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">
+                {product.defaultVatRate != null ? `${product.defaultVatRate}%` : '—'}
+              </div>
+              {ficConnection && (
+                <div className="flex items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
+                  {ficBadge(product.ficSyncStatus)}
+                </div>
               )}
-              {canUpdate && (
-                <Link
-                  href={`/dashboard/settings/fic/products/${product.id}/edit`}
-                  aria-label="Modifica prodotto"
-                  className="text-secondary transition hover:text-primary"
-                >
-                  <Pencil size={15} strokeWidth={1.75} />
-                </Link>
-              )}
-              {!canUpdate && <span className="text-muted">—</span>}
+              <div className="flex items-center justify-end gap-3 border-b border-grid-border px-3 py-2 whitespace-nowrap group-hover:bg-row-hover">
+                {ficConnection && canUpdate && product.ficSyncStatus !== 'synced' && (
+                  <Link
+                    href={`/dashboard/settings/fic/products/${product.id}/sync-fic`}
+                    aria-label="Sincronizza con Fatture in Cloud"
+                    className="text-secondary transition hover:text-primary"
+                  >
+                    <RefreshCw size={15} strokeWidth={1.75} />
+                  </Link>
+                )}
+                {canUpdate && (
+                  <Link
+                    href={`/dashboard/settings/fic/products/${product.id}/edit`}
+                    aria-label="Modifica prodotto"
+                    className="text-secondary transition hover:text-primary"
+                  >
+                    <Pencil size={15} strokeWidth={1.75} />
+                  </Link>
+                )}
+                {!canUpdate && <span className="text-muted">—</span>}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="flex items-center justify-end p-6 text-sm">
-        <Pagination currentPage={currentPage} totalPages={totalPages} buildHref={buildHref} />
-      </div>
+          ))}
+        </div>
+      </ListNavigator>
     </div>
   );
 }

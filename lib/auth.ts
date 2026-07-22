@@ -29,6 +29,12 @@ const { handlers, auth: realAuth, signIn, signOut } = NextAuth({
       if (user && user.email) {
         const email = user.email;
 
+        // Propaga esplicitamente l'avatar Google nel token (non ci fidiamo
+        // del merge automatico dato che il callback session è interamente custom)
+        if (user.image) {
+          token.picture = user.image;
+        }
+
         // Verifica se l'utente esiste in Supabase
         const { data: existingUser, error: fetchError } = await supabaseServer
           .from('users')
@@ -108,6 +114,7 @@ const { handlers, auth: realAuth, signIn, signOut } = NextAuth({
         session.user.id = token.userId as string;
         session.user.role = token.role as string;
         session.user.active = token.active as boolean;
+        session.user.image = (token.picture as string | undefined) ?? session.user.image;
 
         if (token.error) {
           session.user.error = token.error as string;

@@ -96,10 +96,11 @@ export default function Sidebar({ role }: SidebarProps) {
         </button>
       </div>
 
-      {/* Sidebar fissa desktop */}
-      <aside className="hidden md:sticky md:top-0 md:block md:h-[calc(100vh-50px)] md:w-44 md:shrink-0">
+      {/* Sidebar fissa desktop: position fixed, non scrolla mai con la pagina */}
+      <aside className="hidden md:fixed md:left-0 md:top-[50px] md:block md:h-[calc(100vh-50px)] md:w-44 md:shrink-0 md:z-30">
         <SidebarContent role={role} />
       </aside>
+      <div className="hidden md:block md:w-44 md:shrink-0" aria-hidden="true" />
 
       {/* Drawer overlay mobile */}
       {mobileOpen && (
