@@ -148,7 +148,7 @@ const { handlers, auth: realAuth, signIn, signOut } = NextAuth({
      * Log quando un utente fa signin
      */
     async signIn({ user, isNewUser }: { user: any; isNewUser?: boolean }) {
-      console.log(`✅ Sign in: ${user.email} (${isNewUser ? 'nuovo' : 'returning'})`);
+      console.log(`✅ Sign in: ${user.email} (${isNewUser ? 'nuovo' : 'returning'}) image=${user.image ?? 'NULL'}`);
     },
 
     /**
