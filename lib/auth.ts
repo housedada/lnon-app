@@ -11,6 +11,12 @@ const { handlers, auth: realAuth, signIn, signOut } = NextAuth({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
       allowDangerousEmailAccountLinking: true,
+      authorization: {
+        params: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+      },
     }),
   ],
 
@@ -148,7 +154,7 @@ const { handlers, auth: realAuth, signIn, signOut } = NextAuth({
      * Log quando un utente fa signin
      */
     async signIn({ user, isNewUser }: { user: any; isNewUser?: boolean }) {
-      console.log(`✅ Sign in: ${user.email} (${isNewUser ? 'nuovo' : 'returning'}) image=${user.image ?? 'NULL'}`);
+      console.log(`✅ Sign in: ${user.email} (${isNewUser ? 'nuovo' : 'returning'})`);
     },
 
     /**
