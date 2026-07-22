@@ -13,7 +13,7 @@ export default function TopBar({ role, userName }: { role: UserRole; userName: s
   return (
     <header className="flex h-[50px] shrink-0 items-center justify-between border-b border-grid-border bg-card-bg px-4">
       <Link href="/dashboard" className="flex items-center">
-        <Image src="/logo.png" alt="Housedada" width={84} height={17} />
+        <Image src="/logo.png" alt="Housedada" width={84} height={17} className="topbar-logo" />
       </Link>
 
       <div className="flex items-center gap-1">

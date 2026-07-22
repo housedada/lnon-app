@@ -1,17 +1,28 @@
 'use client';
 
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { X, Copy } from 'lucide-react';
+import { notify } from '@/lib/notify';
+
+export interface DetailField {
+  label: string;
+  value: React.ReactNode;
+  copyable?: boolean;
+}
 
 export interface DetailSection {
   title: string;
-  fields: { label: string; value: React.ReactNode }[];
+  fields: DetailField[];
 }
 
 interface DetailModalProps {
   title: string;
   sections: DetailSection[];
   onClose: () => void;
+}
+
+function copyValue(value: string) {
+  navigator.clipboard.writeText(value).then(() => notify('Copiato negli appunti.'));
 }
 
 export default function DetailModal({ title, sections, onClose }: DetailModalProps) {
@@ -21,7 +32,7 @@ export default function DetailModal({ title, sections, onClose }: DetailModalPro
         role="dialog"
         aria-modal="true"
         aria-labelledby="detail-modal-title"
-        className="modal-panel card-shadow max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-grid-border bg-card-bg p-6"
+        className="modal-panel card-shadow max-h-[85vh] w-[96%] max-w-[1280px] overflow-y-auto rounded-xl border border-grid-border bg-card-bg p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-3">
@@ -37,11 +48,23 @@ export default function DetailModal({ title, sections, onClose }: DetailModalPro
           {sections.map((section) => (
             <div key={section.title}>
               <h3 className="detail-label mb-2">{section.title}</h3>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-4">
                 {section.fields.map((field) => (
                   <div key={field.label}>
                     <p className="detail-label">{field.label}</p>
-                    <p className="mt-0.5 text-sm text-primary">{field.value ?? '—'}</p>
+                    <div className="mt-0.5 flex items-center gap-1.5">
+                      {field.copyable && typeof field.value === 'string' && field.value && (
+                        <button
+                          type="button"
+                          onClick={() => copyValue(field.value as string)}
+                          aria-label={`Copia ${field.label}`}
+                          className="text-secondary transition hover:text-primary"
+                        >
+                          <Copy size={12} strokeWidth={1.75} />
+                        </button>
+                      )}
+                      <p className="text-sm text-primary">{field.value ?? '—'}</p>
+                    </div>
                   </div>
                 ))}
               </div>

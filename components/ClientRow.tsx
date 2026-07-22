@@ -28,9 +28,9 @@ function buildDetailSections(client: Client): DetailSection[] {
       fields: [
         { label: 'Nome / Denominazione', value: client.name },
         { label: 'Referente', value: client.contactPerson },
-        { label: 'Email', value: client.email },
-        { label: 'Telefono', value: client.phone },
-        { label: 'Fax', value: client.fax },
+        { label: 'Email', value: client.email, copyable: true },
+        { label: 'Telefono', value: client.phone, copyable: true },
+        { label: 'Fax', value: client.fax, copyable: true },
         { label: 'Codice interno', value: client.internalCode },
       ],
     },
