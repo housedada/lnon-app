@@ -163,7 +163,7 @@ export async function getClients(filters?: {
     .from('clients')
     .select('*', { count: 'exact' })
     .is('deleted_at', null) // Non includiamo soft-deleted
-    .order('created_at', { ascending: false });
+    .order('name', { ascending: true });
 
   if (filters?.search) {
     query = query.or(
