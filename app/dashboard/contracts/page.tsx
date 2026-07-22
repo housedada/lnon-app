@@ -41,6 +41,7 @@ function formatDate(value?: Date) {
 // orizzontale (overflow-x-auto sul wrapper).
 const DATA_COLUMNS: { key: string; label: string }[] = [
   { key: 'client', label: 'Cliente' },
+  { key: 'linkStatus', label: 'Sync' },
   { key: 'site', label: 'Sito' },
   { key: 'status', label: 'Stato' },
   { key: 'billingMonth', label: 'Mese fatturazione' },
@@ -63,13 +64,12 @@ const GRID_TEMPLATE = `repeat(${DATA_COLUMNS.length}, max-content) 56px`;
 function renderCell(contract: Contract, key: string): React.ReactNode {
   switch (key) {
     case 'client':
-      return (
-        <span className="flex items-center gap-1.5">
-          {contract.clientName ?? contract.clientNameRaw}
-          {!contract.clientId && (
-            <span className="rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">non collegato</span>
-          )}
-        </span>
+      return contract.clientName ?? contract.clientNameRaw;
+    case 'linkStatus':
+      return contract.clientId ? (
+        <span className="rounded-full bg-green-600/10 px-2 py-0.5 text-xs font-medium text-green-700">Sync</span>
+      ) : (
+        <span className="rounded-full bg-grid-header-bg px-2 py-0.5 text-xs font-medium text-secondary">No Sync</span>
       );
     case 'site':
       return contract.site ?? '—';
