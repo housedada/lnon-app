@@ -8,7 +8,7 @@ import ContractsFilterWidget from '@/components/ContractsFilterWidget';
 import ContractsStatsWidget from '@/components/ContractsStatsWidget';
 import SyncContractsClientsButton from '@/components/SyncContractsClientsButton';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
-import type { ContractStatus } from '@/lib/types';
+import type { Contract, ContractStatus } from '@/lib/types';
 
 export const metadata = { title: 'Contratti' };
 
@@ -25,6 +25,89 @@ const STATUS_BADGE: Record<ContractStatus, string> = {
   da_definire: 'bg-grid-header-bg text-secondary',
   disattivo: 'bg-red-600/10 text-red-700',
 };
+
+function formatAmount(value?: number) {
+  return value != null ? `€ ${value.toFixed(2)}` : '—';
+}
+
+function formatDate(value?: Date) {
+  return value ? value.toLocaleDateString('it-IT') : '—';
+}
+
+// Colonne dati (tutte tranne "Azioni", che resta fissa a destra).
+// grid-template-columns usa max-content per adattarsi al contenuto: la
+// griglia può superare la larghezza del contenitore, che scrolla in
+// orizzontale (overflow-x-auto sul wrapper).
+const DATA_COLUMNS: { key: string; label: string }[] = [
+  { key: 'client', label: 'Cliente' },
+  { key: 'site', label: 'Sito' },
+  { key: 'status', label: 'Stato' },
+  { key: 'billingMonth', label: 'Mese fatturazione' },
+  { key: 'maintenance', label: 'Manutenzione WP' },
+  { key: 'hosting', label: 'Hosting' },
+  { key: 'analytics', label: 'Analytics e GDPR' },
+  { key: 'cookie', label: 'Cookie' },
+  { key: 'total', label: 'Totale' },
+  { key: 'serviceDescription', label: 'Servizio' },
+  { key: 'package', label: 'Pacchetto' },
+  { key: 'notes', label: 'Note' },
+  { key: 'provider', label: 'Provider' },
+  { key: 'providerPlan', label: 'Piano provider' },
+  { key: 'providerExpiryDate', label: 'Scadenza' },
+  { key: 'providerCost', label: 'Costo provider' },
+];
+
+const GRID_TEMPLATE = `repeat(${DATA_COLUMNS.length}, max-content) 56px`;
+
+function renderCell(contract: Contract, key: string): React.ReactNode {
+  switch (key) {
+    case 'client':
+      return (
+        <span className="flex items-center gap-1.5">
+          {contract.clientName ?? contract.clientNameRaw}
+          {!contract.clientId && (
+            <span className="rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">non collegato</span>
+          )}
+        </span>
+      );
+    case 'site':
+      return contract.site ?? '—';
+    case 'status':
+      return (
+        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE[contract.status]}`}>
+          {STATUS_LABEL[contract.status]}
+        </span>
+      );
+    case 'billingMonth':
+      return contract.billingMonth ?? '—';
+    case 'maintenance':
+      return formatAmount(contract.maintenanceWpAmount);
+    case 'hosting':
+      return formatAmount(contract.hostingAmount);
+    case 'analytics':
+      return formatAmount(contract.analyticsGdprAmount);
+    case 'cookie':
+      return formatAmount(contract.cookieAmount);
+    case 'total':
+      return formatAmount(contract.totalAmount);
+    case 'serviceDescription':
+      return contract.serviceDescription ?? '—';
+    case 'package':
+      return contract.package ?? '—';
+    case 'notes':
+      return contract.notes ?? '—';
+    case 'provider':
+      return contract.provider ?? '—';
+    case 'providerPlan':
+      return contract.providerPlan ?? '—';
+    case 'providerExpiryDate':
+      return formatDate(contract.providerExpiryDate);
+    case 'providerCost':
+      return formatAmount(contract.providerCost);
+    default:
+      return '—';
+  }
+}
 
 export default async function ContractsPage({
   searchParams,
@@ -47,14 +130,6 @@ export default async function ContractsPage({
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const canCreate = hasPermission(role, 'contracts', 'create');
   const canUpdate = hasPermission(role, 'contracts', 'update');
-
-  function formatAmount(value?: number) {
-    return value != null ? `€ ${value.toFixed(2)}` : '—';
-  }
-
-  function formatDate(value?: Date) {
-    return value ? value.toLocaleDateString('it-IT') : '—';
-  }
 
   return (
     <div>
@@ -89,52 +164,51 @@ export default async function ContractsPage({
         totalPages={totalPages}
         showSyncFilter={false}
       >
-        <div className="mx-6 mt-6 grid grid-cols-[2fr_2fr_1fr_1fr_1fr_1fr_auto] gap-x-[2px] border-t border-grid-border text-[10px]">
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Cliente</div>
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Sito</div>
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Stato</div>
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Totale</div>
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Provider</div>
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Scadenza</div>
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Azioni</div>
-
-          {contracts.length === 0 && (
-            <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
-              Nessun contratto trovato{q ? ` per “${q}”` : ''}.
+        <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
+          <div className="grid w-fit min-w-full gap-x-[2px] text-[12px]" style={{ gridTemplateColumns: GRID_TEMPLATE }}>
+            {DATA_COLUMNS.map((col) => (
+              <div
+                key={col.key}
+                className="flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary"
+              >
+                {col.label}
+              </div>
+            ))}
+            <div className="sticky right-0 z-[2] flex items-center justify-end whitespace-nowrap border-b border-l border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">
+              Azioni
             </div>
-          )}
 
-          {contracts.map((contract) => (
-            <div key={contract.id} className="group contents">
-              <div className="flex items-center gap-1.5 border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">
-                {contract.clientName ?? contract.clientNameRaw}
-                {!contract.clientId && (
-                  <span className="rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-medium text-amber-700">non collegato</span>
-                )}
+            {contracts.length === 0 && (
+              <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
+                Nessun contratto trovato{q ? ` per “${q}”` : ''}.
               </div>
-              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">{contract.site ?? '—'}</div>
-              <div className="flex items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
-                <span className={`rounded-full px-2 py-0.5 text-[9px] font-medium ${STATUS_BADGE[contract.status]}`}>
-                  {STATUS_LABEL[contract.status]}
-                </span>
-              </div>
-              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">{formatAmount(contract.totalAmount)}</div>
-              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">{contract.provider ?? '—'}</div>
-              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">{formatDate(contract.providerExpiryDate)}</div>
-              <div className="flex items-center justify-end gap-3 border-b border-grid-border px-3 py-2 whitespace-nowrap group-hover:bg-row-hover">
-                {canUpdate && (
-                  <Link
-                    href={`/dashboard/contracts/${contract.id}/edit`}
-                    aria-label="Modifica contratto"
-                    className="text-secondary transition hover:text-primary"
+            )}
+
+            {contracts.map((contract) => (
+              <div key={contract.id} className="group contents">
+                {DATA_COLUMNS.map((col) => (
+                  <div
+                    key={col.key}
+                    className="flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover [&:first-child]:font-semibold [&:first-child]:tracking-[0.01em] [&:first-child]:text-primary"
                   >
-                    <Pencil size={15} strokeWidth={1.75} />
-                  </Link>
-                )}
-                {!canUpdate && <span className="text-muted">—</span>}
+                    {renderCell(contract, col.key)}
+                  </div>
+                ))}
+                <div className="sticky right-0 z-[1] flex items-center justify-end gap-3 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-3 py-2 group-hover:bg-row-hover">
+                  {canUpdate && (
+                    <Link
+                      href={`/dashboard/contracts/${contract.id}/edit`}
+                      aria-label="Modifica contratto"
+                      className="text-secondary transition hover:text-primary"
+                    >
+                      <Pencil size={15} strokeWidth={1.75} />
+                    </Link>
+                  )}
+                  {!canUpdate && <span className="text-muted">—</span>}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </ListNavigator>
     </div>
