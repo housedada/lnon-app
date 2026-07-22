@@ -141,23 +141,52 @@ export async function getFicCompanies(accessToken: string) {
   return response.data.data?.companies ?? [];
 }
 
+const CLIENT_DELETE_EVENT_TYPE = 'it.fattureincloud.webhooks.entities.clients.delete';
+
 /**
- * Registra la subscription webhook per la cancellazione clienti, così LNON
- * può rilevare in tempo reale quando un cliente sincronizzato viene cancellato su FiC.
+ * Stato reale (verificato o no) della subscription webhook per la cancellazione clienti,
+ * letto live da FiC (non fidandosi solo dell'id salvato localmente).
+ */
+export async function getFicClientDeleteWebhookStatus(): Promise<{ id: string; verified: boolean } | null> {
+  const { accessToken, companyId } = await getValidAccessToken();
+  const api = new WebhooksApi(new Configuration({ accessToken }));
+  const response = await api.listWebhooksSubscriptions(companyId);
+
+  const subscription = (response.data.data ?? []).find((s) => s.types?.includes(CLIENT_DELETE_EVENT_TYPE));
+  if (!subscription?.id) return null;
+  return { id: subscription.id, verified: Boolean(subscription.verified) };
+}
+
+/**
+ * Registra (o, se già presente ma non verificata, ri-attiva) la subscription webhook
+ * per la cancellazione clienti, così LNON può rilevare quando un cliente sincronizzato
+ * viene cancellato su FiC. FiC invia un handshake di verifica (GET con challenge) subito
+ * dopo la creazione o dopo il "verify" esplicito: l'endpoint /api/fic/webhooks deve
+ * rispondere correttamente perché la subscription diventi attiva.
  */
 export async function registerFicClientDeleteWebhook(sinkUrl: string): Promise<string> {
   const { accessToken, companyId } = await getValidAccessToken();
   const api = new WebhooksApi(new Configuration({ accessToken }));
 
-  const response = await api.createWebhooksSubscription(companyId, {
-    data: {
-      sink: sinkUrl,
-      types: ['it.fattureincloud.webhooks.entities.clients.delete'],
-    },
-  });
+  const existing = await getFicClientDeleteWebhookStatus();
+
+  let subscriptionId: string | undefined;
+  if (!existing) {
+    const response = await api.createWebhooksSubscription(companyId, {
+      data: {
+        sink: sinkUrl,
+        types: [CLIENT_DELETE_EVENT_TYPE],
+      },
+    });
+    subscriptionId = response.data.data?.id ?? undefined;
+  } else {
+    subscriptionId = existing.id;
+    if (!existing.verified) {
+      await api.verifyWebhooksSubscription(companyId, existing.id);
+    }
+  }
 
   const connection = await getFicConnection();
-  const subscriptionId = response.data.data?.id;
   if (connection && subscriptionId) {
     await setFicWebhookSubscriptionId(connection.id, subscriptionId);
   }

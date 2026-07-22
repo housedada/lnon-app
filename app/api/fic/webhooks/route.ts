@@ -3,32 +3,49 @@ import { markClientsOrphanedByFicId } from '@/lib/db';
 
 const CLIENT_DELETE_EVENT = 'it.fattureincloud.webhooks.entities.clients.delete';
 
-// FiC non firma i payload in modo standard; l'endpoint è protetto includendo
-// FIC_WEBHOOK_SECRET nella query string del sink URL registrato su FiC
-// (unico URL a cui FiC invia richieste, non esposto altrove).
-export async function POST(request: NextRequest) {
+function isAuthorized(request: NextRequest): boolean {
   const secret = request.nextUrl.searchParams.get('secret');
-  if (!secret || secret !== process.env.FIC_WEBHOOK_SECRET) {
+  return Boolean(secret) && secret === process.env.FIC_WEBHOOK_SECRET;
+}
+
+// Handshake di verifica della subscription: FiC invia una GET con un valore
+// casuale (header x-fic-verification-challenge, dato che usiamo il metodo
+// 'header'), che va rispedito indietro in { verification: <valore> } per
+// completare la verifica. Finché non risponde correttamente, FiC non
+// considera la subscription verificata e non invia notifiche reali.
+export async function GET(request: NextRequest) {
+  if (!isAuthorized(request)) {
     return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 });
   }
 
-  const payload = await request.json().catch(() => null);
-  if (!payload) {
-    return NextResponse.json({ error: 'Payload non valido' }, { status: 400 });
+  const challenge = request.headers.get('x-fic-verification-challenge');
+  if (!challenge) {
+    return NextResponse.json({ error: 'Challenge mancante' }, { status: 400 });
   }
 
-  const events = Array.isArray(payload) ? payload : [payload];
+  return NextResponse.json({ verification: challenge });
+}
 
-  for (const event of events) {
-    if (event?.type !== CLIENT_DELETE_EVENT) continue;
+// Notifica evento: in modalità "binary" (default FiC) il tipo evento arriva
+// nell'header ce-type, e il body contiene solo { data: { ids: [...] } } —
+// nessun dato sensibile sull'entità, solo gli id delle risorse coinvolte.
+export async function POST(request: NextRequest) {
+  if (!isAuthorized(request)) {
+    return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 });
+  }
 
-    // La forma esatta del payload data non è documentata pubblicamente in dettaglio:
-    // proviamo i percorsi più plausibili per l'id dell'entità cancellata.
-    const ficId = event?.data?.id ?? event?.data?.entity?.id ?? event?.entity_id;
-    if (typeof ficId === 'number') {
+  const eventType = request.headers.get('ce-type');
+  if (eventType !== CLIENT_DELETE_EVENT) {
+    return NextResponse.json({ ok: true });
+  }
+
+  const payload = await request.json().catch(() => null);
+  const ids: unknown[] = payload?.data?.ids ?? [];
+
+  for (const id of ids) {
+    const ficId = typeof id === 'number' ? id : Number(id);
+    if (!Number.isNaN(ficId)) {
       await markClientsOrphanedByFicId(ficId);
-    } else if (typeof ficId === 'string' && !Number.isNaN(Number(ficId))) {
-      await markClientsOrphanedByFicId(Number(ficId));
     }
   }
 

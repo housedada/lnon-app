@@ -3,6 +3,7 @@ import { CheckCircle2, XCircle, Link2 } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { getFicConnection } from '@/lib/db';
+import { getFicClientDeleteWebhookStatus } from '@/lib/fattureincloud';
 import { registerFicWebhookAction } from '@/lib/actions/fic';
 
 export const metadata = { title: 'Fatture in Cloud' };
@@ -18,6 +19,7 @@ export default async function FicSettingsPage({
   const canManage = hasPermission(role, 'settings', 'manage_integrations');
 
   const connection = await getFicConnection();
+  const webhookStatus = connection ? await getFicClientDeleteWebhookStatus() : null;
   const headersList = await headers();
   const host = headersList.get('host');
   const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
@@ -56,7 +58,8 @@ export default async function FicSettingsPage({
             </p>
             {connection && (
               <p className="text-xs text-secondary">
-                Webhook cancellazione clienti: {connection.webhookSubscriptionId ? 'attivo' : 'non registrato'}
+                Webhook cancellazione clienti:{' '}
+                {webhookStatus?.verified ? 'attivo' : webhookStatus ? 'in attesa di verifica' : 'non registrato'}
               </p>
             )}
           </div>
@@ -72,13 +75,13 @@ export default async function FicSettingsPage({
               {connection ? 'Ricollega account' : 'Connetti a Fatture in Cloud'}
             </a>
 
-            {connection && !connection.webhookSubscriptionId && (
+            {connection && !webhookStatus?.verified && (
               <form action={boundRegisterWebhook}>
                 <button
                   type="submit"
                   className="rounded-lg border border-grid-border px-4 py-2 text-sm font-medium text-primary transition hover:bg-row-hover"
                 >
-                  Registra webhook cancellazioni
+                  {webhookStatus ? 'Riprova verifica webhook' : 'Registra webhook cancellazioni'}
                 </button>
               </form>
             )}
