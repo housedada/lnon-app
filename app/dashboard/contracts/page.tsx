@@ -176,8 +176,8 @@ export default async function ContractsPage({
                 {col.label}
               </div>
             ))}
-            <div className="sticky right-10 z-[2] border-b border-l border-grid-border bg-grid-header-bg" />
-            <div className="sticky right-0 z-[2] border-b border-l border-grid-border bg-grid-header-bg" />
+            <div className="sticky right-10 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
+            <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
 
 
             {contracts.length === 0 && (
@@ -196,7 +196,7 @@ export default async function ContractsPage({
                     {renderCell(contract, col.key)}
                   </div>
                 ))}
-                <div className="sticky right-10 z-[1] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
+                <div className="sticky right-10 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
                   {canUpdate && !contract.clientId && (
                     <ContractLinkButton
                       contractId={contract.id}
@@ -205,7 +205,7 @@ export default async function ContractsPage({
                     />
                   )}
                 </div>
-                <div className="sticky right-0 z-[1] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
+                <div className="sticky right-0 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
                   {canUpdate && (
                     <Link
                       href={`/dashboard/contracts/${contract.id}/edit`}
