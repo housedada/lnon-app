@@ -80,7 +80,7 @@ export default function ListNavigator({
         </form>
 
         <div className="flex items-center gap-3">
-          <span className="text-sm text-secondary whitespace-nowrap">
+          <span className="text-[9px] text-secondary whitespace-nowrap">
             Pagina {currentPage} di {totalPages}
           </span>
           <div className="flex items-center gap-2">

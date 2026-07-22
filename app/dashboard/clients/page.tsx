@@ -70,7 +70,7 @@ export default async function ClientsPage({
         showSyncFilter={Boolean(ficConnection)}
       >
         <div
-          className={`mx-6 mt-6 grid gap-x-[2px] border-t border-grid-border text-[10px] ${
+          className={`mx-6 mt-6 grid gap-x-[2px] border-t border-grid-border text-[12px] ${
             ficConnection ? 'grid-cols-[2fr_1fr_1fr_1fr_auto]' : 'grid-cols-[2fr_1fr_1fr_auto]'
           }`}
         >
