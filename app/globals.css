@@ -263,6 +263,20 @@ textarea::placeholder {
   box-shadow: 0 0 0 3px rgba(111, 95, 146, 0.16), 0 0 0 1px rgba(111, 95, 146, 0.35);
 }
 
+/* Hover righe liste: zoom verticale morbido (più padding verticale) +
+   lieve aumento font-size, sempre animato in/out senza scatti. */
+.list-row-cell {
+  position: relative;
+  transition: padding-block 160ms cubic-bezier(0.4, 0, 0.2, 1), font-size 160ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 160ms ease, background-color 160ms ease;
+}
+
+.group:hover .list-row-cell {
+  padding-block: 0.625rem;
+  font-size: 1.05em;
+  z-index: 2;
+}
+
 /* Checkbox e radio custom: solo outline, quadratino pieno quando selezionati */
 input[type='checkbox'],
 input[type='radio'] {

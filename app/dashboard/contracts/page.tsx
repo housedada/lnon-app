@@ -191,7 +191,7 @@ export default async function ContractsPage({
                 {DATA_COLUMNS.map((col) => (
                   <div
                     key={col.key}
-                    className="flex items-center whitespace-nowrap border-b border-grid-border bg-card-bg px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary [&:first-child]:font-semibold [&:first-child]:tracking-[0.01em] [&:first-child]:text-primary"
+                    className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border bg-card-bg px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary [&:first-child]:font-semibold [&:first-child]:tracking-[0.01em] [&:first-child]:text-primary"
                   >
                     {renderCell(contract, col.key)}
                   </div>

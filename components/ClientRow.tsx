@@ -86,26 +86,26 @@ export default function ClientRow({
     <div className="group contents">
       <div
         onClick={() => setDetailOpen(true)}
-        className="flex cursor-pointer items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover"
+        className="list-row-cell flex cursor-pointer items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover"
       >
         {client.name}
       </div>
       <div
         onClick={() => setDetailOpen(true)}
-        className="flex cursor-pointer items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary"
+        className="list-row-cell flex cursor-pointer items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary"
       >
         {client.city ?? '—'}
       </div>
       <div
         onClick={() => setDetailOpen(true)}
-        className="flex cursor-pointer items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary"
+        className="list-row-cell flex cursor-pointer items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary"
       >
         {client.taxId ?? '—'}
       </div>
       {ficConnection && (
         <div
           onClick={() => setDetailOpen(true)}
-          className="flex cursor-pointer items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover"
+          className="list-row-cell flex cursor-pointer items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover"
         >
           {ficBadge(client.ficSyncStatus)}
         </div>

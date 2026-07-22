@@ -129,23 +129,23 @@ export default async function JobsPage({
 
           {jobs.map((job) => (
             <div key={job.id} className="group contents">
-              <div className="flex items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{job.title}</div>
-              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary">
+              <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{job.title}</div>
+              <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary">
                 {job.clientName ?? job.clientNameRaw ?? '—'}
               </div>
-              <div className="flex items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
+              <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
                 {job.clientId ? (
                   <span className="rounded-full bg-green-600/10 px-2 py-0.5 text-xs font-medium text-green-700">Sync</span>
                 ) : (
                   <span className="rounded-full bg-grid-header-bg px-2 py-0.5 text-xs font-medium text-secondary">No Sync</span>
                 )}
               </div>
-              <div className="flex items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
+              <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE[job.status]}`}>{STATUS_LABEL[job.status]}</span>
               </div>
-              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary">{job.assignedToName ?? '—'}</div>
-              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary">{formatAmount(job.estimatedBudget)}</div>
-              <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary">{formatDate(job.endDate)}</div>
+              <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary">{job.assignedToName ?? '—'}</div>
+              <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary">{formatAmount(job.estimatedBudget)}</div>
+              <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:font-semibold group-hover:text-primary">{formatDate(job.endDate)}</div>
               <div className="flex aspect-square items-center justify-center border-b border-grid-border group-hover:bg-row-hover">
                 {canCreateProjects && (
                   <CreateProjectFromJobButton jobId={job.id} jobTitle={job.title} userOptions={userOptions} />
