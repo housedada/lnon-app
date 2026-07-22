@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { markClientsOrphanedByFicId } from '@/lib/db';
+import { markClientsOrphanedByFicId, markProductsOrphanedByFicId } from '@/lib/db';
 
 const CLIENT_DELETE_EVENT = 'it.fattureincloud.webhooks.entities.clients.delete';
+const PRODUCT_DELETE_EVENT = 'it.fattureincloud.webhooks.products.delete';
 
 function isAuthorized(request: NextRequest): boolean {
   const secret = request.nextUrl.searchParams.get('secret');
@@ -35,17 +36,18 @@ export async function POST(request: NextRequest) {
   }
 
   const eventType = request.headers.get('ce-type');
-  if (eventType !== CLIENT_DELETE_EVENT) {
+  if (eventType !== CLIENT_DELETE_EVENT && eventType !== PRODUCT_DELETE_EVENT) {
     return NextResponse.json({ ok: true });
   }
 
   const payload = await request.json().catch(() => null);
   const ids: unknown[] = payload?.data?.ids ?? [];
+  const markOrphaned = eventType === CLIENT_DELETE_EVENT ? markClientsOrphanedByFicId : markProductsOrphanedByFicId;
 
   for (const id of ids) {
     const ficId = typeof id === 'number' ? id : Number(id);
     if (!Number.isNaN(ficId)) {
-      await markClientsOrphanedByFicId(ficId);
+      await markOrphaned(ficId);
     }
   }
 

@@ -75,6 +75,33 @@ export interface FicClientSummary {
   email?: string;
 }
 
+export interface Product {
+  id: string;
+  name: string;
+  code?: string;
+  description?: string;
+  category?: string;
+  measure?: string;
+  netPrice?: number;
+  grossPrice?: number;
+  defaultVatRate?: number;
+  notes?: string;
+  createdBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt?: Date;
+  ficId?: number;
+  ficSyncStatus: FicSyncStatus;
+  ficLastSyncedAt?: Date;
+}
+
+// Rappresentazione minima di un prodotto Fatture in Cloud, per ricerca/collegamento
+export interface FicProductSummary {
+  id: number;
+  name: string;
+  code?: string;
+}
+
 export type JobStatus = 'draft' | 'pending_approval' | 'approved' | 'in_progress' | 'completed' | 'cancelled';
 
 export interface Job {

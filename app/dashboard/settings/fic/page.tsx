@@ -1,9 +1,10 @@
+import Link from 'next/link';
 import { headers } from 'next/headers';
-import { CheckCircle2, XCircle, Link2 } from 'lucide-react';
+import { CheckCircle2, XCircle, Link2, Package } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { getFicConnection } from '@/lib/db';
-import { getFicClientDeleteWebhookStatus } from '@/lib/fattureincloud';
+import { getFicDeleteWebhookStatus } from '@/lib/fattureincloud';
 import { registerFicWebhookAction } from '@/lib/actions/fic';
 import SubmitButton from '@/components/SubmitButton';
 
@@ -20,7 +21,7 @@ export default async function FicSettingsPage({
   const canManage = hasPermission(role, 'settings', 'manage_integrations');
 
   const connection = await getFicConnection();
-  const webhookStatus = connection ? await getFicClientDeleteWebhookStatus() : null;
+  const webhookStatus = connection ? await getFicDeleteWebhookStatus() : null;
   const headersList = await headers();
   const host = headersList.get('host');
   const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
@@ -32,7 +33,7 @@ export default async function FicSettingsPage({
     <div>
       <h1 className="p-6 pb-0 text-2xl font-semibold text-primary">Fatture in Cloud</h1>
       <p className="px-6 pt-1 text-sm text-secondary">
-        Collega LNON al tuo account Fatture in Cloud per sincronizzare l&apos;anagrafica clienti.
+        Collega LNON al tuo account Fatture in Cloud per sincronizzare clienti e prodotti.
       </p>
 
       <div className="mx-6 mt-6 max-w-xl rounded-lg border border-grid-border p-5">
@@ -93,6 +94,21 @@ export default async function FicSettingsPage({
           <p className="mt-4 text-xs text-secondary">Solo un superadmin può gestire questa integrazione.</p>
         )}
       </div>
+
+      {connection && (
+        <div className="mx-6 mt-4 max-w-xl">
+          <Link
+            href="/dashboard/settings/fic/products"
+            className="flex items-center gap-3 rounded-lg border border-grid-border p-4 transition hover:bg-row-hover"
+          >
+            <Package size={20} strokeWidth={1.75} className="text-secondary" aria-hidden="true" />
+            <div>
+              <p className="text-sm font-medium text-primary">Catalogo prodotti</p>
+              <p className="text-xs text-secondary">Importa e sincronizza i prodotti da Fatture in Cloud</p>
+            </div>
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

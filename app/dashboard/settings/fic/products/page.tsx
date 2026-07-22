@@ -1,16 +1,16 @@
 import Link from 'next/link';
 import { Plus, Search, Pencil, Trash2, ChevronLeft, ChevronRight, RefreshCw, AlertTriangle } from 'lucide-react';
 import { auth } from '@/lib/auth';
-import { getClients, getFicConnection } from '@/lib/db';
+import { getProducts, getFicConnection } from '@/lib/db';
 import { hasPermission, canDeleteResource } from '@/lib/permissions';
-import { deleteClientAction } from '@/lib/actions/clients';
-import BulkMatchClientsButton from '@/components/BulkMatchClientsButton';
+import { deleteProductAction } from '@/lib/actions/products';
+import ImportFicProductsButton from '@/components/ImportFicProductsButton';
 
-export const metadata = { title: 'Clienti' };
+export const metadata = { title: 'Prodotti' };
 
 const PAGE_SIZE = 25;
 
-export default async function ClientsPage({
+export default async function ProductsPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string; page?: string }>;
@@ -22,17 +22,13 @@ export default async function ClientsPage({
   const session = await auth();
   const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role ?? 'dipendente';
 
-  const { data: clients, total } = await getClients({
-    search: q,
-    limit: PAGE_SIZE,
-    offset,
-  });
+  const { data: products, total } = await getProducts({ search: q, limit: PAGE_SIZE, offset });
   const ficConnection = await getFicConnection();
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const canCreate = hasPermission(role, 'clients', 'create');
-  const canUpdate = hasPermission(role, 'clients', 'update');
-  const canDelete = canDeleteResource(role, '', '', 'clients');
+  const canCreate = hasPermission(role, 'products', 'create');
+  const canUpdate = hasPermission(role, 'products', 'update');
+  const canDelete = canDeleteResource(role, '', '', 'products');
 
   const ficBadge = (status: 'not_synced' | 'synced' | 'orphaned') => {
     if (status === 'synced') {
@@ -53,16 +49,16 @@ export default async function ClientsPage({
     <div>
       <div className="flex items-center justify-between p-6 pb-0">
         <div>
-          <h1 className="text-2xl font-semibold text-primary">Clienti</h1>
-          <p className="mt-1 text-sm text-secondary">{total} clienti totali</p>
+          <h1 className="text-2xl font-semibold text-primary">Prodotti</h1>
+          <p className="mt-1 text-sm text-secondary">{total} prodotti totali</p>
         </div>
         {canCreate && (
           <Link
-            href="/dashboard/clients/new"
+            href="/dashboard/settings/fic/products/new"
             className="btn-accent flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
           >
             <Plus size={16} strokeWidth={2} aria-hidden="true" />
-            Nuovo Cliente
+            Nuovo Prodotto
           </Link>
         )}
       </div>
@@ -75,51 +71,53 @@ export default async function ClientsPage({
               type="text"
               name="q"
               defaultValue={q ?? ''}
-              placeholder="Cerca per nome, email..."
+              placeholder="Cerca per nome o codice..."
               className="w-full rounded-lg border border-grid-border bg-card-bg py-2 pl-9 pr-3 text-sm text-primary"
             />
           </div>
         </form>
-        {ficConnection && canUpdate && <BulkMatchClientsButton />}
+        {ficConnection && canUpdate && <ImportFicProductsButton />}
       </div>
 
       <div
         className={`mx-6 mt-6 grid gap-x-[2px] border-t border-grid-border text-xs ${
-          ficConnection ? 'grid-cols-[2fr_2fr_1fr_1fr_1fr_1fr_auto]' : 'grid-cols-[2fr_2fr_1fr_1fr_1fr_auto]'
+          ficConnection ? 'grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]' : 'grid-cols-[2fr_1fr_1fr_1fr_auto]'
         }`}
       >
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Nome</div>
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Email</div>
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Telefono</div>
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Città</div>
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">P.IVA</div>
+        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Codice</div>
+        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Prezzo netto</div>
+        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">IVA</div>
         {ficConnection && (
           <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">FIC</div>
         )}
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Azioni</div>
 
-        {clients.length === 0 && (
+        {products.length === 0 && (
           <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
-            Nessun cliente trovato{q ? ` per “${q}”` : ''}.
+            Nessun prodotto trovato{q ? ` per “${q}”` : ''}.
           </div>
         )}
 
-        {clients.map((client) => (
-          <div key={client.id} className="group contents">
-            <div className="flex items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{client.name}</div>
-            <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">{client.email ?? '—'}</div>
-            <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">{client.phone ?? '—'}</div>
-            <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">{client.city ?? '—'}</div>
-            <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">{client.taxId ?? '—'}</div>
+        {products.map((product) => (
+          <div key={product.id} className="group contents">
+            <div className="flex items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{product.name}</div>
+            <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">{product.code ?? '—'}</div>
+            <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">
+              {product.netPrice != null ? `€ ${product.netPrice.toFixed(2)}` : '—'}
+            </div>
+            <div className="flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover">
+              {product.defaultVatRate != null ? `${product.defaultVatRate}%` : '—'}
+            </div>
             {ficConnection && (
               <div className="flex items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
-                {ficBadge(client.ficSyncStatus)}
+                {ficBadge(product.ficSyncStatus)}
               </div>
             )}
             <div className="flex items-center gap-3 border-b border-grid-border px-3 py-2 whitespace-nowrap group-hover:bg-row-hover">
-              {ficConnection && canUpdate && client.ficSyncStatus !== 'synced' && (
+              {ficConnection && canUpdate && product.ficSyncStatus !== 'synced' && (
                 <Link
-                  href={`/dashboard/clients/${client.id}/sync-fic`}
+                  href={`/dashboard/settings/fic/products/${product.id}/sync-fic`}
                   aria-label="Sincronizza con Fatture in Cloud"
                   className="text-secondary transition hover:text-primary"
                 >
@@ -128,16 +126,16 @@ export default async function ClientsPage({
               )}
               {canUpdate && (
                 <Link
-                  href={`/dashboard/clients/${client.id}/edit`}
-                  aria-label="Modifica cliente"
+                  href={`/dashboard/settings/fic/products/${product.id}/edit`}
+                  aria-label="Modifica prodotto"
                   className="text-secondary transition hover:text-primary"
                 >
                   <Pencil size={15} strokeWidth={1.75} />
                 </Link>
               )}
               {canDelete && (
-                <form action={deleteClientAction.bind(null, client.id)} className="inline">
-                  <button type="submit" aria-label="Elimina cliente" className="relative top-[2px] text-red-600/70 transition hover:text-red-600">
+                <form action={deleteProductAction.bind(null, product.id)} className="inline">
+                  <button type="submit" aria-label="Elimina prodotto" className="relative top-[2px] text-red-600/70 transition hover:text-red-600">
                     <Trash2 size={15} strokeWidth={1.75} />
                   </button>
                 </form>
@@ -155,33 +153,27 @@ export default async function ClientsPage({
         <div className="flex items-center gap-2">
           {currentPage > 1 ? (
             <Link
-              href={`/dashboard/clients?q=${encodeURIComponent(q ?? '')}&page=${currentPage - 1}`}
+              href={`/dashboard/settings/fic/products?q=${encodeURIComponent(q ?? '')}&page=${currentPage - 1}`}
               aria-label="Pagina precedente"
               className="flex items-center justify-center rounded-lg border border-muted p-1.5 text-primary transition hover:bg-row-hover"
             >
               <ChevronLeft size={16} strokeWidth={1.75} />
             </Link>
           ) : (
-            <span
-              aria-hidden="true"
-              className="flex cursor-not-allowed items-center justify-center rounded-lg border border-muted p-1.5 text-muted"
-            >
+            <span aria-hidden="true" className="flex cursor-not-allowed items-center justify-center rounded-lg border border-muted p-1.5 text-muted">
               <ChevronLeft size={16} strokeWidth={1.75} />
             </span>
           )}
           {currentPage < totalPages ? (
             <Link
-              href={`/dashboard/clients?q=${encodeURIComponent(q ?? '')}&page=${currentPage + 1}`}
+              href={`/dashboard/settings/fic/products?q=${encodeURIComponent(q ?? '')}&page=${currentPage + 1}`}
               aria-label="Pagina successiva"
               className="flex items-center justify-center rounded-lg border border-muted p-1.5 text-primary transition hover:bg-row-hover"
             >
               <ChevronRight size={16} strokeWidth={1.75} />
             </Link>
           ) : (
-            <span
-              aria-hidden="true"
-              className="flex cursor-not-allowed items-center justify-center rounded-lg border border-muted p-1.5 text-muted"
-            >
+            <span aria-hidden="true" className="flex cursor-not-allowed items-center justify-center rounded-lg border border-muted p-1.5 text-muted">
               <ChevronRight size={16} strokeWidth={1.75} />
             </span>
           )}

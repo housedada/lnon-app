@@ -10,6 +10,7 @@ import type {
   Invitation,
   ActivityLog,
   FicConnection,
+  Product,
 } from './types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -643,4 +644,208 @@ export async function logActivity(
   }
 }
 
-export type { User, Client, Job, Task, Invoice, Invitation, ActivityLog };
+function productRowToProduct(row: Record<string, any>): Product {
+  return {
+    id: row.id,
+    name: row.name,
+    code: row.code ?? undefined,
+    description: row.description ?? undefined,
+    category: row.category ?? undefined,
+    measure: row.measure ?? undefined,
+    netPrice: row.net_price ?? undefined,
+    grossPrice: row.gross_price ?? undefined,
+    defaultVatRate: row.default_vat_rate ?? undefined,
+    notes: row.notes ?? undefined,
+    createdBy: row.created_by ?? undefined,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+    deletedAt: row.deleted_at ? new Date(row.deleted_at) : undefined,
+    ficId: row.fic_id ?? undefined,
+    ficSyncStatus: row.fic_sync_status ?? 'not_synced',
+    ficLastSyncedAt: row.fic_last_synced_at ? new Date(row.fic_last_synced_at) : undefined,
+  };
+}
+
+function productToRow(data: Partial<Omit<Product, 'id' | 'createdAt' | 'updatedAt'>>): Record<string, any> {
+  const row: Record<string, any> = {};
+  if (data.name !== undefined) row.name = data.name;
+  if (data.code !== undefined) row.code = data.code;
+  if (data.description !== undefined) row.description = data.description;
+  if (data.category !== undefined) row.category = data.category;
+  if (data.measure !== undefined) row.measure = data.measure;
+  if (data.netPrice !== undefined) row.net_price = data.netPrice;
+  if (data.grossPrice !== undefined) row.gross_price = data.grossPrice;
+  if (data.defaultVatRate !== undefined) row.default_vat_rate = data.defaultVatRate;
+  if (data.notes !== undefined) row.notes = data.notes;
+  if (data.createdBy !== undefined) row.created_by = data.createdBy;
+  return row;
+}
+
+/**
+ * Crea un nuovo prodotto locale
+ */
+export async function createDbProduct(
+  productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt' | 'ficSyncStatus'>
+): Promise<Product> {
+  const { data, error } = await supabaseServer
+    .from('products')
+    .insert([productToRow(productData)])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return productRowToProduct(data);
+}
+
+/**
+ * Ottieni tutti i prodotti (con filtri opzionali)
+ */
+export async function getProducts(filters?: {
+  search?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<{ data: Product[]; total: number }> {
+  let query = supabaseServer
+    .from('products')
+    .select('*', { count: 'exact' })
+    .is('deleted_at', null)
+    .order('name', { ascending: true });
+
+  if (filters?.search) {
+    query = query.or(`name.ilike.%${filters.search}%,code.ilike.%${filters.search}%`);
+  }
+
+  if (filters?.limit) {
+    query = query.limit(filters.limit);
+  }
+
+  if (filters?.offset) {
+    query = query.range(filters.offset, filters.offset + (filters.limit || 10) - 1);
+  }
+
+  const { data, error, count } = await query;
+
+  if (error) throw error;
+  return { data: (data ?? []).map(productRowToProduct), total: count ?? 0 };
+}
+
+/**
+ * Ottieni un prodotto per id
+ */
+export async function getProductById(id: string): Promise<Product | null> {
+  const { data, error } = await supabaseServer
+    .from('products')
+    .select('*')
+    .eq('id', id)
+    .is('deleted_at', null)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw error;
+  }
+
+  return productRowToProduct(data);
+}
+
+/**
+ * Aggiorna un prodotto esistente
+ */
+export async function updateDbProduct(
+  id: string,
+  productData: Partial<Omit<Product, 'id' | 'createdBy' | 'createdAt' | 'updatedAt'>>
+): Promise<Product> {
+  const { data, error } = await supabaseServer
+    .from('products')
+    .update(productToRow(productData))
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return productRowToProduct(data);
+}
+
+/**
+ * Soft delete di un prodotto
+ */
+export async function softDeleteProduct(productId: string): Promise<Product> {
+  const { data, error } = await supabaseServer
+    .from('products')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', productId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return productRowToProduct(data);
+}
+
+/**
+ * Collega un prodotto LNON a un prodotto Fatture in Cloud esistente (o appena creato)
+ */
+export async function linkProductToFic(productId: string, ficId: number): Promise<Product> {
+  const { data, error } = await supabaseServer
+    .from('products')
+    .update({
+      fic_id: ficId,
+      fic_sync_status: 'synced',
+      fic_last_synced_at: new Date().toISOString(),
+    })
+    .eq('id', productId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return productRowToProduct(data);
+}
+
+/**
+ * Segna come "orfani" i prodotti collegati a un fic_id cancellato su FiC.
+ */
+export async function markProductsOrphanedByFicId(ficId: number): Promise<void> {
+  const { error } = await supabaseServer
+    .from('products')
+    .update({ fic_sync_status: 'orphaned' })
+    .eq('fic_id', ficId)
+    .eq('fic_sync_status', 'synced');
+
+  if (error) throw error;
+}
+
+/**
+ * Crea o aggiorna (per fic_id) un prodotto locale a partire da un prodotto FiC,
+ * usato dall'import/mirror di massa del catalogo.
+ */
+export async function upsertProductFromFic(ficId: number, data: Omit<Product, 'id' | 'createdAt' | 'updatedAt' | 'ficId' | 'ficSyncStatus' | 'ficLastSyncedAt'>): Promise<void> {
+  const row = {
+    ...productToRow(data),
+    fic_id: ficId,
+    fic_sync_status: 'synced',
+    fic_last_synced_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabaseServer.from('products').upsert([row], { onConflict: 'fic_id' });
+  if (error) throw error;
+}
+
+/**
+ * Ottieni tutti i client id LNON con fic_id valorizzato (per il match automatico bulk)
+ */
+export async function getAllClientsWithTaxIds(): Promise<{ id: string; taxId?: string; fiscalCode?: string; ficSyncStatus: Client['ficSyncStatus'] }[]> {
+  const { data, error } = await supabaseServer
+    .from('clients')
+    .select('id, tax_id, fiscal_code, fic_sync_status')
+    .is('deleted_at', null)
+    .eq('fic_sync_status', 'not_synced');
+
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    taxId: row.tax_id ?? undefined,
+    fiscalCode: row.fiscal_code ?? undefined,
+    ficSyncStatus: row.fic_sync_status,
+  }));
+}
+
+export type { User, Client, Job, Task, Invoice, Invitation, ActivityLog, Product };
