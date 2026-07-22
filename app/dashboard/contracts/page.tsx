@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import { Plus, Pencil } from 'lucide-react';
 import { auth } from '@/lib/auth';
-import { getContracts, getContractsStats } from '@/lib/db';
+import { getContracts, getContractsStats, getAllClientNames } from '@/lib/db';
 import { hasPermission } from '@/lib/permissions';
 import ListNavigator from '@/components/ListNavigator';
 import ContractsFilterWidget from '@/components/ContractsFilterWidget';
 import ContractsStatsWidget from '@/components/ContractsStatsWidget';
 import SyncContractsClientsButton from '@/components/SyncContractsClientsButton';
+import ContractLinkButton from '@/components/ContractLinkButton';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import type { Contract, ContractStatus } from '@/lib/types';
 
@@ -122,9 +123,10 @@ export default async function ContractsPage({
   const session = await auth();
   const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role ?? 'dipendente';
 
-  const [{ data: contracts, total }, stats] = await Promise.all([
+  const [{ data: contracts, total }, stats, clientOptions] = await Promise.all([
     getContracts({ search: q, status, categories: categoryList, limit: PAGE_SIZE, offset }),
     getContractsStats(),
+    getAllClientNames(),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -194,6 +196,13 @@ export default async function ContractsPage({
                   </div>
                 ))}
                 <div className="sticky right-0 z-[1] flex items-center justify-end gap-3 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-3 py-2 group-hover:bg-row-hover">
+                  {canUpdate && !contract.clientId && (
+                    <ContractLinkButton
+                      contractId={contract.id}
+                      contractClientName={contract.clientNameRaw}
+                      clientOptions={clientOptions}
+                    />
+                  )}
                   {canUpdate && (
                     <Link
                       href={`/dashboard/contracts/${contract.id}/edit`}

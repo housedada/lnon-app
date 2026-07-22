@@ -96,6 +96,15 @@ export async function deleteContractAction(id: string) {
   redirect('/dashboard/contracts');
 }
 
+/**
+ * Collega manualmente un singolo contratto a un cliente scelto dall'utente.
+ */
+export async function linkContractToClientAction(contractId: string, clientId: string): Promise<void> {
+  await requireRole('contracts', 'update');
+  await linkContractToClient(contractId, clientId);
+  revalidatePath('/dashboard/contracts');
+}
+
 function normalizeName(value: string): string {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
