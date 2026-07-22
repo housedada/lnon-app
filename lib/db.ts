@@ -347,6 +347,7 @@ export async function getJobs(filters?: {
   clientId?: string;
   status?: string;
   assignedTo?: string;
+  sync?: string; // 'synced' | 'not_synced'
   limit?: number;
   offset?: number;
 }): Promise<{ data: Job[]; total: number }> {
@@ -366,6 +367,12 @@ export async function getJobs(filters?: {
 
   if (filters?.status) {
     query = query.eq('status', filters.status);
+  }
+
+  if (filters?.sync === 'synced') {
+    query = query.not('client_id', 'is', null);
+  } else if (filters?.sync === 'not_synced') {
+    query = query.is('client_id', null);
   }
 
   if (filters?.assignedTo) {

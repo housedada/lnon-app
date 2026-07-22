@@ -7,6 +7,7 @@ import ListNavigator from '@/components/ListNavigator';
 import ApproveJobButton from '@/components/ApproveJobButton';
 import SyncJobsClientsButton from '@/components/SyncJobsClientsButton';
 import JobLinkButton from '@/components/JobLinkButton';
+import JobsFilterBar from '@/components/JobsFilterBar';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import type { JobStatus } from '@/lib/types';
 
@@ -35,9 +36,9 @@ const STATUS_BADGE: Record<JobStatus, string> = {
 export default async function JobsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; clientId?: string; sync?: string; status?: string }>;
 }) {
-  const { q, page } = await searchParams;
+  const { q, page, clientId, sync, status } = await searchParams;
   const currentPage = Math.max(1, Number(page) || 1);
   const offset = (currentPage - 1) * PAGE_SIZE;
 
@@ -48,6 +49,9 @@ export default async function JobsPage({
   const [{ data: jobs, total }, clientOptions] = await Promise.all([
     getJobs({
       search: q,
+      clientId,
+      sync,
+      status,
       assignedTo: role === 'dipendente' ? userId : undefined,
       limit: PAGE_SIZE,
       offset,
@@ -90,6 +94,8 @@ export default async function JobsPage({
           {canUpdate && <SyncJobsClientsButton />}
         </div>
       </div>
+
+      <JobsFilterBar clientOptions={clientOptions} />
 
       <ListNavigator
         basePath="/dashboard/jobs"
