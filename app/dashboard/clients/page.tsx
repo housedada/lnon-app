@@ -36,6 +36,7 @@ export default async function ClientsPage({
   const canCreate = hasPermission(role, 'clients', 'create');
   const canUpdate = hasPermission(role, 'clients', 'update');
   const canDelete = canDeleteResource(role, '', '', 'clients');
+  const isSuperadmin = role === 'superadmin';
 
   return (
     <div>
@@ -55,7 +56,7 @@ export default async function ClientsPage({
               Nuovo Cliente
             </Link>
           )}
-          {ficConnection && canUpdate && <BulkMatchClientsButton />}
+          {ficConnection && isSuperadmin && <BulkMatchClientsButton />}
         </div>
       </div>
 
@@ -69,7 +70,7 @@ export default async function ClientsPage({
         showSyncFilter={Boolean(ficConnection)}
       >
         <div
-          className={`mx-6 mt-6 grid gap-x-[2px] border-t border-grid-border text-xs ${
+          className={`mx-6 mt-6 grid gap-x-[2px] border-t border-grid-border text-[10px] ${
             ficConnection ? 'grid-cols-[2fr_1fr_1fr_1fr_auto]' : 'grid-cols-[2fr_1fr_1fr_auto]'
           }`}
         >
@@ -94,6 +95,7 @@ export default async function ClientsPage({
               canUpdate={canUpdate}
               canDelete={canDelete}
               ficConnection={Boolean(ficConnection)}
+              canSyncFic={isSuperadmin}
             />
           ))}
         </div>

@@ -72,11 +72,13 @@ export default function ClientRow({
   canUpdate,
   canDelete,
   ficConnection,
+  canSyncFic,
 }: {
   client: Client;
   canUpdate: boolean;
   canDelete: boolean;
   ficConnection: boolean;
+  canSyncFic: boolean;
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
 
@@ -117,7 +119,7 @@ export default function ClientRow({
         >
           <Eye size={15} strokeWidth={1.75} />
         </button>
-        {ficConnection && canUpdate && client.ficSyncStatus !== 'synced' && (
+        {ficConnection && canSyncFic && client.ficSyncStatus !== 'synced' && (
           <Link
             href={`/dashboard/clients/${client.id}/sync-fic`}
             aria-label="Sincronizza con Fatture in Cloud"

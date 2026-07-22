@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { AlertTriangle } from 'lucide-react';
+import { auth } from '@/lib/auth';
 import { getClientById, getFicConnection } from '@/lib/db';
 import { createFicClientFromLnonAction, linkClientToFicAction } from '@/lib/actions/fic';
 import FicClientSearch from '@/components/FicClientSearch';
@@ -11,8 +12,10 @@ export default async function SyncFicPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const client = await getClientById(id);
   const connection = await getFicConnection();
+  const session = await auth();
+  const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role;
 
-  if (!client || !connection) {
+  if (!client || !connection || role !== 'superadmin') {
     notFound();
   }
 

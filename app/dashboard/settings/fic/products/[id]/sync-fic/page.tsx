@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { AlertTriangle } from 'lucide-react';
+import { auth } from '@/lib/auth';
 import { getProductById, getFicConnection } from '@/lib/db';
 import { createFicProductFromLnonAction, linkProductToFicAction } from '@/lib/actions/fic';
 import FicProductSearch from '@/components/FicProductSearch';
@@ -11,8 +12,10 @@ export default async function SyncFicProductPage({ params }: { params: Promise<{
   const { id } = await params;
   const product = await getProductById(id);
   const connection = await getFicConnection();
+  const session = await auth();
+  const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role;
 
-  if (!product || !connection) {
+  if (!product || !connection || role !== 'superadmin') {
     notFound();
   }
 

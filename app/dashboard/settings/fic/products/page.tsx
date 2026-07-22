@@ -29,6 +29,7 @@ export default async function ProductsPage({
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const canCreate = hasPermission(role, 'products', 'create');
   const canUpdate = hasPermission(role, 'products', 'update');
+  const isSuperadmin = role === 'superadmin';
 
   const ficBadge = (status: 'not_synced' | 'synced' | 'orphaned') => {
     if (status === 'synced') {
@@ -63,7 +64,7 @@ export default async function ProductsPage({
               Nuovo Prodotto
             </Link>
           )}
-          {ficConnection && canUpdate && <ImportFicProductsButton />}
+          {ficConnection && isSuperadmin && <ImportFicProductsButton />}
         </div>
       </div>
 
@@ -77,7 +78,7 @@ export default async function ProductsPage({
         showSyncFilter={Boolean(ficConnection)}
       >
         <div
-          className={`mx-6 mt-6 grid gap-x-[2px] border-t border-grid-border text-xs ${
+          className={`mx-6 mt-6 grid gap-x-[2px] border-t border-grid-border text-[10px] ${
             ficConnection ? 'grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]' : 'grid-cols-[2fr_1fr_1fr_1fr_auto]'
           }`}
         >
@@ -112,7 +113,7 @@ export default async function ProductsPage({
                 </div>
               )}
               <div className="flex items-center justify-end gap-3 border-b border-grid-border px-3 py-2 whitespace-nowrap group-hover:bg-row-hover">
-                {ficConnection && canUpdate && product.ficSyncStatus !== 'synced' && (
+                {ficConnection && isSuperadmin && product.ficSyncStatus !== 'synced' && (
                   <Link
                     href={`/dashboard/settings/fic/products/${product.id}/sync-fic`}
                     aria-label="Sincronizza con Fatture in Cloud"

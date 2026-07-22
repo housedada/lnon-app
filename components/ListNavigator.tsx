@@ -66,7 +66,7 @@ export default function ListNavigator({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={searchPlaceholder}
-              className="w-full rounded-lg border border-grid-border bg-card-bg py-2 pl-9 pr-3 text-sm text-primary"
+              className="w-full rounded-lg border border-grid-border bg-card-bg py-2 pl-9 pr-3 text-[12px] text-primary"
             />
           </div>
         </form>
@@ -100,7 +100,7 @@ export default function ListNavigator({
               value={sync ?? ''}
               onChange={(e) => navigate({ sync: e.target.value, page: 1 })}
               aria-label="Filtra per stato sincronizzazione FIC"
-              className="ml-3 rounded-lg border border-grid-border bg-card-bg py-2 px-3 text-sm text-primary"
+              className="ml-3 rounded-lg border border-grid-border bg-card-bg py-2 px-3 text-[12px] text-primary"
             >
               {SYNC_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>

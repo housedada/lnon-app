@@ -48,11 +48,23 @@ async function requireRole(resource: string, action: string) {
   return role;
 }
 
+// La sincronizzazione con Fatture in Cloud (collegamento/creazione/import) è
+// per ora riservata al superadmin, indipendentemente dai permessi CRUD su
+// clienti/prodotti (che admin ha comunque per la gestione normale dei record).
+async function requireSuperadmin() {
+  const session = await auth();
+  const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role;
+  if (role !== 'superadmin') {
+    throw new Error('Solo un superadmin può eseguire la sincronizzazione con Fatture in Cloud.');
+  }
+  return role;
+}
+
 /**
  * Cerca clienti su Fatture in Cloud per nome/P.IVA/codice fiscale, per il collegamento manuale.
  */
 export async function searchFicClientsAction(query: string): Promise<FicClientSummary[]> {
-  await requireRole('clients', 'update');
+  await requireSuperadmin();
   if (!query.trim()) return [];
   return searchFicClients(query.trim());
 }
@@ -61,7 +73,7 @@ export async function searchFicClientsAction(query: string): Promise<FicClientSu
  * Collega un cliente LNON a un cliente Fatture in Cloud esistente (selezionato dall'utente).
  */
 export async function linkClientToFicAction(clientId: string, ficId: number) {
-  await requireRole('clients', 'update');
+  await requireSuperadmin();
   await dbLinkClientToFic(clientId, ficId);
   revalidatePath('/dashboard/clients');
   revalidatePath(`/dashboard/clients/${clientId}/edit`);
@@ -72,7 +84,7 @@ export async function linkClientToFicAction(clientId: string, ficId: number) {
  * poi collega il cliente LNON all'id FiC risultante.
  */
 export async function createFicClientFromLnonAction(clientId: string) {
-  await requireRole('clients', 'update');
+  await requireSuperadmin();
 
   const client = await getClientById(clientId);
   if (!client) {
@@ -110,7 +122,7 @@ export async function registerFicWebhookAction(appBaseUrl: string) {
  * nulla su FiC: i clienti senza corrispondenza restano da collegare manualmente.
  */
 export async function bulkMatchClientsAction(): Promise<{ matched: number; unmatched: number }> {
-  await requireRole('clients', 'update');
+  await requireSuperadmin();
 
   const [lnonClients, ficClients] = await Promise.all([getAllClientsWithTaxIds(), listAllFicClients()]);
 
@@ -147,7 +159,7 @@ export async function bulkMatchClientsAction(): Promise<{ matched: number; unmat
  * Propone solo corrispondenze di nome univoche (un solo cliente FiC con quel nome).
  */
 export async function suggestNameMatchesAction(): Promise<NameMatchSuggestion[]> {
-  await requireRole('clients', 'update');
+  await requireSuperadmin();
 
   const [lnonClients, ficClients] = await Promise.all([getAllClientsWithTaxIds(), listAllFicClients()]);
 
@@ -184,7 +196,7 @@ export async function suggestNameMatchesAction(): Promise<NameMatchSuggestion[]>
  * dopo la revisione degli abbinamenti per nome.
  */
 export async function confirmNameMatchesAction(pairs: { clientId: string; ficId: number }[]): Promise<number> {
-  await requireRole('clients', 'update');
+  await requireSuperadmin();
 
   for (const pair of pairs) {
     await dbLinkClientToFic(pair.clientId, pair.ficId);
@@ -198,7 +210,7 @@ export async function confirmNameMatchesAction(pairs: { clientId: string; ficId:
  * Cerca prodotti su Fatture in Cloud per nome/codice, per il collegamento manuale.
  */
 export async function searchFicProductsAction(query: string): Promise<FicProductSummary[]> {
-  await requireRole('products', 'update');
+  await requireSuperadmin();
   if (!query.trim()) return [];
   return searchFicProducts(query.trim());
 }
@@ -207,7 +219,7 @@ export async function searchFicProductsAction(query: string): Promise<FicProduct
  * Collega un prodotto LNON a un prodotto Fatture in Cloud esistente (selezionato dall'utente).
  */
 export async function linkProductToFicAction(productId: string, ficId: number) {
-  await requireRole('products', 'update');
+  await requireSuperadmin();
   await dbLinkProductToFic(productId, ficId);
   revalidatePath('/dashboard/settings/fic/products');
 }
@@ -217,7 +229,7 @@ export async function linkProductToFicAction(productId: string, ficId: number) {
  * poi collega il prodotto LNON all'id FiC risultante.
  */
 export async function createFicProductFromLnonAction(productId: string) {
-  await requireRole('products', 'update');
+  await requireSuperadmin();
 
   const product = await getProductById(productId);
   if (!product) {
@@ -235,7 +247,7 @@ export async function createFicProductFromLnonAction(productId: string) {
  * Importa/aggiorna in LNON tutti i prodotti presenti su Fatture in Cloud.
  */
 export async function importAllFicProductsAction(): Promise<number> {
-  await requireRole('products', 'update');
+  await requireSuperadmin();
   const count = await importAllFicProducts();
   revalidatePath('/dashboard/settings/fic/products');
   return count;
