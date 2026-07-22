@@ -1,6 +1,8 @@
 import ClientForm from '@/components/ClientForm';
 import { createClientAction } from '@/lib/actions/clients';
 
+export const metadata = { title: 'Nuovo Cliente' };
+
 export default function NewClientPage() {
   return (
     <div>
