@@ -28,6 +28,17 @@ function normalizeTaxId(value?: string): string | null {
   return trimmed || null;
 }
 
+function normalizeName(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+export interface NameMatchSuggestion {
+  clientId: string;
+  clientName: string;
+  ficId: number;
+  ficName: string;
+}
+
 async function requireRole(resource: string, action: string) {
   const session = await auth();
   const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role;
@@ -126,6 +137,61 @@ export async function bulkMatchClientsAction(): Promise<{ matched: number; unmat
 
   revalidatePath('/dashboard/clients');
   return { matched, unmatched: lnonClients.length - matched };
+}
+
+/**
+ * Propone abbinamenti per nome per i clienti LNON rimasti "non sincronizzati"
+ * dopo il match esatto su P.IVA/codice fiscale, limitatamente a quelli senza
+ * P.IVA né codice fiscale (per cui il match esatto non è mai stato possibile).
+ * Non collega nulla: l'utente deve confermare in un secondo passaggio.
+ * Propone solo corrispondenze di nome univoche (un solo cliente FiC con quel nome).
+ */
+export async function suggestNameMatchesAction(): Promise<NameMatchSuggestion[]> {
+  await requireRole('clients', 'update');
+
+  const [lnonClients, ficClients] = await Promise.all([getAllClientsWithTaxIds(), listAllFicClients()]);
+
+  const byName = new Map<string, { id: number; name: string }[]>();
+  for (const fc of ficClients) {
+    if (fc.id == null || !fc.name) continue;
+    const key = normalizeName(fc.name);
+    if (!key) continue;
+    const list = byName.get(key) ?? [];
+    list.push({ id: fc.id, name: fc.name });
+    byName.set(key, list);
+  }
+
+  const suggestions: NameMatchSuggestion[] = [];
+  for (const client of lnonClients) {
+    if (client.taxId || client.fiscalCode) continue; // già coperti dal match esatto
+    const key = normalizeName(client.name);
+    const candidates = byName.get(key);
+    if (candidates && candidates.length === 1) {
+      suggestions.push({
+        clientId: client.id,
+        clientName: client.name,
+        ficId: candidates[0].id,
+        ficName: candidates[0].name,
+      });
+    }
+  }
+
+  return suggestions;
+}
+
+/**
+ * Collega in blocco le coppie cliente LNON / cliente FiC confermate dall'utente
+ * dopo la revisione degli abbinamenti per nome.
+ */
+export async function confirmNameMatchesAction(pairs: { clientId: string; ficId: number }[]): Promise<number> {
+  await requireRole('clients', 'update');
+
+  for (const pair of pairs) {
+    await dbLinkClientToFic(pair.clientId, pair.ficId);
+  }
+
+  revalidatePath('/dashboard/clients');
+  return pairs.length;
 }
 
 /**

@@ -842,16 +842,19 @@ export async function upsertProductFromFic(ficId: number, data: Omit<Product, 'i
 /**
  * Ottieni tutti i client id LNON con fic_id valorizzato (per il match automatico bulk)
  */
-export async function getAllClientsWithTaxIds(): Promise<{ id: string; taxId?: string; fiscalCode?: string; ficSyncStatus: Client['ficSyncStatus'] }[]> {
+export async function getAllClientsWithTaxIds(): Promise<
+  { id: string; name: string; taxId?: string; fiscalCode?: string; ficSyncStatus: Client['ficSyncStatus'] }[]
+> {
   const { data, error } = await supabaseServer
     .from('clients')
-    .select('id, tax_id, fiscal_code, fic_sync_status')
+    .select('id, name, tax_id, fiscal_code, fic_sync_status')
     .is('deleted_at', null)
     .eq('fic_sync_status', 'not_synced');
 
   if (error) throw error;
   return (data ?? []).map((row) => ({
     id: row.id,
+    name: row.name,
     taxId: row.tax_id ?? undefined,
     fiscalCode: row.fiscal_code ?? undefined,
     ficSyncStatus: row.fic_sync_status,
