@@ -7,6 +7,9 @@ import {
   WebhooksApi,
   Scope,
   OAuth2AuthorizationCodeManager,
+  Condition,
+  Disjunction,
+  Operator,
 } from '@fattureincloud/fattureincloud-ts-sdk';
 import type { Client as FicClientModel } from '@fattureincloud/fattureincloud-ts-sdk';
 import {
@@ -81,7 +84,15 @@ function ficClientToSummary(c: FicClientModel): FicClientSummary {
  */
 export async function searchFicClients(query: string): Promise<FicClientSummary[]> {
   const { api, companyId } = await getClientsApi();
-  const response = await api.listClients(companyId, undefined, undefined, undefined, 1, 20, query || undefined);
+
+  // FiC non fa full-text search: 'q' è un'espressione di filtro strutturata
+  // (vedi src/filter dell'SDK), non una stringa libera.
+  const byName = new Condition('name', Operator.CONTAINS, query);
+  const byVat = new Condition('vat_number', Operator.CONTAINS, query);
+  const byTaxCode = new Condition('tax_code', Operator.CONTAINS, query);
+  const filter = new Disjunction(new Disjunction(byName, byVat), byTaxCode).buildQuery();
+
+  const response = await api.listClients(companyId, undefined, undefined, undefined, 1, 20, filter);
   return (response.data.data ?? []).map(ficClientToSummary);
 }
 
