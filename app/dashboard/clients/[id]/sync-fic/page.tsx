@@ -3,6 +3,7 @@ import { AlertTriangle } from 'lucide-react';
 import { getClientById, getFicConnection } from '@/lib/db';
 import { createFicClientFromLnonAction, linkClientToFicAction } from '@/lib/actions/fic';
 import FicClientSearch from '@/components/FicClientSearch';
+import SubmitButton from '@/components/SubmitButton';
 
 export const metadata = { title: 'Sincronizza con Fatture in Cloud' };
 
@@ -47,12 +48,9 @@ export default async function SyncFicPage({ params }: { params: Promise<{ id: st
             (nome, indirizzo, P.IVA, IBAN, ecc.).
           </p>
           <form action={boundCreate} className="mt-3">
-            <button
-              type="submit"
-              className="btn-accent rounded-lg px-4 py-2 text-sm font-medium"
-            >
+            <SubmitButton pendingLabel="Creazione in corso..." className="btn-accent rounded-lg px-4 py-2 text-sm font-medium">
               Crea nuovo cliente su Fatture in Cloud
-            </button>
+            </SubmitButton>
           </form>
         </section>
       </div>

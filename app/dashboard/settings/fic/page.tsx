@@ -5,6 +5,7 @@ import { hasPermission } from '@/lib/permissions';
 import { getFicConnection } from '@/lib/db';
 import { getFicClientDeleteWebhookStatus } from '@/lib/fattureincloud';
 import { registerFicWebhookAction } from '@/lib/actions/fic';
+import SubmitButton from '@/components/SubmitButton';
 
 export const metadata = { title: 'Fatture in Cloud' };
 
@@ -77,12 +78,12 @@ export default async function FicSettingsPage({
 
             {connection && !webhookStatus?.verified && (
               <form action={boundRegisterWebhook}>
-                <button
-                  type="submit"
+                <SubmitButton
+                  pendingLabel="Verifica in corso..."
                   className="rounded-lg border border-grid-border px-4 py-2 text-sm font-medium text-primary transition hover:bg-row-hover"
                 >
                   {webhookStatus ? 'Riprova verifica webhook' : 'Registra webhook cancellazioni'}
-                </button>
+                </SubmitButton>
               </form>
             )}
           </div>
