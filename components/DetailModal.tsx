@@ -45,12 +45,12 @@ export default function DetailModal({ title, sections, onClose }: DetailModalPro
         </div>
 
         <div className="mt-5 space-y-6">
-          {sections.map((section) => (
-            <div key={section.title}>
+          {sections.map((section, index) => (
+            <div key={section.title} className={index > 0 ? 'border-t border-grid-border pt-6' : ''}>
               <h3 className="detail-label mb-2">{section.title}</h3>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-[1px] overflow-hidden rounded-lg border border-grid-border bg-grid-border sm:grid-cols-3 lg:grid-cols-4">
                 {section.fields.map((field) => (
-                  <div key={field.label}>
+                  <div key={field.label} className="bg-card-bg px-3 py-2">
                     <p className="detail-label">{field.label}</p>
                     <div className="mt-0.5 flex items-center gap-1.5">
                       {field.copyable && typeof field.value === 'string' && field.value && (
