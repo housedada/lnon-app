@@ -59,7 +59,7 @@ const DATA_COLUMNS: { key: string; label: string }[] = [
   { key: 'providerCost', label: 'Costo provider' },
 ];
 
-const GRID_TEMPLATE = `repeat(${DATA_COLUMNS.length}, max-content) 56px`;
+const GRID_TEMPLATE = `repeat(${DATA_COLUMNS.length}, max-content) 40px 40px`;
 
 function renderCell(contract: Contract, key: string): React.ReactNode {
   switch (key) {
@@ -176,7 +176,8 @@ export default async function ContractsPage({
                 {col.label}
               </div>
             ))}
-            <div className="sticky right-0 z-[2] flex items-center justify-end whitespace-nowrap border-b border-l border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary" />
+            <div className="sticky right-10 z-[2] border-b border-l border-grid-border bg-grid-header-bg" />
+            <div className="sticky right-0 z-[2] border-b border-l border-grid-border bg-grid-header-bg" />
 
 
             {contracts.length === 0 && (
@@ -195,7 +196,7 @@ export default async function ContractsPage({
                     {renderCell(contract, col.key)}
                   </div>
                 ))}
-                <div className="sticky right-0 z-[1] flex items-center justify-end gap-3 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-3 py-2 group-hover:bg-row-hover">
+                <div className="sticky right-10 z-[1] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
                   {canUpdate && !contract.clientId && (
                     <ContractLinkButton
                       contractId={contract.id}
@@ -203,6 +204,8 @@ export default async function ContractsPage({
                       clientOptions={clientOptions}
                     />
                   )}
+                </div>
+                <div className="sticky right-0 z-[1] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
                   {canUpdate && (
                     <Link
                       href={`/dashboard/contracts/${contract.id}/edit`}
@@ -212,7 +215,6 @@ export default async function ContractsPage({
                       <Pencil size={15} strokeWidth={1.75} />
                     </Link>
                   )}
-                  {!canUpdate && <span className="text-muted">—</span>}
                 </div>
               </div>
             ))}
