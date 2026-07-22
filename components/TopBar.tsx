@@ -12,6 +12,7 @@ import Popover from '@/components/Popover';
 import UserColorPicker from '@/components/UserColorPicker';
 import { useContractsFilterStore } from '@/lib/store/contractsFilterStore';
 import { useContractsStatsStore } from '@/lib/store/contractsStatsStore';
+import { useJobsFilterStore } from '@/lib/store/jobsFilterStore';
 
 export default function TopBar({
   role,
@@ -26,10 +27,13 @@ export default function TopBar({
 }) {
   const pathname = usePathname();
   const isContractsPage = pathname?.startsWith('/dashboard/contracts');
+  const isJobsPage = pathname?.startsWith('/dashboard/jobs');
   const contractsFilterVisible = useContractsFilterStore((s) => s.visible);
   const toggleContractsFilter = useContractsFilterStore((s) => s.toggle);
   const contractsStatsVisible = useContractsStatsStore((s) => s.visible);
   const toggleContractsStats = useContractsStatsStore((s) => s.toggle);
+  const jobsFilterVisible = useJobsFilterStore((s) => s.visible);
+  const toggleJobsFilter = useJobsFilterStore((s) => s.toggle);
 
   return (
     <header className="fixed inset-x-0 top-0 z-40 flex h-[50px] items-center justify-between border-b border-neutral-800 bg-neutral-900 px-4">
@@ -63,6 +67,20 @@ export default function TopBar({
               <SlidersHorizontal size={17} strokeWidth={1.75} aria-hidden="true" />
             </button>
           </>
+        )}
+
+        {isJobsPage && (
+          <button
+            type="button"
+            onClick={toggleJobsFilter}
+            aria-label="Mostra/nascondi filtri lavori"
+            aria-pressed={jobsFilterVisible}
+            className={`flex h-8 w-8 items-center justify-center rounded-md transition ${
+              jobsFilterVisible ? 'bg-amber-500/15 text-amber-500' : 'text-amber-500/80 hover:bg-neutral-800 hover:text-amber-500'
+            }`}
+          >
+            <SlidersHorizontal size={17} strokeWidth={1.75} aria-hidden="true" />
+          </button>
         )}
 
         <Popover

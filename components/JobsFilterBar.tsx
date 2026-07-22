@@ -4,6 +4,7 @@ import { useTransition } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import type { JobStatus } from '@/lib/types';
+import { useJobsFilterStore } from '@/lib/store/jobsFilterStore';
 
 const STATUS_OPTIONS: { value: JobStatus | ''; label: string }[] = [
   { value: '', label: 'Tutti gli stati' },
@@ -22,6 +23,7 @@ const SYNC_OPTIONS: { value: string; label: string }[] = [
 ];
 
 export default function JobsFilterBar({ clientOptions }: { clientOptions: { id: string; name: string }[] }) {
+  const visible = useJobsFilterStore((s) => s.visible);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -43,8 +45,10 @@ export default function JobsFilterBar({ clientOptions }: { clientOptions: { id: 
     });
   }
 
+  if (!visible) return null;
+
   return (
-    <div className="mx-6 mt-6 flex flex-wrap items-center gap-3">
+    <div className="mx-6 mt-6 flex flex-wrap items-center gap-4 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
       <select
         value={clientId}
         onChange={(e) => updateParam('clientId', e.target.value)}
