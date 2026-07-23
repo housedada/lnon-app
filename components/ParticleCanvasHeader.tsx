@@ -9,6 +9,7 @@ interface ParticleState {
   vx: number;
   vy: number;
   alpha: number;
+  maxAlpha: number;
   strokeWidth: number;
   diameter?: number;
   angle?: number;
@@ -17,8 +18,9 @@ interface ParticleState {
   rotateClockwise?: boolean;
 }
 
-const MAX_ALPHA = 0.75;
-const MAX_PARTICLES = 40;
+const MIN_ALPHA = 0.06;
+const MAX_ALPHA = 0.16;
+const MAX_PARTICLES = 18;
 
 function randomFrom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -32,9 +34,10 @@ function createParticle(width: number, height: number): ParticleState {
     type,
     x,
     y,
-    vx: (Math.random() < 0.5 ? -1 : 1) * Math.random() * 0.15,
-    vy: (Math.random() < 0.5 ? -1 : 1) * Math.random() * 0.15,
+    vx: (Math.random() < 0.5 ? -1 : 1) * Math.random() * 0.05,
+    vy: (Math.random() < 0.5 ? -1 : 1) * Math.random() * 0.05,
     alpha: 0,
+    maxAlpha: MIN_ALPHA + Math.random() * (MAX_ALPHA - MIN_ALPHA),
     strokeWidth: Math.random() * (Math.random() > 0.5 ? 1.2 : 2),
   };
   if (type === 'hexagon') {
@@ -43,7 +46,7 @@ function createParticle(width: number, height: number): ParticleState {
   } else {
     base.angle = Math.atan2(y, x);
     base.length = randomFrom([5, 7, 3, 10]);
-    base.rotateSpeed = randomFrom([80, 140, 220, 320]);
+    base.rotateSpeed = randomFrom([260, 380, 520, 700]);
     base.rotateClockwise = Math.random() < 0.5;
   }
   return base;
@@ -105,7 +108,7 @@ export default function ParticleCanvasHeader() {
 
     function update() {
       particles.forEach((p) => {
-        if (p.alpha < MAX_ALPHA) p.alpha = Math.min(MAX_ALPHA, p.alpha + 0.004);
+        if (p.alpha < p.maxAlpha) p.alpha = Math.min(p.maxAlpha, p.alpha + 0.0015);
         p.x += p.vx;
         p.y += p.vy;
         if (p.type === 'line') {
