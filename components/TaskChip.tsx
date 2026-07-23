@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { GripVertical, ChevronRight, Plus } from 'lucide-react';
+import { GripVertical, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import AssigneeFloatingMenu from '@/components/AssigneeFloatingMenu';
+import RowContextMenu from '@/components/RowContextMenu';
 import type { ProjectTask, ProjectTaskStatus } from '@/lib/types';
 
 const STATUS_STYLE: Record<ProjectTaskStatus, string> = {
@@ -31,6 +32,7 @@ export default function TaskChip({
   onAssigneeSelect,
   onRename,
   onAddSubtask,
+  onDelete,
 }: {
   task: ProjectTask;
   level: number;
@@ -45,6 +47,7 @@ export default function TaskChip({
   onAssigneeSelect: (userId: string | null) => void;
   onRename: (title: string) => void;
   onAddSubtask: () => void;
+  onDelete: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(task.title);
@@ -60,6 +63,18 @@ export default function TaskChip({
   }
 
   return (
+    <RowContextMenu
+      menu={
+        <button
+          type="button"
+          onClick={onDelete}
+          className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-red-600 transition hover:bg-row-hover"
+        >
+          <Trash2 size={13} strokeWidth={1.75} aria-hidden="true" />
+          Elimina
+        </button>
+      }
+    >
     <div
       onDragOver={onDragOver}
       onDrop={onDrop}
@@ -144,5 +159,6 @@ export default function TaskChip({
         <AssigneeFloatingMenu userOptions={userOptions} currentAssignee={task.assignedTo} onSelect={onAssigneeSelect} />
       </div>
     </div>
+    </RowContextMenu>
   );
 }

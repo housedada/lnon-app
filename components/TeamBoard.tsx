@@ -2,10 +2,11 @@
 
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
-import { GripVertical, Briefcase } from 'lucide-react';
+import { GripVertical, Briefcase, ChevronDown } from 'lucide-react';
 import { saveTeamColumnOrderAction } from '@/lib/actions/projects';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
-import type { Project } from '@/lib/types';
+import ProjectTaskList from '@/components/ProjectTaskList';
+import type { Project, ProjectTask } from '@/lib/types';
 
 interface TeamMember {
   id: string;
@@ -16,10 +17,24 @@ interface TeamMember {
 export default function TeamBoard({
   members,
   projectsByUser,
+  tasksByProject,
+  userOptions,
 }: {
   members: TeamMember[];
   projectsByUser: Record<string, Project[]>;
+  tasksByProject: Record<string, ProjectTask[]>;
+  userOptions: { id: string; name: string; color?: string }[];
 }) {
+  const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
+
+  function toggleProject(projectId: string) {
+    setCollapsedProjects((prev) => {
+      const next = new Set(prev);
+      if (next.has(projectId)) next.delete(projectId);
+      else next.add(projectId);
+      return next;
+    });
+  }
   const [order, setOrder] = useState<string[]>(members.map((m) => m.id));
   const [dragId, setDragId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -77,17 +92,39 @@ export default function TeamBoard({
 
             <div className="flex flex-1 flex-col gap-2 p-2">
               {projects.length === 0 && <p className="px-2 py-4 text-center text-[11px] text-secondary">Nessun progetto</p>}
-              {projects.map((project) => (
-                <div key={project.id} className="card-shadow rounded-lg border border-grid-border bg-card-bg p-3">
-                  <p className="text-sm font-medium text-primary">{project.title}</p>
-                  {project.jobTitle && (
-                    <p className="mt-1 flex items-center gap-1 text-[11px] text-secondary">
-                      <Briefcase size={11} strokeWidth={1.75} aria-hidden="true" />
-                      {project.jobTitle}
-                    </p>
-                  )}
-                </div>
-              ))}
+              {projects.map((project) => {
+                const isCollapsed = collapsedProjects.has(project.id);
+                return (
+                  <div key={project.id} className="card-shadow rounded-lg border border-grid-border bg-card-bg">
+                    <button
+                      type="button"
+                      onClick={() => toggleProject(project.id)}
+                      className="flex w-full items-center justify-between gap-2 p-3 text-left"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-primary">{project.title}</p>
+                        {project.jobTitle && (
+                          <p className="mt-1 flex items-center gap-1 truncate text-[11px] text-secondary">
+                            <Briefcase size={11} strokeWidth={1.75} aria-hidden="true" />
+                            {project.jobTitle}
+                          </p>
+                        )}
+                      </div>
+                      <ChevronDown
+                        size={14}
+                        strokeWidth={2}
+                        className={`shrink-0 text-secondary transition-transform ${isCollapsed ? '-rotate-90' : ''}`}
+                        aria-hidden="true"
+                      />
+                    </button>
+                    {!isCollapsed && (
+                      <div className="border-t border-grid-border p-2">
+                        <ProjectTaskList projectId={project.id} initialTasks={tasksByProject[project.id] ?? []} userOptions={userOptions} />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         );

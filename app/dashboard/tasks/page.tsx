@@ -73,7 +73,11 @@ async function TeamView({ currentUserId }: { currentUserId: string }) {
   ];
   const members = ordered.map((id) => ({ id, name: byId.get(id)!.name, color: byId.get(id)!.color }));
 
-  return <TeamBoard members={members} projectsByUser={projectsByUser} />;
+  const taskLists = await Promise.all(allProjects.map((p) => getProjectTasks(p.id)));
+  const tasksByProject = Object.fromEntries(allProjects.map((p, i) => [p.id, taskLists[i]]));
+  const userOptions = activeUsers.map((u) => ({ id: u.id, name: u.name, color: u.color }));
+
+  return <TeamBoard members={members} projectsByUser={projectsByUser} tasksByProject={tasksByProject} userOptions={userOptions} />;
 }
 
 async function PersonalView({ userId }: { userId: string }) {

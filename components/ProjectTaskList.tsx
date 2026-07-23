@@ -1,14 +1,16 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import TaskChip from '@/components/TaskChip';
+import ProjectTaskTrashModal from '@/components/ProjectTaskTrashModal';
 import {
   createProjectTaskAction,
   updateProjectTaskStatusAction,
   updateProjectTaskAssigneeAction,
   updateProjectTaskTitleAction,
   reorderProjectTasksAction,
+  deleteProjectTaskAction,
 } from '@/lib/actions/projectTasks';
 import { notify } from '@/lib/notify';
 import type { ProjectTask, ProjectTaskStatus } from '@/lib/types';
@@ -33,6 +35,7 @@ export default function ProjectTaskList({
   const [title, setTitle] = useState('');
   const [dragId, setDragId] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [showTrash, setShowTrash] = useState(false);
   const [, startTransition] = useTransition();
 
   const childrenByParent = useMemo(() => {
@@ -93,6 +96,28 @@ export default function ProjectTaskList({
     setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, assignedTo: userId ?? undefined, assignedToName: user?.name, assignedToColor: user?.color } : t)));
     startTransition(async () => {
       const res = await updateProjectTaskAssigneeAction(task.id, userId);
+      if (!res.success) notify(res.message);
+    });
+  }
+
+  function handleDelete(task: ProjectTask) {
+    const idsToRemove = new Set<string>([task.id]);
+    let frontier = [task.id];
+    while (frontier.length > 0) {
+      const next: string[] = [];
+      for (const parentId of frontier) {
+        for (const child of childrenByParent.get(parentId) ?? []) {
+          if (!idsToRemove.has(child.id)) {
+            idsToRemove.add(child.id);
+            next.push(child.id);
+          }
+        }
+      }
+      frontier = next;
+    }
+    setTasks((prev) => prev.filter((t) => !idsToRemove.has(t.id)));
+    startTransition(async () => {
+      const res = await deleteProjectTaskAction(task.id);
       if (!res.success) notify(res.message);
     });
   }
@@ -162,6 +187,7 @@ export default function ProjectTaskList({
           onStatusClick={() => handleStatusClick(task)}
           onAssigneeSelect={(userId) => handleAssigneeSelect(task, userId)}
           onRename={(newTitle) => handleRename(task, newTitle)}
+          onDelete={() => handleDelete(task)}
           onAddSubtask={() => {
             setCreatingFor(task.id);
             setTitle('');
@@ -178,6 +204,18 @@ export default function ProjectTaskList({
 
   return (
     <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-end">
+        <button
+          type="button"
+          onClick={() => setShowTrash(true)}
+          aria-label="Cestino task"
+          title="Cestino task"
+          className="flex items-center gap-1 rounded px-1.5 py-1 text-[10px] text-secondary transition hover:text-primary"
+        >
+          <Trash2 size={11} strokeWidth={1.75} aria-hidden="true" />
+        </button>
+      </div>
+
       {rootTasks.map((task) => renderNode(task, 0))}
 
       {creatingFor === null ? (
@@ -194,6 +232,14 @@ export default function ProjectTaskList({
           <Plus size={12} strokeWidth={2} aria-hidden="true" />
           Aggiungi Task
         </button>
+      )}
+
+      {showTrash && (
+        <ProjectTaskTrashModal
+          projectId={projectId}
+          onClose={() => setShowTrash(false)}
+          onRestore={(task) => setTasks((prev) => [...prev, task])}
+        />
       )}
     </div>
   );

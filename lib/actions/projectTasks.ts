@@ -3,7 +3,16 @@
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
-import { createProjectTask, updateProjectTaskStatus, updateProjectTaskAssignee, updateProjectTaskTitle, reorderProjectTasks } from '@/lib/db';
+import {
+  createProjectTask,
+  updateProjectTaskStatus,
+  updateProjectTaskAssignee,
+  updateProjectTaskTitle,
+  reorderProjectTasks,
+  softDeleteProjectTask,
+  restoreProjectTask,
+  getDeletedProjectTasks,
+} from '@/lib/db';
 import type { ProjectTask, ProjectTaskStatus } from '@/lib/types';
 
 async function requireCanManage() {
@@ -83,4 +92,36 @@ export async function reorderProjectTasksAction(orderedTaskIds: string[]): Promi
   await requireCanManage();
   await reorderProjectTasks(orderedTaskIds);
   revalidatePath('/dashboard/tasks');
+}
+
+export async function deleteProjectTaskAction(taskId: string): Promise<{ success: boolean; message: string }> {
+  try {
+    await requireCanManage();
+    await softDeleteProjectTask(taskId);
+    revalidatePath('/dashboard/tasks');
+    return { success: true, message: 'Task spostato nel cestino.' };
+  } catch (err) {
+    return { success: false, message: err instanceof Error ? err.message : 'Errore nell\'eliminazione del task.' };
+  }
+}
+
+export async function restoreProjectTaskAction(taskId: string): Promise<{ success: boolean; message: string; task?: ProjectTask }> {
+  try {
+    await requireCanManage();
+    const task = await restoreProjectTask(taskId);
+    revalidatePath('/dashboard/tasks');
+    return { success: true, message: 'Task ripristinato.', task };
+  } catch (err) {
+    return { success: false, message: err instanceof Error ? err.message : 'Errore nel ripristino del task.' };
+  }
+}
+
+export async function getProjectTaskTrashAction(projectId: string): Promise<{ success: boolean; message: string; tasks?: ProjectTask[] }> {
+  try {
+    await requireCanManage();
+    const tasks = await getDeletedProjectTasks(projectId);
+    return { success: true, message: '', tasks };
+  } catch (err) {
+    return { success: false, message: err instanceof Error ? err.message : 'Errore nel caricamento del cestino.' };
+  }
 }

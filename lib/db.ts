@@ -1741,6 +1741,55 @@ export async function updateProjectTaskAssignee(taskId: string, assignedTo: stri
 }
 
 /**
+ * Sposta un task (e tutti i suoi sotto task discendenti) nel cestino del progetto
+ */
+export async function softDeleteProjectTask(taskId: string): Promise<void> {
+  const idsToDelete: string[] = [taskId];
+  let frontier = [taskId];
+  while (frontier.length > 0) {
+    const { data, error } = await supabaseServer.from('project_tasks').select('id').in('parent_task_id', frontier);
+    if (error) throw error;
+    const childIds = (data ?? []).map((r) => r.id as string);
+    if (childIds.length === 0) break;
+    idsToDelete.push(...childIds);
+    frontier = childIds;
+  }
+  const { error } = await supabaseServer
+    .from('project_tasks')
+    .update({ deleted_at: new Date().toISOString() })
+    .in('id', idsToDelete);
+  if (error) throw error;
+}
+
+/**
+ * Ripristina un task del cestino al suo stato base
+ */
+export async function restoreProjectTask(taskId: string): Promise<ProjectTask> {
+  const { data, error } = await supabaseServer
+    .from('project_tasks')
+    .update({ deleted_at: null })
+    .eq('id', taskId)
+    .select('*, assigned_user:users!project_tasks_assigned_to_fkey(name, color)')
+    .single();
+  if (error) throw error;
+  return projectTaskRowToProjectTask(data);
+}
+
+/**
+ * Task eliminati (cestino) di un progetto, dal più recente
+ */
+export async function getDeletedProjectTasks(projectId: string): Promise<ProjectTask[]> {
+  const { data, error } = await supabaseServer
+    .from('project_tasks')
+    .select('*, assigned_user:users!project_tasks_assigned_to_fkey(name, color)')
+    .eq('project_id', projectId)
+    .not('deleted_at', 'is', null)
+    .order('deleted_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(projectTaskRowToProjectTask);
+}
+
+/**
  * Applica il nuovo ordine (drag&drop) dei sotto task di un progetto
  */
 export async function reorderProjectTasks(orderedTaskIds: string[]): Promise<void> {
