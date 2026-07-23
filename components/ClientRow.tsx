@@ -2,10 +2,17 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Pencil, RefreshCw, AlertTriangle, Eye } from 'lucide-react';
+import { Pencil, RefreshCw, AlertTriangle, Eye, Briefcase, Trash2, Bug } from 'lucide-react';
 import type { Client, FicSyncStatus } from '@/lib/types';
 import DetailModal, { type DetailSection } from '@/components/DetailModal';
 import NewJobFromClientButton from '@/components/NewJobFromClientButton';
+import RowContextMenu from '@/components/RowContextMenu';
+import FormPageModal from '@/components/FormPageModal';
+import JobForm from '@/components/JobForm';
+import DoubleConfirmModal from '@/components/DoubleConfirmModal';
+import { createJobAction } from '@/lib/actions/jobs';
+import { deleteClientFromListAction } from '@/lib/actions/clients';
+import { notify } from '@/lib/notify';
 
 function ficBadge(status: FicSyncStatus) {
   if (status === 'synced') {
@@ -68,9 +75,15 @@ function buildDetailSections(client: Client): DetailSection[] {
   ];
 }
 
+const MENU_ROW_CLASS = 'flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-secondary transition hover:bg-row-hover hover:text-primary';
+
+type ModalKind = 'newJob' | 'delete' | null;
+
 export default function ClientRow({
   client,
   canUpdate,
+  canDelete,
+  isSuperadmin,
   ficConnection,
   canSyncFic,
   canCreateJobs,
@@ -81,6 +94,8 @@ export default function ClientRow({
 }: {
   client: Client;
   canUpdate: boolean;
+  canDelete: boolean;
+  isSuperadmin: boolean;
   ficConnection: boolean;
   canSyncFic: boolean;
   canCreateJobs: boolean;
@@ -90,9 +105,52 @@ export default function ClientRow({
   userOptions: { id: string; name: string; color?: string }[];
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
+  const [modal, setModal] = useState<ModalKind>(null);
+
+  async function handleDeleteConfirm() {
+    const res = await deleteClientFromListAction(client.id);
+    notify(res.message);
+    setModal(null);
+  }
+
+  function handleInspect() {
+    console.log('[Ispeziona] Cliente', client);
+    notify('Dati cliente loggati in console (apri gli strumenti sviluppatore).');
+  }
 
   return (
-    <div className="group contents">
+    <RowContextMenu
+      className="group contents"
+      menu={
+        <>
+          {canCreateJobs && (
+            <button type="button" onClick={() => setModal('newJob')} className={MENU_ROW_CLASS}>
+              <Briefcase size={15} strokeWidth={1.75} aria-hidden="true" />
+              Nuovo lavoro
+            </button>
+          )}
+          <button type="button" onClick={() => setDetailOpen(true)} className={MENU_ROW_CLASS}>
+            <Eye size={15} strokeWidth={1.75} aria-hidden="true" />
+            Vedi dettaglio
+          </button>
+          {canDelete && (
+            <button type="button" onClick={() => setModal('delete')} className={`${MENU_ROW_CLASS} text-red-600 hover:bg-red-600/5`}>
+              <Trash2 size={15} strokeWidth={1.75} aria-hidden="true" />
+              Elimina cliente
+            </button>
+          )}
+          {isSuperadmin && (
+            <>
+              <div className="my-1 border-t border-grid-border" />
+              <button type="button" onClick={handleInspect} className={MENU_ROW_CLASS}>
+                <Bug size={15} strokeWidth={1.75} aria-hidden="true" />
+                Ispeziona
+              </button>
+            </>
+          )}
+        </>
+      }
+    >
       <div
         onClick={() => setDetailOpen(true)}
         className="list-row-cell flex cursor-pointer items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover"
@@ -119,7 +177,8 @@ export default function ClientRow({
           {ficBadge(client.ficSyncStatus)}
         </div>
       )}
-      <div className="sticky right-30 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
+
+      <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 border-b border-l border-grid-border bg-card-bg px-2 group-hover:bg-row-hover">
         {canCreateJobs && (
           <NewJobFromClientButton
             clientId={client.id}
@@ -129,33 +188,30 @@ export default function ClientRow({
             userOptions={userOptions}
           />
         )}
-      </div>
-      <div className="sticky right-20 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
         <button
           type="button"
           onClick={() => setDetailOpen(true)}
           aria-label="Vedi dettaglio cliente"
+          title="Vedi dettaglio cliente"
           className="text-secondary transition hover:text-primary"
         >
           <Eye size={15} strokeWidth={1.75} />
         </button>
-      </div>
-      <div className="sticky right-10 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
         {ficConnection && canSyncFic && client.ficSyncStatus !== 'synced' && (
           <Link
             href={`/dashboard/clients/${client.id}/sync-fic`}
             aria-label="Sincronizza con Fatture in Cloud"
+            title="Sincronizza con Fatture in Cloud"
             className="text-secondary transition hover:text-primary"
           >
             <RefreshCw size={15} strokeWidth={1.75} />
           </Link>
         )}
-      </div>
-      <div className="sticky right-0 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
         {canUpdate && (
           <Link
             href={`/dashboard/clients/${client.id}/edit`}
             aria-label="Modifica cliente"
+            title="Modifica cliente"
             className="text-secondary transition hover:text-primary"
           >
             <Pencil size={15} strokeWidth={1.75} />
@@ -166,6 +222,31 @@ export default function ClientRow({
       {detailOpen && (
         <DetailModal title={client.name} sections={buildDetailSections(client)} onClose={() => setDetailOpen(false)} />
       )}
-    </div>
+
+      {modal === 'newJob' && (
+        <FormPageModal
+          title="Nuovo Lavoro"
+          icon={<Briefcase size={16} strokeWidth={1.75} className="text-white/70" aria-hidden="true" />}
+          onClose={() => setModal(null)}
+        >
+          <JobForm
+            defaultClientId={client.id}
+            clientOptions={clientOptions}
+            contractOptions={contractOptions}
+            productOptions={productOptions}
+            userOptions={userOptions}
+            action={createJobAction}
+          />
+        </FormPageModal>
+      )}
+      {modal === 'delete' && (
+        <DoubleConfirmModal
+          firstMessage={`Sei sicuro di voler eliminare il cliente "${client.name}"?`}
+          secondMessage="Confermi in modo definitivo? Il cliente verrà eliminato (soft delete)."
+          onConfirm={handleDeleteConfirm}
+          onClose={() => setModal(null)}
+        />
+      )}
+    </RowContextMenu>
   );
 }

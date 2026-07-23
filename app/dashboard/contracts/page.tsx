@@ -1,42 +1,19 @@
-import Link from 'next/link';
 import { Suspense } from 'react';
-import { Pencil } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { getContracts, getContractsStats, getAllClientNames } from '@/lib/db';
-import { hasPermission } from '@/lib/permissions';
+import { hasPermission, canDeleteResource } from '@/lib/permissions';
 import ListNavigator from '@/components/ListNavigator';
 import ListPlaceholder from '@/components/ListPlaceholder';
 import ContractsFilterWidget from '@/components/ContractsFilterWidget';
 import ContractsStatsWidget from '@/components/ContractsStatsWidget';
 import SyncContractsClientsButton from '@/components/SyncContractsClientsButton';
-import ContractLinkButton from '@/components/ContractLinkButton';
 import NewContractButton from '@/components/NewContractButton';
+import ContractRow from '@/components/ContractRow';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
-import type { Contract, ContractStatus } from '@/lib/types';
 
 export const metadata = { title: 'Contratti' };
 
 const PAGE_SIZE = 25;
-
-const STATUS_LABEL: Record<ContractStatus, string> = {
-  attivo: 'Attivo',
-  da_definire: 'Da definire',
-  disattivo: 'Disattivo',
-};
-
-const STATUS_BADGE: Record<ContractStatus, string> = {
-  attivo: 'bg-green-600/10 text-green-700',
-  da_definire: 'bg-grid-header-bg text-secondary',
-  disattivo: 'bg-red-600/10 text-red-700',
-};
-
-function formatAmount(value?: number) {
-  return value != null ? `€ ${value.toFixed(2)}` : '—';
-}
-
-function formatDate(value?: Date) {
-  return value ? value.toLocaleDateString('it-IT') : '—';
-}
 
 // Colonne dati (tutte tranne "Azioni", che resta fissa a destra).
 // grid-template-columns usa max-content per adattarsi al contenuto: la
@@ -62,56 +39,7 @@ const DATA_COLUMNS: { key: string; label: string }[] = [
   { key: 'providerCost', label: 'Costo provider' },
 ];
 
-const GRID_TEMPLATE = `repeat(${DATA_COLUMNS.length}, max-content) 40px 40px`;
-
-function renderCell(contract: Contract, key: string): React.ReactNode {
-  switch (key) {
-    case 'client':
-      return contract.clientName ?? contract.clientNameRaw;
-    case 'linkStatus':
-      return contract.clientId ? (
-        <span className="rounded-full bg-green-600/10 px-2 py-0.5 text-xs font-medium text-green-700">Sync</span>
-      ) : (
-        <span className="rounded-full bg-grid-header-bg px-2 py-0.5 text-xs font-medium text-secondary">No Sync</span>
-      );
-    case 'site':
-      return contract.site ?? '—';
-    case 'status':
-      return (
-        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE[contract.status]}`}>
-          {STATUS_LABEL[contract.status]}
-        </span>
-      );
-    case 'billingMonth':
-      return contract.billingMonth ?? '—';
-    case 'maintenance':
-      return formatAmount(contract.maintenanceWpAmount);
-    case 'hosting':
-      return formatAmount(contract.hostingAmount);
-    case 'analytics':
-      return formatAmount(contract.analyticsGdprAmount);
-    case 'cookie':
-      return formatAmount(contract.cookieAmount);
-    case 'total':
-      return formatAmount(contract.totalAmount);
-    case 'serviceDescription':
-      return contract.serviceDescription ?? '—';
-    case 'package':
-      return contract.package ?? '—';
-    case 'notes':
-      return contract.notes ?? '—';
-    case 'provider':
-      return contract.provider ?? '—';
-    case 'providerPlan':
-      return contract.providerPlan ?? '—';
-    case 'providerExpiryDate':
-      return formatDate(contract.providerExpiryDate);
-    case 'providerCost':
-      return formatAmount(contract.providerCost);
-    default:
-      return '—';
-  }
-}
+const GRID_TEMPLATE = `repeat(${DATA_COLUMNS.length}, max-content) 150px`;
 
 type SearchParams = { q?: string; page?: string; status?: string; categories?: string };
 
@@ -125,6 +53,8 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
 
   const canCreate = hasPermission(role, 'contracts', 'create');
   const canUpdate = hasPermission(role, 'contracts', 'update');
+  const canDelete = canDeleteResource(role, '', '', 'contracts');
+  const isSuperadmin = role === 'superadmin';
 
   return (
     <div>
@@ -143,7 +73,7 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
       <ContractsFilterWidget />
 
       <Suspense fallback={<ListPlaceholder />}>
-        <ContractsListSection params={params} clientOptions={clientOptions} canUpdate={canUpdate} />
+        <ContractsListSection params={params} clientOptions={clientOptions} canUpdate={canUpdate} canDelete={canDelete} isSuperadmin={isSuperadmin} />
       </Suspense>
     </div>
   );
@@ -153,10 +83,14 @@ async function ContractsListSection({
   params,
   clientOptions,
   canUpdate,
+  canDelete,
+  isSuperadmin,
 }: {
   params: SearchParams;
   clientOptions: { id: string; name: string }[];
   canUpdate: boolean;
+  canDelete: boolean;
+  isSuperadmin: boolean;
 }) {
   const { q, page, status, categories } = params;
   const currentPage = Math.max(1, Number(page) || 1);
@@ -187,7 +121,6 @@ async function ContractsListSection({
               {col.label}
             </div>
           ))}
-          <div className="sticky right-10 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
           <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
 
           {contracts.length === 0 && (
@@ -197,36 +130,15 @@ async function ContractsListSection({
           )}
 
           {contracts.map((contract) => (
-            <div key={contract.id} className="group contents">
-              {DATA_COLUMNS.map((col) => (
-                <div
-                  key={col.key}
-                  className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border bg-card-bg px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary [&:first-child]:font-semibold [&:first-child]:tracking-[0.01em] [&:first-child]:text-primary"
-                >
-                  {renderCell(contract, col.key)}
-                </div>
-              ))}
-              <div className="sticky right-10 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
-                {canUpdate && !contract.clientId && (
-                  <ContractLinkButton
-                    contractId={contract.id}
-                    contractClientName={contract.clientNameRaw}
-                    clientOptions={clientOptions}
-                  />
-                )}
-              </div>
-              <div className="sticky right-0 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
-                {canUpdate && (
-                  <Link
-                    href={`/dashboard/contracts/${contract.id}/edit`}
-                    aria-label="Modifica contratto"
-                    className="text-secondary transition hover:text-primary"
-                  >
-                    <Pencil size={15} strokeWidth={1.75} />
-                  </Link>
-                )}
-              </div>
-            </div>
+            <ContractRow
+              key={contract.id}
+              contract={contract}
+              dataColumns={DATA_COLUMNS}
+              canUpdate={canUpdate}
+              canDelete={canDelete}
+              isSuperadmin={isSuperadmin}
+              clientOptions={clientOptions}
+            />
           ))}
         </div>
       </div>

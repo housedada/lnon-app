@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { auth } from '@/lib/auth';
 import { getClients, getFicConnection, getAllClientNames, getAllContractOptions, getAllProductNames, getUsers } from '@/lib/db';
-import { hasPermission } from '@/lib/permissions';
+import { hasPermission, canDeleteResource } from '@/lib/permissions';
 import BulkMatchClientsButton from '@/components/BulkMatchClientsButton';
 import ClientRow from '@/components/ClientRow';
 import NewClientButton from '@/components/NewClientButton';
@@ -32,6 +32,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
 
   const canCreate = hasPermission(role, 'clients', 'create');
   const canUpdate = hasPermission(role, 'clients', 'update');
+  const canDelete = canDeleteResource(role, '', '', 'clients');
   const canCreateJobs = hasPermission(role, 'jobs', 'create');
   const isSuperadmin = role === 'superadmin';
 
@@ -53,6 +54,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
           params={params}
           ficConnection={Boolean(ficConnection)}
           canUpdate={canUpdate}
+          canDelete={canDelete}
           canCreateJobs={canCreateJobs}
           isSuperadmin={isSuperadmin}
           clientOptions={clientOptions}
@@ -69,6 +71,7 @@ async function ClientsListSection({
   params,
   ficConnection,
   canUpdate,
+  canDelete,
   canCreateJobs,
   isSuperadmin,
   clientOptions,
@@ -79,6 +82,7 @@ async function ClientsListSection({
   params: SearchParams;
   ficConnection: boolean;
   canUpdate: boolean;
+  canDelete: boolean;
   canCreateJobs: boolean;
   isSuperadmin: boolean;
   clientOptions: { id: string; name: string }[];
@@ -112,7 +116,7 @@ async function ClientsListSection({
     >
       <div
         className={`mx-6 mt-6 grid gap-x-[2px] border-t border-grid-border text-[12px] ${
-          ficConnection ? 'grid-cols-[2fr_1fr_1fr_1fr_40px_40px_40px_40px]' : 'grid-cols-[2fr_1fr_1fr_40px_40px_40px_40px]'
+          ficConnection ? 'grid-cols-[2fr_1fr_1fr_1fr_150px]' : 'grid-cols-[2fr_1fr_1fr_150px]'
         }`}
       >
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Nome</div>
@@ -121,9 +125,6 @@ async function ClientsListSection({
         {ficConnection && (
           <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">FIC</div>
         )}
-        <div className="sticky right-30 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
-        <div className="sticky right-20 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
-        <div className="sticky right-10 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
         <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
 
         {clients.length === 0 && (
@@ -137,6 +138,8 @@ async function ClientsListSection({
             key={client.id}
             client={client}
             canUpdate={canUpdate}
+            canDelete={canDelete}
+            isSuperadmin={isSuperadmin}
             ficConnection={ficConnection}
             canSyncFic={isSuperadmin}
             canCreateJobs={canCreateJobs}

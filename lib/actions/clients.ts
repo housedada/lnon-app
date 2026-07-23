@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { hasPermission, canDeleteResource } from '@/lib/permissions';
 import { createDbClient, updateDbClient, softDeleteClient } from '@/lib/db';
@@ -89,4 +90,17 @@ export async function deleteClientAction(id: string) {
 
   await softDeleteClient(id);
   redirect('/dashboard/clients');
+}
+
+export async function deleteClientFromListAction(id: string): Promise<{ success: boolean; message: string }> {
+  const session = await auth();
+  const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role;
+
+  if (!role || !canDeleteResource(role, '', '', 'clients')) {
+    return { success: false, message: 'Solo un superadmin può eliminare un cliente.' };
+  }
+
+  await softDeleteClient(id);
+  revalidatePath('/dashboard/clients');
+  return { success: true, message: 'Cliente eliminato.' };
 }

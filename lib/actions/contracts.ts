@@ -96,6 +96,19 @@ export async function deleteContractAction(id: string) {
   redirect('/dashboard/contracts');
 }
 
+export async function deleteContractFromListAction(id: string): Promise<{ success: boolean; message: string }> {
+  const session = await auth();
+  const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role;
+
+  if (!role || !canDeleteResource(role, '', '', 'contracts')) {
+    return { success: false, message: 'Solo un superadmin può eliminare un contratto.' };
+  }
+
+  await softDeleteContract(id);
+  revalidatePath('/dashboard/contracts');
+  return { success: true, message: 'Contratto eliminato.' };
+}
+
 /**
  * Collega manualmente un singolo contratto a un cliente scelto dall'utente.
  */

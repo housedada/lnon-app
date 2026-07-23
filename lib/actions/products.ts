@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { hasPermission, canDeleteResource } from '@/lib/permissions';
 import { createDbProduct, updateDbProduct, softDeleteProduct } from '@/lib/db';
@@ -69,4 +70,17 @@ export async function deleteProductAction(id: string) {
 
   await softDeleteProduct(id);
   redirect('/dashboard/settings/products');
+}
+
+export async function deleteProductFromListAction(id: string): Promise<{ success: boolean; message: string }> {
+  const session = await auth();
+  const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role;
+
+  if (!role || !canDeleteResource(role, '', '', 'products')) {
+    return { success: false, message: 'Solo un superadmin può eliminare un prodotto.' };
+  }
+
+  await softDeleteProduct(id);
+  revalidatePath('/dashboard/settings/products');
+  return { success: true, message: 'Prodotto eliminato.' };
 }
