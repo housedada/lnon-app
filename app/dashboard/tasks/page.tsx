@@ -2,12 +2,13 @@ import Link from 'next/link';
 import { Users2, User } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { getUsers, getAllAssignedProjects, getProjectsByAssignee, getTeamColumnOrder, getPersonalColumnOrder, getProductColorsForJobs, getProjectTasks } from '@/lib/db';
+import { DEMO_USERS, DEMO_PROJECTS, DEMO_TASKS_BY_PROJECT } from '@/lib/demoData';
 import TeamBoard from '@/components/TeamBoard';
 import PersonalBoard from '@/components/PersonalBoard';
 import TaskBoardViewToggle from '@/components/TaskBoardViewToggle';
 import TaskBoardBottomNav from '@/components/TaskBoardBottomNav';
 import DemoDataControls from '@/components/DemoDataControls';
-import type { Project } from '@/lib/types';
+import type { Project, ProjectTask } from '@/lib/types';
 
 export const metadata = { title: 'Task' };
 
@@ -71,13 +72,14 @@ async function TeamView({
   canManageInvoices: boolean;
   includeDemo: boolean;
 }) {
-  const [users, allProjects, savedOrder] = await Promise.all([
-    getUsers({ includeDemo }),
-    getAllAssignedProjects({ includeDemo }),
+  const [users, realProjects, savedOrder] = await Promise.all([
+    getUsers(),
+    getAllAssignedProjects(),
     currentUserId ? getTeamColumnOrder(currentUserId) : Promise.resolve([]),
   ]);
 
-  const activeUsers = users.filter((u) => u.isActive);
+  const activeUsers = includeDemo ? [...users.filter((u) => u.isActive), ...DEMO_USERS] : users.filter((u) => u.isActive);
+  const allProjects = includeDemo ? [...realProjects, ...DEMO_PROJECTS] : realProjects;
 
   const projectsByUser: Record<string, Project[]> = {};
   for (const project of allProjects) {
@@ -92,8 +94,9 @@ async function TeamView({
   ];
   const members = ordered.map((id) => ({ id, name: byId.get(id)!.name, color: byId.get(id)!.color }));
 
-  const taskLists = await Promise.all(allProjects.map((p) => getProjectTasks(p.id)));
-  const tasksByProject = Object.fromEntries(allProjects.map((p, i) => [p.id, taskLists[i]]));
+  const realTaskLists = await Promise.all(realProjects.map((p) => getProjectTasks(p.id)));
+  const tasksByProject: Record<string, ProjectTask[]> = Object.fromEntries(realProjects.map((p, i) => [p.id, realTaskLists[i]]));
+  if (includeDemo) Object.assign(tasksByProject, DEMO_TASKS_BY_PROJECT);
   const userOptions = activeUsers.map((u) => ({ id: u.id, name: u.name, color: u.color }));
 
   return (
@@ -116,19 +119,24 @@ async function PersonalView({
   canManageInvoices: boolean;
   includeDemo: boolean;
 }) {
-  const projects = userId ? await getProjectsByAssignee(userId, { includeDemo }) : [];
-  const jobIds = Array.from(new Set(projects.map((p) => p.jobId).filter((id): id is string => Boolean(id))));
+  const realProjects = userId ? await getProjectsByAssignee(userId) : [];
+  const jobIds = Array.from(new Set(realProjects.map((p) => p.jobId).filter((id): id is string => Boolean(id))));
 
-  const [productColorsMap, allUsers, taskLists, savedOrder] = await Promise.all([
+  const [productColorsMap, allUsers, realTaskLists, savedOrder] = await Promise.all([
     getProductColorsForJobs(jobIds),
-    getUsers({ includeDemo }),
-    Promise.all(projects.map((p) => getProjectTasks(p.id))),
+    getUsers(),
+    Promise.all(realProjects.map((p) => getProjectTasks(p.id))),
     userId ? getPersonalColumnOrder(userId) : Promise.resolve([]),
   ]);
   const productColorsByJob = Object.fromEntries(productColorsMap);
-  const userOptions = allUsers.filter((u) => u.isActive).map((u) => ({ id: u.id, name: u.name, color: u.color }));
-  const tasksByProject = Object.fromEntries(projects.map((p, i) => [p.id, taskLists[i]]));
+  const userOptions = includeDemo
+    ? [...allUsers.filter((u) => u.isActive), ...DEMO_USERS].map((u) => ({ id: u.id, name: u.name, color: u.color }))
+    : allUsers.filter((u) => u.isActive).map((u) => ({ id: u.id, name: u.name, color: u.color }));
 
+  const tasksByProject: Record<string, ProjectTask[]> = Object.fromEntries(realProjects.map((p, i) => [p.id, realTaskLists[i]]));
+  if (includeDemo) Object.assign(tasksByProject, DEMO_TASKS_BY_PROJECT);
+
+  const projects = includeDemo ? [...realProjects, ...DEMO_PROJECTS] : realProjects;
   const byId = new Map(projects.map((p) => [p.id, p]));
   const orderedProjects = [
     ...savedOrder.filter((id) => byId.has(id)).map((id) => byId.get(id)!),

@@ -17,7 +17,6 @@ import type {
   ProjectTaskStatus,
   ProjectInvoice,
 } from './types';
-import { USER_TAG_COLORS } from './types';
 import { buildProductColorMap } from './productColors';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -84,13 +83,12 @@ function userRowToUser(row: Record<string, any>): User {
 
 /**
  * Ottieni tutti gli utenti (per la gestione accessi).
- * Gli utenti demo (is_demo) sono esclusi di default: compaiono solo quando
- * includeDemo è esplicitamente true (usato solo dalla board Task col toggle dati demo).
+ * Eventuali righe is_demo residue (da un vecchio meccanismo di dati demo su DB,
+ * ora sostituito da un dataset fittizio hardcoded in lib/demoData.ts) restano
+ * escluse per sicurezza.
  */
-export async function getUsers({ includeDemo = false }: { includeDemo?: boolean } = {}): Promise<User[]> {
-  let query = supabaseServer.from('users').select('*').order('name', { ascending: true });
-  if (!includeDemo) query = query.eq('is_demo', false);
-  const { data, error } = await query;
+export async function getUsers(): Promise<User[]> {
+  const { data, error } = await supabaseServer.from('users').select('*').eq('is_demo', false).order('name', { ascending: true });
 
   if (error) throw error;
   return (data ?? []).map(userRowToUser);
@@ -1557,36 +1555,32 @@ export async function createDbProject(
 
 /**
  * Tutti i progetti (non eliminati) con l'assegnatario valorizzato, per la board Team.
- * I progetti demo sono esclusi di default (vedi getUsers).
+ * I progetti demo sono esclusi (vedi getUsers).
  */
-export async function getAllAssignedProjects({ includeDemo = false }: { includeDemo?: boolean } = {}): Promise<Project[]> {
-  let query = supabaseServer
+export async function getAllAssignedProjects(): Promise<Project[]> {
+  const { data, error } = await supabaseServer
     .from('projects')
     .select('*, jobs(title)')
     .is('deleted_at', null)
     .not('assigned_to', 'is', null)
+    .eq('is_demo', false)
     .order('created_at', { ascending: false });
-  if (!includeDemo) query = query.eq('is_demo', false);
-
-  const { data, error } = await query;
   if (error) throw error;
   return (data ?? []).map(projectRowToProject);
 }
 
 /**
  * Progetti assegnati a un utente specifico, per la board Personale.
- * I progetti demo sono esclusi di default (vedi getUsers).
+ * I progetti demo sono esclusi (vedi getUsers).
  */
-export async function getProjectsByAssignee(userId: string, { includeDemo = false }: { includeDemo?: boolean } = {}): Promise<Project[]> {
-  let query = supabaseServer
+export async function getProjectsByAssignee(userId: string): Promise<Project[]> {
+  const { data, error } = await supabaseServer
     .from('projects')
     .select('*, jobs(title)')
     .is('deleted_at', null)
     .eq('assigned_to', userId)
+    .eq('is_demo', false)
     .order('created_at', { ascending: false });
-  if (!includeDemo) query = query.eq('is_demo', false);
-
-  const { data, error } = await query;
   if (error) throw error;
   return (data ?? []).map(projectRowToProject);
 }
@@ -2122,62 +2116,5 @@ export async function reorderProjectTasks(orderedTaskIds: string[]): Promise<voi
   );
 }
 
-const DEMO_TASK_TITLES = ['Bozza contenuti', 'Revisione grafica', 'Setup ambiente', 'Test funzionale', 'Consegna al cliente'];
-const DEMO_TASK_STATUSES: ProjectTaskStatus[] = ['todo', 'in_progress', 'completed'];
-
-/**
- * Genera utenti/progetti/task fittizi (is_demo = true) per testare la board Task
- * con molte colonne, senza toccare i dati reali. Alcuni progetti demo vengono
- * assegnati anche a chi genera i dati, per popolare pure la vista Personale.
- */
-export async function generateDemoData(currentUserId: string): Promise<void> {
-  const demoUserRows = Array.from({ length: 5 }, (_, i) => ({
-    name: `Demo Utente ${i + 1}`,
-    email: `demo-${Date.now()}-${i + 1}@example.invalid`,
-    role: 'dipendente',
-    is_active: true,
-    color: USER_TAG_COLORS[i % USER_TAG_COLORS.length],
-    is_demo: true,
-  }));
-  const { data: demoUsers, error: usersError } = await supabaseServer.from('users').insert(demoUserRows).select();
-  if (usersError) throw usersError;
-  const demoUserIds = (demoUsers ?? []).map((u: any) => u.id as string);
-
-  const assigneePool = [...demoUserIds, currentUserId, currentUserId];
-  const projectRows = Array.from({ length: 12 }, (_, i) => ({
-    title: `Progetto demo ${i + 1}`,
-    assigned_to: assigneePool[i % assigneePool.length],
-    budget_share: 100,
-    is_demo: true,
-    created_by: currentUserId,
-  }));
-  const { data: demoProjects, error: projectsError } = await supabaseServer.from('projects').insert(projectRows).select();
-  if (projectsError) throw projectsError;
-
-  const taskRows = (demoProjects ?? []).flatMap((project: any) => {
-    const count = 2 + (Math.floor(Math.random() * 3));
-    return Array.from({ length: count }, (_, i) => ({
-      project_id: project.id,
-      title: DEMO_TASK_TITLES[i % DEMO_TASK_TITLES.length],
-      status: DEMO_TASK_STATUSES[Math.floor(Math.random() * DEMO_TASK_STATUSES.length)],
-      position: i,
-      created_by: currentUserId,
-    }));
-  });
-  if (taskRows.length > 0) {
-    const { error: tasksError } = await supabaseServer.from('project_tasks').insert(taskRows);
-    if (tasksError) throw tasksError;
-  }
-}
-
-/**
- * Elimina tutti i dati demo (progetti/task a cascata, poi gli utenti demo).
- */
-export async function clearDemoData(): Promise<void> {
-  const { error: projectsError } = await supabaseServer.from('projects').delete().eq('is_demo', true);
-  if (projectsError) throw projectsError;
-  const { error: usersError } = await supabaseServer.from('users').delete().eq('is_demo', true);
-  if (usersError) throw usersError;
-}
 
 export type { User, Client, Job, Task, Invoice, Invitation, ActivityLog, Product, Contract, Project, ProjectTask, ProjectInvoice };
