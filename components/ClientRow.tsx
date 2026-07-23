@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Pencil, RefreshCw, AlertTriangle, Eye } from 'lucide-react';
 import type { Client, FicSyncStatus } from '@/lib/types';
 import DetailModal, { type DetailSection } from '@/components/DetailModal';
+import NewJobFromClientButton from '@/components/NewJobFromClientButton';
 
 function ficBadge(status: FicSyncStatus) {
   if (status === 'synced') {
@@ -70,15 +71,23 @@ function buildDetailSections(client: Client): DetailSection[] {
 export default function ClientRow({
   client,
   canUpdate,
-  canDelete,
   ficConnection,
   canSyncFic,
+  canCreateJobs,
+  clientOptions,
+  contractOptions,
+  productOptions,
+  userOptions,
 }: {
   client: Client;
   canUpdate: boolean;
-  canDelete: boolean;
   ficConnection: boolean;
   canSyncFic: boolean;
+  canCreateJobs: boolean;
+  clientOptions: { id: string; name: string }[];
+  contractOptions: { id: string; label: string }[];
+  productOptions: { id: string; name: string }[];
+  userOptions: { id: string; name: string; color?: string }[];
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
 
@@ -110,7 +119,18 @@ export default function ClientRow({
           {ficBadge(client.ficSyncStatus)}
         </div>
       )}
-      <div className="flex items-center justify-end gap-3 border-b border-grid-border px-3 py-2 whitespace-nowrap group-hover:bg-row-hover">
+      <div className="sticky right-30 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
+        {canCreateJobs && (
+          <NewJobFromClientButton
+            clientId={client.id}
+            clientOptions={clientOptions}
+            contractOptions={contractOptions}
+            productOptions={productOptions}
+            userOptions={userOptions}
+          />
+        )}
+      </div>
+      <div className="sticky right-20 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
         <button
           type="button"
           onClick={() => setDetailOpen(true)}
@@ -119,6 +139,8 @@ export default function ClientRow({
         >
           <Eye size={15} strokeWidth={1.75} />
         </button>
+      </div>
+      <div className="sticky right-10 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
         {ficConnection && canSyncFic && client.ficSyncStatus !== 'synced' && (
           <Link
             href={`/dashboard/clients/${client.id}/sync-fic`}
@@ -128,6 +150,8 @@ export default function ClientRow({
             <RefreshCw size={15} strokeWidth={1.75} />
           </Link>
         )}
+      </div>
+      <div className="sticky right-0 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
         {canUpdate && (
           <Link
             href={`/dashboard/clients/${client.id}/edit`}
@@ -137,7 +161,6 @@ export default function ClientRow({
             <Pencil size={15} strokeWidth={1.75} />
           </Link>
         )}
-        {!canUpdate && !canDelete && <span className="text-muted">—</span>}
       </div>
 
       {detailOpen && (

@@ -6,6 +6,7 @@ import AssignedToPicker from '@/components/AssignedToPicker';
 
 interface JobFormProps {
   job?: Job;
+  defaultClientId?: string;
   clientOptions: { id: string; name: string }[];
   contractOptions: { id: string; label: string }[];
   productOptions: { id: string; name: string }[];
@@ -69,7 +70,16 @@ function toDateInputValue(date?: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-export default function JobForm({ job, clientOptions, contractOptions, productOptions, userOptions, action, secondaryAction }: JobFormProps) {
+export default function JobForm({
+  job,
+  defaultClientId,
+  clientOptions,
+  contractOptions,
+  productOptions,
+  userOptions,
+  action,
+  secondaryAction,
+}: JobFormProps) {
   return (
     <form action={action} className="w-full space-y-6 p-6">
       <section className="card-shadow space-y-4 rounded-xl border border-grid-border bg-card-bg p-6">
@@ -80,7 +90,7 @@ export default function JobForm({ job, clientOptions, contractOptions, productOp
             <select
               name="clientId"
               id="clientId"
-              defaultValue={job?.clientId ?? ''}
+              defaultValue={job?.clientId ?? defaultClientId ?? ''}
               required
               className="field-input w-full border border-grid-border bg-transparent px-3 pb-2 pt-4 text-sm text-primary"
             >
