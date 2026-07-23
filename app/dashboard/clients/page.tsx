@@ -116,8 +116,12 @@ async function ClientsListSection({
     >
       <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
         <div
-          className="grid w-fit min-w-full text-[12px]"
-          style={{ gridTemplateColumns: ficConnection ? 'repeat(4, max-content) max-content' : 'repeat(3, max-content) max-content' }}
+          className="grid w-full text-[12px]"
+          style={{
+            gridTemplateColumns: ficConnection
+              ? 'repeat(4, minmax(max-content, 1fr)) max-content'
+              : 'repeat(3, minmax(max-content, 1fr)) max-content',
+          }}
         >
           <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Nome</div>
           <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Città</div>

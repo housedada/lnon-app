@@ -79,7 +79,9 @@ async function ProductsListSection({
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const colorMap = buildProductColorMap(allProductNames);
 
-  const gridCols = ficConnection ? '40px repeat(4, max-content) max-content' : '40px repeat(3, max-content) max-content';
+  const gridCols = ficConnection
+    ? '40px repeat(4, minmax(max-content, 1fr)) max-content'
+    : '40px repeat(3, minmax(max-content, 1fr)) max-content';
 
   return (
     <ListNavigator
@@ -94,7 +96,7 @@ async function ProductsListSection({
       totalLabel="prodotti"
     >
       <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
-        <div className="grid w-fit min-w-full text-[12px]" style={{ gridTemplateColumns: gridCols }}>
+        <div className="grid w-full text-[12px]" style={{ gridTemplateColumns: gridCols }}>
           <div className="list-cell-deco border-b border-grid-border bg-grid-header-bg" />
           <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Nome</div>
           <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Codice</div>

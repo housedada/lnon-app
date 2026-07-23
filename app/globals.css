@@ -271,7 +271,7 @@ textarea::placeholder {
   transform-origin: left center;
   transition: transform 160ms cubic-bezier(0.4, 0, 0.2, 1), color 160ms ease, background-color 160ms ease;
   border-right: 1px solid var(--color-grid-border);
-  background-image: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 4%, transparent) 0%, transparent 65%);
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 2%, transparent) 0%, transparent 65%);
 }
 
 .group:hover .list-row-cell {
@@ -284,7 +284,7 @@ textarea::placeholder {
    pallino colore) che non lo usano. */
 .list-cell-deco {
   border-right: 1px solid var(--color-grid-border);
-  background-image: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 4%, transparent) 0%, transparent 65%);
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 2%, transparent) 0%, transparent 65%);
 }
 
 /* Intestazioni di lista: stesso divisore verticale, scoping esplicito

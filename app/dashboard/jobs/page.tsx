@@ -148,8 +148,8 @@ async function JobsListSection({
     >
       <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
         <div
-          className="grid w-fit min-w-full text-[12px]"
-          style={{ gridTemplateColumns: '32px repeat(7, max-content) max-content' }}
+          className="grid w-full text-[12px]"
+          style={{ gridTemplateColumns: '32px repeat(7, minmax(max-content, 1fr)) max-content' }}
         >
           <div className="list-cell-deco flex items-center justify-center border-b border-grid-border bg-grid-header-bg px-1 py-2">
             <JobsSelectAllCheckbox jobIds={jobs.map((j) => j.id)} />
