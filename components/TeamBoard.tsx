@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { GripVertical, Briefcase, ChevronDown } from 'lucide-react';
+import { GripVertical, Briefcase, ChevronDown, Trash2 } from 'lucide-react';
 import { saveTeamColumnOrderAction } from '@/lib/actions/projects';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
-import ProjectTaskList from '@/components/ProjectTaskList';
+import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/ProjectTaskList';
 import type { Project, ProjectTask } from '@/lib/types';
 
 interface TeamMember {
@@ -26,6 +26,7 @@ export default function TeamBoard({
   userOptions: { id: string; name: string; color?: string }[];
 }) {
   const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
+  const listRefs = useRef<Map<string, ProjectTaskListHandle>>(new Map());
 
   function toggleProject(projectId: string) {
     setCollapsedProjects((prev) => {
@@ -95,33 +96,48 @@ export default function TeamBoard({
               {projects.map((project) => {
                 const isCollapsed = collapsedProjects.has(project.id);
                 return (
-                  <div key={project.id} className="card-shadow rounded-lg border border-grid-border bg-card-bg">
-                    <button
-                      type="button"
-                      onClick={() => toggleProject(project.id)}
-                      className="flex w-full items-center justify-between gap-2 p-3 text-left"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-primary">{project.title}</p>
-                        {project.jobTitle && (
-                          <p className="mt-1 flex items-center gap-1 truncate text-[11px] text-secondary">
-                            <Briefcase size={11} strokeWidth={1.75} aria-hidden="true" />
-                            {project.jobTitle}
-                          </p>
-                        )}
-                      </div>
-                      <ChevronDown
-                        size={14}
-                        strokeWidth={2}
-                        className={`shrink-0 text-secondary transition-transform ${isCollapsed ? '-rotate-90' : ''}`}
-                        aria-hidden="true"
+                  <div key={project.id} className="card-shadow group rounded-lg border border-grid-border bg-card-bg">
+                    <div className="flex w-full items-center justify-between gap-2 p-3">
+                      <button type="button" onClick={() => toggleProject(project.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-primary">{project.title}</p>
+                          {project.jobTitle && (
+                            <p className="mt-1 flex items-center gap-1 truncate text-[11px] text-secondary">
+                              <Briefcase size={11} strokeWidth={1.75} aria-hidden="true" />
+                              {project.jobTitle}
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => listRefs.current.get(project.id)?.openTrash()}
+                        aria-label="Cestino task"
+                        title="Cestino task"
+                        className="shrink-0 text-secondary opacity-0 transition-opacity group-hover:opacity-100 hover:text-primary"
+                      >
+                        <Trash2 size={13} strokeWidth={1.75} aria-hidden="true" />
+                      </button>
+                      <button type="button" onClick={() => toggleProject(project.id)} className="shrink-0" aria-label={isCollapsed ? 'Espandi progetto' : 'Comprimi progetto'}>
+                        <ChevronDown
+                          size={14}
+                          strokeWidth={2}
+                          className={`text-secondary transition-transform ${isCollapsed ? '-rotate-90' : ''}`}
+                          aria-hidden="true"
+                        />
+                      </button>
+                    </div>
+                    <div className={`border-t border-grid-border p-2 ${isCollapsed ? 'hidden' : ''}`}>
+                      <ProjectTaskList
+                        ref={(el) => {
+                          if (el) listRefs.current.set(project.id, el);
+                          else listRefs.current.delete(project.id);
+                        }}
+                        projectId={project.id}
+                        initialTasks={tasksByProject[project.id] ?? []}
+                        userOptions={userOptions}
                       />
-                    </button>
-                    {!isCollapsed && (
-                      <div className="border-t border-grid-border p-2">
-                        <ProjectTaskList projectId={project.id} initialTasks={tasksByProject[project.id] ?? []} userOptions={userOptions} />
-                      </div>
-                    )}
+                    </div>
                   </div>
                 );
               })}

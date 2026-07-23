@@ -6,6 +6,8 @@ import AssigneeFloatingMenu from '@/components/AssigneeFloatingMenu';
 import RowContextMenu from '@/components/RowContextMenu';
 import type { ProjectTask, ProjectTaskStatus } from '@/lib/types';
 
+const MAX_LEVEL = 1;
+
 const STATUS_STYLE: Record<ProjectTaskStatus, string> = {
   todo: 'bg-transparent border-grid-border',
   in_progress: 'bg-yellow-300/25 border-yellow-500/50',
@@ -78,9 +80,23 @@ export default function TaskChip({
     <div
       onDragOver={onDragOver}
       onDrop={onDrop}
-      style={{ marginLeft: level * 16 }}
+      style={{ marginLeft: level * 16, width: `calc(100% - ${level * 16}px)` }}
       className={`group/task relative flex items-center gap-1.5 rounded border px-2 py-1.5 pr-20 text-xs transition-colors ${STATUS_STYLE[task.status]} ${level > 0 ? 'border-l-2 border-l-secondary/30' : ''}`}
     >
+      <span
+        draggable
+        onDragStart={onDragStart}
+        className="flex h-4 w-4 shrink-0 cursor-grab items-center justify-center active:cursor-grabbing"
+        aria-label="Trascina per riordinare"
+      >
+        <GripVertical
+          size={12}
+          strokeWidth={1.75}
+          className="text-secondary opacity-0 transition-opacity group-hover/task:opacity-60"
+          aria-hidden="true"
+        />
+      </span>
+
       {hasChildren ? (
         <button
           type="button"
@@ -93,20 +109,6 @@ export default function TaskChip({
       ) : (
         <span className="w-4 shrink-0" />
       )}
-
-      <span
-        draggable
-        onDragStart={onDragStart}
-        className="flex shrink-0 cursor-grab items-center active:cursor-grabbing"
-        aria-label="Trascina per riordinare"
-      >
-        <GripVertical
-          size={12}
-          strokeWidth={1.75}
-          className="text-secondary opacity-0 transition-opacity group-hover/task:opacity-60"
-          aria-hidden="true"
-        />
-      </span>
 
       {editing ? (
         <input
@@ -138,15 +140,17 @@ export default function TaskChip({
       )}
 
       <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
-        <button
-          type="button"
-          onClick={onAddSubtask}
-          aria-label="Aggiungi sotto task"
-          title="Aggiungi sotto task"
-          className="flex h-4 w-4 shrink-0 items-center justify-center text-secondary opacity-0 transition-opacity group-hover/task:opacity-70 hover:!opacity-100"
-        >
-          <Plus size={12} strokeWidth={2} aria-hidden="true" />
-        </button>
+        {level < MAX_LEVEL && (
+          <button
+            type="button"
+            onClick={onAddSubtask}
+            aria-label="Aggiungi sotto task"
+            title="Aggiungi sotto task"
+            className="flex h-4 w-4 shrink-0 items-center justify-center text-secondary opacity-0 transition-opacity group-hover/task:opacity-70 hover:!opacity-100"
+          >
+            <Plus size={12} strokeWidth={2} aria-hidden="true" />
+          </button>
+        )}
         <button
           type="button"
           onClick={onStatusClick}

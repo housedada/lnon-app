@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { forwardRef, useImperativeHandle, useMemo, useState, useTransition } from 'react';
+import { Plus } from 'lucide-react';
 import TaskChip from '@/components/TaskChip';
 import ProjectTaskTrashModal from '@/components/ProjectTaskTrashModal';
 import {
@@ -21,15 +21,15 @@ const NEXT_STATUS: Record<ProjectTaskStatus, ProjectTaskStatus> = {
   completed: 'todo',
 };
 
-export default function ProjectTaskList({
-  projectId,
-  initialTasks,
-  userOptions,
-}: {
+export interface ProjectTaskListHandle {
+  openTrash: () => void;
+}
+
+const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
   projectId: string;
   initialTasks: ProjectTask[];
   userOptions: { id: string; name: string; color?: string }[];
-}) {
+}>(function ProjectTaskList({ projectId, initialTasks, userOptions }, ref) {
   const [tasks, setTasks] = useState<ProjectTask[]>(initialTasks);
   const [creatingFor, setCreatingFor] = useState<string | null | undefined>(undefined);
   const [title, setTitle] = useState('');
@@ -37,6 +37,10 @@ export default function ProjectTaskList({
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [showTrash, setShowTrash] = useState(false);
   const [, startTransition] = useTransition();
+
+  useImperativeHandle(ref, () => ({
+    openTrash: () => setShowTrash(true),
+  }));
 
   const childrenByParent = useMemo(() => {
     const map = new Map<string, ProjectTask[]>();
@@ -162,9 +166,9 @@ export default function ProjectTaskList({
             setTitle('');
           }
         }}
-        style={{ marginLeft: level * 16 }}
+        style={{ marginLeft: level * 16, width: `calc(100% - ${level * 16}px)` }}
         placeholder="Titolo task..."
-        className="field-input w-full rounded border border-grid-border bg-transparent px-2 py-1.5 text-xs text-primary"
+        className="field-input rounded border border-grid-border bg-transparent px-2 py-1.5 text-xs text-primary"
       />
     );
   }
@@ -204,18 +208,6 @@ export default function ProjectTaskList({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-end">
-        <button
-          type="button"
-          onClick={() => setShowTrash(true)}
-          aria-label="Cestino task"
-          title="Cestino task"
-          className="flex items-center gap-1 rounded px-1.5 py-1 text-[10px] text-secondary transition hover:text-primary"
-        >
-          <Trash2 size={11} strokeWidth={1.75} aria-hidden="true" />
-        </button>
-      </div>
-
       {rootTasks.map((task) => renderNode(task, 0))}
 
       {creatingFor === null ? (
@@ -243,4 +235,6 @@ export default function ProjectTaskList({
       )}
     </div>
   );
-}
+});
+
+export default ProjectTaskList;

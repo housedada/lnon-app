@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { Briefcase, ChevronDown } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Briefcase, ChevronDown, Trash2 } from 'lucide-react';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
-import ProjectTaskList from '@/components/ProjectTaskList';
+import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/ProjectTaskList';
 import type { Project, ProjectTask } from '@/lib/types';
 
 export default function PersonalBoard({
@@ -19,6 +19,7 @@ export default function PersonalBoard({
 }) {
   const density = useTaskBoardViewStore((s) => s.density);
   const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
+  const listRefs = useRef<Map<string, ProjectTaskListHandle>>(new Map());
 
   function toggleProject(projectId: string) {
     setCollapsedProjects((prev) => {
@@ -62,33 +63,50 @@ export default function PersonalBoard({
             key={project.id}
             className={`group flex shrink-0 flex-col rounded-xl border border-grid-border bg-grid-header-bg ${cardWidthClass} ${isMasonry ? '' : 'self-start'}`}
           >
-            <button
-              type="button"
-              onClick={() => toggleProject(project.id)}
-              className="flex w-full items-center justify-between gap-2 rounded-t-xl border-b border-grid-border px-3 py-2 text-left"
+            <div
+              className="flex w-full items-center justify-between gap-2 rounded-t-xl border-b border-grid-border px-3 py-2"
               style={headerStyle}
             >
-              <div className="min-w-0">
-                <p className={`truncate text-sm font-semibold ${headerTextClass}`}>{project.title}</p>
-                {project.jobTitle && (
-                  <p className={`mt-1 flex items-center gap-1 truncate text-[11px] ${headerSubTextClass}`}>
-                    <Briefcase size={11} strokeWidth={1.75} aria-hidden="true" />
-                    {project.jobTitle}
-                  </p>
-                )}
-              </div>
-              <ChevronDown
-                size={14}
-                strokeWidth={2}
-                className={`shrink-0 transition-transform ${headerTextClass} ${isCollapsed ? '-rotate-90' : ''}`}
-                aria-hidden="true"
+              <button type="button" onClick={() => toggleProject(project.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                <div className="min-w-0">
+                  <p className={`truncate text-sm font-semibold ${headerTextClass}`}>{project.title}</p>
+                  {project.jobTitle && (
+                    <p className={`mt-1 flex items-center gap-1 truncate text-[11px] ${headerSubTextClass}`}>
+                      <Briefcase size={11} strokeWidth={1.75} aria-hidden="true" />
+                      {project.jobTitle}
+                    </p>
+                  )}
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => listRefs.current.get(project.id)?.openTrash()}
+                aria-label="Cestino task"
+                title="Cestino task"
+                className={`shrink-0 opacity-0 transition-opacity group-hover:opacity-100 ${headerTextClass}`}
+              >
+                <Trash2 size={13} strokeWidth={1.75} aria-hidden="true" />
+              </button>
+              <button type="button" onClick={() => toggleProject(project.id)} className="shrink-0" aria-label={isCollapsed ? 'Espandi progetto' : 'Comprimi progetto'}>
+                <ChevronDown
+                  size={14}
+                  strokeWidth={2}
+                  className={`transition-transform ${headerTextClass} ${isCollapsed ? '-rotate-90' : ''}`}
+                  aria-hidden="true"
+                />
+              </button>
+            </div>
+            <div className={`flex-1 p-2 ${isCollapsed ? 'hidden' : ''}`}>
+              <ProjectTaskList
+                ref={(el) => {
+                  if (el) listRefs.current.set(project.id, el);
+                  else listRefs.current.delete(project.id);
+                }}
+                projectId={project.id}
+                initialTasks={tasksByProject[project.id] ?? []}
+                userOptions={userOptions}
               />
-            </button>
-            {!isCollapsed && (
-              <div className="flex-1 p-2">
-                <ProjectTaskList projectId={project.id} initialTasks={tasksByProject[project.id] ?? []} userOptions={userOptions} />
-              </div>
-            )}
+            </div>
           </div>
         );
       })}
