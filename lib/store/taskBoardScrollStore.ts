@@ -1,11 +1,18 @@
 import { create } from 'zustand';
 
+export interface TaskBoardScrollColumn {
+  id: string;
+  label: string;
+  /** Sfondo coerente col colore del progetto/membro collegato (plain o gradient) */
+  background?: string;
+}
+
 interface TaskBoardScrollState {
   scrollContainer: HTMLDivElement | null;
-  columns: { id: string; label: string }[];
+  columns: TaskBoardScrollColumn[];
   columnRefs: Record<string, HTMLDivElement | null>;
   setScrollContainer: (el: HTMLDivElement | null) => void;
-  setColumns: (cols: { id: string; label: string }[]) => void;
+  setColumns: (cols: TaskBoardScrollColumn[]) => void;
   registerColumnRef: (id: string, el: HTMLDivElement | null) => void;
 }
 

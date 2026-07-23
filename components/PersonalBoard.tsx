@@ -12,6 +12,12 @@ import MarkProjectCompletedButton from '@/components/MarkProjectCompletedButton'
 import DropPlaceholder from '@/components/DropPlaceholder';
 import type { Project, ProjectTask } from '@/lib/types';
 
+function projectHeaderBackground(project: Project, productColorsByJob: Record<string, string[]>): string | undefined {
+  const colors = project.jobId ? productColorsByJob[project.jobId] : undefined;
+  if (!colors || colors.length === 0) return undefined;
+  return colors.length === 1 ? colors[0] : `linear-gradient(135deg, ${colors.join(', ')})`;
+}
+
 export default function PersonalBoard({
   projects,
   productColorsByJob,
@@ -43,8 +49,8 @@ export default function PersonalBoard({
   const projectsById = new Map(projects.map((p) => [p.id, p]));
 
   useEffect(() => {
-    setColumns(projects.map((p) => ({ id: p.id, label: p.title })));
-  }, [projects, setColumns]);
+    setColumns(projects.map((p) => ({ id: p.id, label: p.title, background: projectHeaderBackground(p, productColorsByJob) })));
+  }, [projects, productColorsByJob, setColumns]);
 
   useEffect(() => {
     listRefs.current.forEach((handle) => handle.setAllCollapsed(!expandTarget));
@@ -125,13 +131,8 @@ export default function PersonalBoard({
   return (
     <div className={containerClass} ref={(el) => setScrollContainer(el)}>
       {orderedProjects.map((project) => {
-        const colors = project.jobId ? productColorsByJob[project.jobId] : undefined;
-        const headerStyle =
-          colors && colors.length > 0
-            ? colors.length === 1
-              ? { background: colors[0] }
-              : { background: `linear-gradient(135deg, ${colors.join(', ')})` }
-            : undefined;
+        const background = projectHeaderBackground(project, productColorsByJob);
+        const headerStyle = background ? { background } : undefined;
         const headerTextClass = headerStyle ? 'text-neutral-800' : 'text-primary';
         const headerSubTextClass = headerStyle ? 'text-neutral-700/70' : 'text-secondary';
         const isCollapsed = collapsedProjects.has(project.id);

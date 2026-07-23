@@ -60,7 +60,7 @@ export default function TeamBoard({
   const membersById = new Map(members.map((m) => [m.id, m]));
 
   useEffect(() => {
-    setColumns(members.map((m) => ({ id: m.id, label: m.name })));
+    setColumns(members.map((m) => ({ id: m.id, label: m.name, background: m.color })));
   }, [members, setColumns]);
 
   useEffect(() => {
