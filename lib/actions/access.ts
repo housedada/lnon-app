@@ -33,7 +33,7 @@ export async function grantSuperadminByEmailAction(
   if (!user) {
     return {
       success: false,
-      message: 'Nessun utente trovato con questa email. Deve aver già effettuato il primo accesso a LNON.',
+      message: 'Nessun utente trovato con questa email. Deve aver già effettuato il primo accesso a Housedada.',
     };
   }
 

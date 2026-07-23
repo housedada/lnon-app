@@ -27,7 +27,7 @@ export default async function AccessSettingsPage() {
     <div>
       <h1 className="p-6 pb-0 text-2xl font-semibold text-primary">Gestione Accessi</h1>
       <p className="px-6 pt-1 text-sm text-secondary">
-        Concedi accesso superadmin a un utente già registrato (deve aver già effettuato il primo accesso a LNON),
+        Concedi accesso superadmin a un utente già registrato (deve aver già effettuato il primo accesso a Housedada),
         salvo eccezioni future.
       </p>
 

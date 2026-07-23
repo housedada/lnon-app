@@ -46,7 +46,7 @@ export default async function SyncFicProductPage({ params }: { params: Promise<{
         <section className="rounded-lg border border-grid-border p-5">
           <h2 className="text-sm font-semibold text-primary">Oppure crea un nuovo prodotto su FiC</h2>
           <p className="mt-1 text-xs text-secondary">
-            Verrà creato un nuovo prodotto su Fatture in Cloud usando i dati già presenti su questo record LNON.
+            Verrà creato un nuovo prodotto su Fatture in Cloud usando i dati già presenti su questo record Housedada.
           </p>
           <form action={boundCreate} className="mt-3">
             <SubmitButton pendingLabel="Creazione in corso..." className="btn-accent rounded-lg px-4 py-2 text-sm font-medium">

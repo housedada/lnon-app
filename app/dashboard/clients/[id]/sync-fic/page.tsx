@@ -31,7 +31,7 @@ export default async function SyncFicPage({ params }: { params: Promise<{ id: st
           <AlertTriangle size={16} strokeWidth={1.75} className="mt-0.5 shrink-0" aria-hidden="true" />
           <p>
             Questo cliente era collegato a Fatture in Cloud, ma il cliente corrispondente è stato cancellato su FiC.
-            I lavori collegati a questo cliente in LNON non sono stati toccati. Ricollegalo a un cliente FiC
+            I lavori collegati a questo cliente in Housedada non sono stati toccati. Ricollegalo a un cliente FiC
             esistente oppure creane uno nuovo.
           </p>
         </div>
@@ -47,7 +47,7 @@ export default async function SyncFicPage({ params }: { params: Promise<{ id: st
         <section className="rounded-lg border border-grid-border p-5">
           <h2 className="text-sm font-semibold text-primary">Oppure crea un nuovo cliente su FiC</h2>
           <p className="mt-1 text-xs text-secondary">
-            Verrà creato un nuovo cliente su Fatture in Cloud usando i dati già presenti su questo record LNON
+            Verrà creato un nuovo cliente su Fatture in Cloud usando i dati già presenti su questo record Housedada
             (nome, indirizzo, P.IVA, IBAN, ecc.).
           </p>
           <form action={boundCreate} className="mt-3">

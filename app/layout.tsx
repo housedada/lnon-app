@@ -9,8 +9,8 @@ const inter = Sora({
 
 export const metadata: Metadata = {
   title: {
-    default: "LNON · Housedada",
-    template: "%s · LNON",
+    default: "Housedada",
+    template: "%s · Housedada",
   },
   description: "Gestionale aziendale Housedada",
 };

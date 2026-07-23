@@ -78,7 +78,7 @@ export default function ContractForm({ contract, clientOptions, action, secondar
               ))}
             </select>
             <label htmlFor="clientId" className="field-floating-label">
-              Cliente LNON collegato
+              Cliente Housedada collegato
             </label>
           </div>
           <Field label="Sito / dominio" name="site" defaultValue={contract?.site} icon={Globe} />

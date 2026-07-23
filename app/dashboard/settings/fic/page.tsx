@@ -36,7 +36,7 @@ export default async function FicSettingsPage({
     <div>
       <h1 className="p-6 pb-0 text-2xl font-semibold text-primary">Fatture in Cloud</h1>
       <p className="px-6 pt-1 text-sm text-secondary">
-        Collega LNON al tuo account Fatture in Cloud per sincronizzare clienti e prodotti.
+        Collega Housedada al tuo account Fatture in Cloud per sincronizzare clienti e prodotti.
       </p>
 
       <div className="mx-6 mt-6 max-w-xl rounded-lg border border-grid-border p-5">
