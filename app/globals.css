@@ -48,7 +48,7 @@
     --background: #0a0a0a;
     --foreground: #ededed;
     --color-content-bg: #18181b;
-    --color-grid-border: #171717;
+    --color-grid-border: #262626; /* neutral-800: uniforma i bordi in tema scuro, prima quasi invisibili */
     --color-grid-header-bg: #202023;
     --color-card-bg: #141416;
     --color-row-hover: #1e1e21;
@@ -153,6 +153,25 @@ textarea::placeholder {
 }
 
 :root[data-theme='dark'] .special-action-icon {
+  color: #cfc8e6;
+}
+
+/* Talloncino "risolti/totale" nelle righe progetto/task delle card griglia Task:
+   stesso principio dell'icona speciale, colore chiaro in notte per restare leggibile. */
+.task-count-badge {
+  background: color-mix(in srgb, var(--accent-to) 12%, transparent);
+  color: var(--accent-to);
+}
+
+@media (prefers-color-scheme: dark) {
+  .task-count-badge {
+    background: color-mix(in srgb, #cfc8e6 18%, transparent);
+    color: #cfc8e6;
+  }
+}
+
+:root[data-theme='dark'] .task-count-badge {
+  background: color-mix(in srgb, #cfc8e6 18%, transparent);
   color: #cfc8e6;
 }
 

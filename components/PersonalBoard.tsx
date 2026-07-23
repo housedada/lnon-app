@@ -13,7 +13,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, horizontalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { Briefcase, CheckCircle2, ChevronDown, GripVertical, Maximize2, Trash2 } from 'lucide-react';
+import { Briefcase, CheckCircle2, ChevronDown, GripVertical, Plus, Trash2 } from 'lucide-react';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
 import { useTaskBoardScrollStore } from '@/lib/store/taskBoardScrollStore';
 import { useTaskBoardExpandStore } from '@/lib/store/taskBoardExpandStore';
@@ -23,7 +23,13 @@ import ProjectShareBadge from '@/components/ProjectShareBadge';
 import MarkProjectCompletedButton from '@/components/MarkProjectCompletedButton';
 import SortableColumn from '@/components/SortableColumn';
 import ProjectDetailModal from '@/components/ProjectDetailModal';
-import type { Project, ProjectTask } from '@/lib/types';
+import type { Project, ProjectTask, ProjectTaskStatus } from '@/lib/types';
+
+const TASK_STATUS_LABEL: Record<ProjectTaskStatus, string> = {
+  todo: 'Da fare',
+  in_progress: 'In corso',
+  completed: 'Fatto',
+};
 
 function projectHeaderBackground(project: Project, productColorsByJob: Record<string, string[]>): string | undefined {
   const colors = project.jobId ? productColorsByJob[project.jobId] : undefined;
@@ -134,7 +140,7 @@ export default function PersonalBoard({
 
   const isGrid = density === 'masonry';
   const containerClass = isGrid
-    ? 'grid h-full auto-rows-[176px] grid-cols-2 content-start gap-3 overflow-y-auto px-4 pb-4 pt-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
+    ? 'grid h-full auto-rows-[300px] grid-cols-2 content-start gap-3 overflow-y-auto px-4 pb-4 pt-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
     : 'flex h-full gap-3 overflow-x-auto px-4 pb-4 pt-3';
   const cardWidthClass = density === 'wide' ? 'w-[30%] min-w-[400px]' : 'w-[20%] min-w-[400px]';
 
@@ -151,28 +157,68 @@ export default function PersonalBoard({
           const background = projectHeaderBackground(project, productColorsByJob);
           const headerStyle = background ? { background } : undefined;
           const headerTextClass = headerStyle ? 'text-neutral-800' : 'text-primary';
-          const headerSubTextClass = headerStyle ? 'text-neutral-700/70' : 'text-secondary';
+          const tasks = tasksByProject[project.id] ?? [];
+          const total = tasks.length;
+          const completed = tasks.filter((t) => t.status === 'completed').length;
+          const toResolve = total - completed;
 
           return (
-            <div key={project.id} className="relative flex flex-col overflow-hidden rounded-xl border border-grid-border bg-grid-header-bg">
-              <div className="flex-1 p-3 pb-9" style={headerStyle}>
-                <p className={`truncate text-sm font-semibold ${headerTextClass}`}>{project.title}</p>
+            <button
+              type="button"
+              key={project.id}
+              onClick={() => setDetailProjectId(project.id)}
+              className="group relative flex flex-col overflow-hidden rounded-xl border border-grid-border bg-card-bg text-left transition hover:border-secondary"
+            >
+              <span
+                className="pointer-events-none absolute right-4 top-4 z-10 opacity-0 -translate-x-1.5 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:translate-x-0"
+                aria-hidden="true"
+              >
+                <Plus size={14} strokeWidth={2} className={headerTextClass} />
+              </span>
+              <div className="shrink-0 p-3" style={headerStyle}>
+                <p className={`truncate pr-6 text-sm font-semibold ${headerTextClass}`}>{project.title}</p>
                 {project.jobTitle && (
-                  <p className={`mt-1 flex items-center gap-1 truncate text-[11px] ${headerSubTextClass}`}>
+                  <p className={`mt-1 flex items-center gap-1 truncate text-xs ${headerStyle ? 'text-neutral-700/70' : 'text-secondary'}`}>
                     <Briefcase size={11} strokeWidth={1.75} aria-hidden="true" />
                     {project.jobTitle}
                   </p>
                 )}
               </div>
-              <button
-                type="button"
-                onClick={() => setDetailProjectId(project.id)}
-                className="absolute inset-x-0 bottom-0 flex h-9 items-center justify-center gap-1.5 border-t border-grid-border bg-card-bg text-xs font-medium text-secondary transition hover:bg-row-hover hover:text-primary"
-              >
-                <Maximize2 size={12} strokeWidth={1.75} aria-hidden="true" />
-                Dettagli
-              </button>
-            </div>
+
+              <div className="relative min-h-0 flex-1">
+                <div className="flex flex-col">
+                  {tasks.length === 0 && <p className="px-3 py-2 text-xs text-secondary">Nessun task</p>}
+                  {tasks.slice(0, 5).map((task) => (
+                    <div key={task.id} className="relative flex items-center border-b border-grid-border px-3 py-2.5 pr-16">
+                      <p className="truncate text-xs text-secondary">{task.title}</p>
+                      <span className="task-count-badge absolute right-3 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
+                        {TASK_STATUS_LABEL[task.status]}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div
+                  className="absolute inset-x-0 bottom-0 flex h-14 items-end"
+                  style={{ background: 'linear-gradient(to bottom, color-mix(in srgb, var(--color-card-bg) 0%, transparent), var(--color-card-bg) 55%)' }}
+                >
+                  <div className="grid w-full grid-cols-3 divide-x divide-grid-border border-t border-grid-border">
+                    <div className="px-1 py-1.5 text-center">
+                      <p className="text-base font-bold text-primary">{total}</p>
+                      <p className="detail-label">Task</p>
+                    </div>
+                    <div className="px-1 py-1.5 text-center">
+                      <p className="text-base font-bold text-primary">{completed}</p>
+                      <p className="detail-label">Fatti</p>
+                    </div>
+                    <div className="px-1 py-1.5 text-center">
+                      <p className="text-base font-bold text-primary">{toResolve}</p>
+                      <p className="detail-label">Da fare</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </button>
           );
         })}
 

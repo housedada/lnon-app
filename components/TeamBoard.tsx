@@ -191,10 +191,7 @@ export default function TeamBoard({
                     return (
                       <div key={project.id} className="relative flex items-center border-b border-grid-border px-3 py-2.5 pr-12">
                         <p className="truncate text-xs text-secondary">{project.title}</p>
-                        <span
-                          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
-                          style={{ background: 'color-mix(in srgb, var(--accent-to) 12%, transparent)', color: 'var(--accent-to)' }}
-                        >
+                        <span className="task-count-badge absolute right-3 top-1/2 -translate-y-1/2 rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
                           {counts.resolved}/{counts.total}
                         </span>
                       </div>
