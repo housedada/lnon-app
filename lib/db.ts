@@ -368,13 +368,15 @@ export async function getJobs(filters?: {
   sync?: string; // 'synced' | 'not_synced'
   archived?: boolean;
   archivedYear?: number;
+  trashed?: boolean;
   limit?: number;
   offset?: number;
 }): Promise<{ data: Job[]; total: number }> {
   let query = supabaseServer
     .from('jobs')
-    .select('*, clients(name), contracts(client_name_raw, clients(name))')
-    .is('deleted_at', null);
+    .select('*, clients(name), contracts(client_name_raw, clients(name))');
+
+  query = filters?.trashed ? query.not('deleted_at', 'is', null) : query.is('deleted_at', null);
 
   if (filters?.archived) {
     query = query.not('archived_at', 'is', null);
@@ -490,6 +492,22 @@ export async function softDeleteJob(jobId: string): Promise<Job> {
   const { data, error } = await supabaseServer
     .from('jobs')
     .update({ deleted_at: new Date().toISOString() })
+    .eq('id', jobId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return jobRowToJob(data);
+}
+
+/**
+ * Ripristina un lavoro dal cestino (con i suoi sotto task, quando esisteranno,
+ * dato che condivideranno lo stesso job_id e non vengono mai eliminati a parte)
+ */
+export async function restoreJob(jobId: string): Promise<Job> {
+  const { data, error } = await supabaseServer
+    .from('jobs')
+    .update({ deleted_at: null })
     .eq('id', jobId)
     .select()
     .single();

@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { Pencil, Archive } from 'lucide-react';
+import { Pencil, Archive, Trash2 } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { getJobs, getAllClientNames, getAllContractOptions, getAllProductNames, getUsers } from '@/lib/db';
-import { hasPermission } from '@/lib/permissions';
+import { hasPermission, canDeleteResource } from '@/lib/permissions';
 import ListNavigator from '@/components/ListNavigator';
 import ListPlaceholder from '@/components/ListPlaceholder';
 import ApproveJobButton from '@/components/ApproveJobButton';
@@ -17,6 +17,8 @@ import JobRowSelectCheckbox from '@/components/JobRowSelectCheckbox';
 import JobsSelectAllCheckbox from '@/components/JobsSelectAllCheckbox';
 import JobsBulkArchiveButton from '@/components/JobsBulkArchiveButton';
 import JobsSelectionToggle from '@/components/JobsSelectionToggle';
+import RowContextMenu from '@/components/RowContextMenu';
+import DeleteJobMenuItem from '@/components/DeleteJobMenuItem';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import type { JobStatus } from '@/lib/types';
 
@@ -69,6 +71,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   const canCreate = hasPermission(role, 'jobs', 'create');
   const canUpdate = hasPermission(role, 'jobs', 'update');
   const canApprove = hasPermission(role, 'jobs', 'approve');
+  const canDelete = canDeleteResource(role, '', '', 'jobs');
 
   return (
     <div>
@@ -96,6 +99,15 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
             <Archive size={16} strokeWidth={1.75} aria-hidden="true" />
             Archivio
           </Link>
+          <Link
+            href="/dashboard/jobs/trash"
+            aria-label="Cestino lavori"
+            title="Cestino lavori"
+            className="flex items-center gap-1.5 rounded-lg border border-grid-border px-3 py-2 text-sm font-medium text-secondary transition hover:bg-row-hover hover:text-primary"
+          >
+            <Trash2 size={16} strokeWidth={1.75} aria-hidden="true" />
+            Cestino
+          </Link>
         </div>
       </div>
 
@@ -111,6 +123,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
           canCreateProjects={canCreateProjects}
           canUpdate={canUpdate}
           canApprove={canApprove}
+          canDelete={canDelete}
         />
       </Suspense>
     </div>
@@ -126,6 +139,7 @@ async function JobsListSection({
   canCreateProjects,
   canUpdate,
   canApprove,
+  canDelete,
 }: {
   params: SearchParams;
   role: 'superadmin' | 'admin' | 'dipendente';
@@ -135,6 +149,7 @@ async function JobsListSection({
   canCreateProjects: boolean;
   canUpdate: boolean;
   canApprove: boolean;
+  canDelete: boolean;
 }) {
   const { q, page, clientId, sync, status } = params;
   const currentPage = Math.max(1, Number(page) || 1);
@@ -164,7 +179,7 @@ async function JobsListSection({
       extraTopControls={<JobsBulkArchiveButton />}
       searchExtra={canUpdate && <JobsSelectionToggle />}
     >
-      <div className="mx-6 mt-6 grid grid-cols-[32px_2fr_1.5fr_auto_1fr_1fr_1fr_1fr_40px_40px_40px_40px_40px] gap-x-[2px] border-t border-grid-border text-[12px]">
+      <div className="mx-6 mt-6 grid grid-cols-[32px_2fr_1.5fr_auto_1fr_1fr_1fr_1fr_40px] gap-x-[2px] border-t border-grid-border text-[12px]">
         <div className="flex items-center justify-center border-b border-grid-border bg-grid-header-bg px-1 py-2">
           <JobsSelectAllCheckbox jobIds={jobs.map((j) => j.id)} />
         </div>
@@ -175,10 +190,6 @@ async function JobsListSection({
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Assegnato a</div>
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Budget stimato</div>
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Scadenza</div>
-        <div className="sticky right-40 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
-        <div className="sticky right-30 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
-        <div className="sticky right-20 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
-        <div className="sticky right-10 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
         <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
 
         {jobs.length === 0 && (
@@ -209,28 +220,32 @@ async function JobsListSection({
             <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{job.assignedToName ?? '—'}</div>
             <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatAmount(job.estimatedBudget)}</div>
             <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(job.endDate)}</div>
-            <div className="sticky right-40 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
-              {canCreateProjects && (
-                <CreateProjectFromJobButton jobId={job.id} jobTitle={job.title} userOptions={userOptions} />
-              )}
-            </div>
-            <div className="sticky right-30 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
-              {canUpdate && !job.clientId && job.clientNameRaw && (
-                <JobLinkButton jobId={job.id} jobClientName={job.clientNameRaw} clientOptions={clientOptions} />
-              )}
-            </div>
-            <div className="sticky right-20 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
-              {canApprove && job.status === 'pending_approval' && <ApproveJobButton jobId={job.id} />}
-            </div>
-            <div className="sticky right-10 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
-              {canUpdate && job.status === 'completed' && !job.archivedAt && <ArchiveJobButton jobId={job.id} />}
-            </div>
             <div className="sticky right-0 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
-              {canUpdate && (
-                <Link href={`/dashboard/jobs/${job.id}/edit`} aria-label="Modifica lavoro" className="text-secondary transition hover:text-primary">
-                  <Pencil size={15} strokeWidth={1.75} />
-                </Link>
-              )}
+              <RowContextMenu>
+                {canCreateProjects && (
+                  <CreateProjectFromJobButton jobId={job.id} jobTitle={job.title} userOptions={userOptions} />
+                )}
+                {canUpdate && !job.clientId && job.clientNameRaw && (
+                  <JobLinkButton jobId={job.id} jobClientName={job.clientNameRaw} clientOptions={clientOptions} />
+                )}
+                {canApprove && job.status === 'pending_approval' && <ApproveJobButton jobId={job.id} />}
+                {canUpdate && job.status === 'completed' && !job.archivedAt && <ArchiveJobButton jobId={job.id} />}
+                {canUpdate && (
+                  <Link
+                    href={`/dashboard/jobs/${job.id}/edit`}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-secondary transition hover:bg-row-hover hover:text-primary"
+                  >
+                    <Pencil size={15} strokeWidth={1.75} aria-hidden="true" />
+                    Modifica lavoro
+                  </Link>
+                )}
+                {canDelete && (
+                  <>
+                    <div className="my-1 border-t border-grid-border" />
+                    <DeleteJobMenuItem jobId={job.id} jobTitle={job.title} />
+                  </>
+                )}
+              </RowContextMenu>
             </div>
           </div>
         ))}

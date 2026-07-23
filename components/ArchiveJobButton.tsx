@@ -23,11 +23,10 @@ export default function ArchiveJobButton({ jobId }: { jobId: string }) {
       type="button"
       onClick={handleClick}
       disabled={isPending}
-      aria-label="Archivia lavoro"
-      title="Archivia lavoro"
-      className="text-secondary transition hover:text-primary disabled:opacity-60"
+      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-secondary transition hover:bg-row-hover hover:text-primary disabled:opacity-60"
     >
-      {isPending ? <Loader2 size={15} strokeWidth={1.75} className="animate-spin" aria-hidden="true" /> : <Archive size={15} strokeWidth={1.75} />}
+      {isPending ? <Loader2 size={15} strokeWidth={1.75} className="animate-spin" aria-hidden="true" /> : <Archive size={15} strokeWidth={1.75} aria-hidden="true" />}
+      Archivia lavoro
     </button>
   );
 }

@@ -9,6 +9,7 @@ import {
   createDbJob,
   updateDbJob,
   softDeleteJob,
+  restoreJob,
   approveJob,
   archiveJob,
   archiveJobs,
@@ -94,6 +95,38 @@ export async function deleteJobAction(id: string) {
 
   await softDeleteJob(id);
   redirect('/dashboard/jobs');
+}
+
+/**
+ * Eliminazione (soft) da un contesto lista: niente redirect, torna un esito
+ * per il toast e l'aggiornamento in-place della riga.
+ */
+export async function deleteJobFromListAction(jobId: string): Promise<{ success: boolean; message: string }> {
+  const session = await auth();
+  const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role;
+
+  if (!role || !canDeleteResource(role, '', '', 'jobs')) {
+    return { success: false, message: 'Solo un superadmin può eliminare un lavoro.' };
+  }
+
+  await softDeleteJob(jobId);
+  revalidatePath('/dashboard/jobs');
+  revalidatePath('/dashboard/jobs/trash');
+  return { success: true, message: 'Lavoro spostato nel cestino.' };
+}
+
+export async function restoreJobAction(jobId: string): Promise<{ success: boolean; message: string }> {
+  const session = await auth();
+  const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role;
+
+  if (!role || !canDeleteResource(role, '', '', 'jobs')) {
+    return { success: false, message: 'Solo un superadmin può ripristinare un lavoro.' };
+  }
+
+  await restoreJob(jobId);
+  revalidatePath('/dashboard/jobs');
+  revalidatePath('/dashboard/jobs/trash');
+  return { success: true, message: 'Lavoro ripristinato.' };
 }
 
 export async function approveJobAction(jobId: string): Promise<{ success: boolean; message: string }> {

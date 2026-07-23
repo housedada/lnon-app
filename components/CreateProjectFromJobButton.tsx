@@ -20,11 +20,10 @@ export default function CreateProjectFromJobButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Genera progetto da questo lavoro"
-        title="Genera progetto da questo lavoro"
-        className="relative flex h-6 w-6 items-center justify-center rounded-full bg-neutral-500/10 transition hover:bg-neutral-500/20"
+        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-secondary transition hover:bg-row-hover hover:text-primary"
       >
-        <FolderPlus size={12} strokeWidth={2} style={{ color: 'var(--accent-to)' }} aria-hidden="true" />
+        <FolderPlus size={15} strokeWidth={1.75} aria-hidden="true" />
+        Genera progetto
       </button>
       {open && (
         <CreateProjectFromJobModal jobId={jobId} jobTitle={jobTitle} userOptions={userOptions} onClose={() => setOpen(false)} />
