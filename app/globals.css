@@ -396,6 +396,70 @@ input[type='radio']:focus-visible {
   box-shadow: 0 0 0 3px rgba(111, 95, 146, 0.16), 0 0 0 1px rgba(111, 95, 146, 0.35);
 }
 
+/* In notte il bordo a riposo (grid-border quasi nero su sfondo quasi nero) e il
+   riempimento selezionato (accent-to molto scuro) sono praticamente invisibili:
+   rendiamo entrambi più chiari e contrastati. */
+@media (prefers-color-scheme: dark) {
+  input[type='checkbox'],
+  input[type='radio'] {
+    border-color: #5a5a60;
+  }
+  input[type='checkbox']:checked,
+  input[type='radio']:checked {
+    border-color: #b3a9d1;
+  }
+  input[type='checkbox']:checked::after,
+  input[type='radio']:checked::after {
+    background: #b3a9d1;
+  }
+}
+
+:root[data-theme='dark'] input[type='checkbox'],
+:root[data-theme='dark'] input[type='radio'] {
+  border-color: #5a5a60;
+}
+
+:root[data-theme='dark'] input[type='checkbox']:checked,
+:root[data-theme='dark'] input[type='radio']:checked {
+  border-color: #b3a9d1;
+}
+
+:root[data-theme='dark'] input[type='checkbox']:checked::after,
+:root[data-theme='dark'] input[type='radio']:checked::after {
+  background: #b3a9d1;
+}
+
+:root[data-theme='light'] input[type='checkbox'],
+:root[data-theme='light'] input[type='radio'] {
+  border-color: var(--color-grid-border);
+}
+
+:root[data-theme='light'] input[type='checkbox']:checked,
+:root[data-theme='light'] input[type='radio']:checked {
+  border-color: var(--accent-to);
+}
+
+:root[data-theme='light'] input[type='checkbox']:checked::after,
+:root[data-theme='light'] input[type='radio']:checked::after {
+  background: var(--accent-to);
+}
+
+/* Toolbar pagina Task (Team/Personale/densità/demo): il bordo grid-border standard
+   è troppo poco visibile in notte contro lo sfondo quasi nero. */
+.task-toolbar-border {
+  border-bottom: 1px solid var(--color-grid-border);
+}
+
+@media (prefers-color-scheme: dark) {
+  .task-toolbar-border {
+    border-bottom-color: #38383d;
+  }
+}
+
+:root[data-theme='dark'] .task-toolbar-border {
+  border-bottom-color: #38383d;
+}
+
 /* Label per griglie di dettaglio (modali): piccola, opaca, spaziata */
 .detail-label {
   font-size: 8px;

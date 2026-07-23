@@ -83,6 +83,12 @@ export const canUserViewAuditLogs = (role: UserRole) => hasPermission(role, 'aud
 export const canUserManageSettings = (role: UserRole) => hasPermission(role, 'settings', 'update');
 
 /**
+ * I dipendenti vedono Clienti/Contratti/Lavori/Fatture ma senza cifre economiche
+ * (importi, budget, widget di resoconto): vedono solo se un servizio è attivo o meno.
+ */
+export const canViewAmounts = (role: UserRole) => role !== 'dipendente';
+
+/**
  * Determina se un utente può vedere una risorsa
  * (Logica di visibilità, oltre al permesso 'read')
  */

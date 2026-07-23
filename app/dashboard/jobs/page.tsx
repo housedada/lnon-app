@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import { Archive, Trash2 } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { getJobs, getAllClientNames, getAllContractOptions, getAllProductNames, getUsers } from '@/lib/db';
-import { hasPermission, canDeleteResource } from '@/lib/permissions';
+import { hasPermission, canDeleteResource, canViewAmounts } from '@/lib/permissions';
 import ListNavigator from '@/components/ListNavigator';
 import ListPlaceholder from '@/components/ListPlaceholder';
 import SyncJobsClientsButton from '@/components/SyncJobsClientsButton';
@@ -39,6 +39,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   const canApprove = hasPermission(role, 'jobs', 'approve');
   const canDelete = canDeleteResource(role, '', '', 'jobs');
   const isSuperadmin = role === 'superadmin';
+  const showAmounts = canViewAmounts(role);
 
   return (
     <div>
@@ -90,6 +91,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
           canApprove={canApprove}
           canDelete={canDelete}
           isSuperadmin={isSuperadmin}
+          showAmounts={showAmounts}
         />
       </Suspense>
     </div>
@@ -107,6 +109,7 @@ async function JobsListSection({
   canApprove,
   canDelete,
   isSuperadmin,
+  showAmounts,
 }: {
   params: SearchParams;
   role: 'superadmin' | 'admin' | 'dipendente';
@@ -118,6 +121,7 @@ async function JobsListSection({
   canApprove: boolean;
   canDelete: boolean;
   isSuperadmin: boolean;
+  showAmounts: boolean;
 }) {
   const { q, page, clientId, sync, status } = params;
   const currentPage = Math.max(1, Number(page) || 1);
@@ -180,6 +184,7 @@ async function JobsListSection({
               isSuperadmin={isSuperadmin}
               clientOptions={clientOptions}
               userOptions={userOptions}
+              showAmounts={showAmounts}
             />
           ))}
         </div>

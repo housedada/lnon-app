@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { auth } from '@/lib/auth';
 import { getContracts, getContractsStats, getAllClientNames } from '@/lib/db';
-import { hasPermission, canDeleteResource } from '@/lib/permissions';
+import { hasPermission, canDeleteResource, canViewAmounts } from '@/lib/permissions';
 import ListNavigator from '@/components/ListNavigator';
 import ListPlaceholder from '@/components/ListPlaceholder';
 import ContractsFilterWidget from '@/components/ContractsFilterWidget';
@@ -49,7 +49,11 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
   const session = await auth();
   const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role ?? 'dipendente';
 
-  const [stats, clientOptions] = await Promise.all([getContractsStats(), getAllClientNames()]);
+  const showAmounts = canViewAmounts(role);
+  const [stats, clientOptions] = await Promise.all([
+    showAmounts ? getContractsStats() : Promise.resolve(null),
+    getAllClientNames(),
+  ]);
 
   const canCreate = hasPermission(role, 'contracts', 'create');
   const canUpdate = hasPermission(role, 'contracts', 'update');
@@ -69,11 +73,11 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
         </div>
       </div>
 
-      <ContractsStatsWidget stats={stats} />
+      {stats && <ContractsStatsWidget stats={stats} />}
       <ContractsFilterWidget />
 
       <Suspense fallback={<ListPlaceholder />}>
-        <ContractsListSection params={params} clientOptions={clientOptions} canUpdate={canUpdate} canDelete={canDelete} isSuperadmin={isSuperadmin} />
+        <ContractsListSection params={params} clientOptions={clientOptions} canUpdate={canUpdate} canDelete={canDelete} isSuperadmin={isSuperadmin} showAmounts={showAmounts} />
       </Suspense>
     </div>
   );
@@ -85,12 +89,14 @@ async function ContractsListSection({
   canUpdate,
   canDelete,
   isSuperadmin,
+  showAmounts,
 }: {
   params: SearchParams;
   clientOptions: { id: string; name: string }[];
   canUpdate: boolean;
   canDelete: boolean;
   isSuperadmin: boolean;
+  showAmounts: boolean;
 }) {
   const { q, page, status, categories } = params;
   const currentPage = Math.max(1, Number(page) || 1);
@@ -138,6 +144,7 @@ async function ContractsListSection({
               canDelete={canDelete}
               isSuperadmin={isSuperadmin}
               clientOptions={clientOptions}
+              showAmounts={showAmounts}
             />
           ))}
         </div>

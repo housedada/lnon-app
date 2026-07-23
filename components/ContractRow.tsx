@@ -6,6 +6,7 @@ import { Pencil, Trash2, Bug } from 'lucide-react';
 import RowContextMenu from '@/components/RowContextMenu';
 import ContractLinkButton from '@/components/ContractLinkButton';
 import DoubleConfirmModal from '@/components/DoubleConfirmModal';
+import MaskedAmount from '@/components/MaskedAmount';
 import { deleteContractFromListAction } from '@/lib/actions/contracts';
 import { notify } from '@/lib/notify';
 import type { Contract, ContractStatus } from '@/lib/types';
@@ -30,7 +31,16 @@ function formatDate(value?: Date) {
   return value ? value.toLocaleDateString('it-IT') : '—';
 }
 
-function renderCell(contract: Contract, key: string): React.ReactNode {
+function serviceActiveBadge(value?: number) {
+  const active = value != null && value > 0;
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${active ? 'bg-green-600/10 text-green-700' : 'bg-grid-header-bg text-secondary'}`}>
+      {active ? 'Attivo' : 'Non attivo'}
+    </span>
+  );
+}
+
+function renderCell(contract: Contract, key: string, showAmounts: boolean): React.ReactNode {
   switch (key) {
     case 'client':
       return contract.clientName ?? contract.clientNameRaw;
@@ -51,15 +61,15 @@ function renderCell(contract: Contract, key: string): React.ReactNode {
     case 'billingMonth':
       return contract.billingMonth ?? '—';
     case 'maintenance':
-      return formatAmount(contract.maintenanceWpAmount);
+      return showAmounts ? formatAmount(contract.maintenanceWpAmount) : serviceActiveBadge(contract.maintenanceWpAmount);
     case 'hosting':
-      return formatAmount(contract.hostingAmount);
+      return showAmounts ? formatAmount(contract.hostingAmount) : serviceActiveBadge(contract.hostingAmount);
     case 'analytics':
-      return formatAmount(contract.analyticsGdprAmount);
+      return showAmounts ? formatAmount(contract.analyticsGdprAmount) : serviceActiveBadge(contract.analyticsGdprAmount);
     case 'cookie':
-      return formatAmount(contract.cookieAmount);
+      return showAmounts ? formatAmount(contract.cookieAmount) : serviceActiveBadge(contract.cookieAmount);
     case 'total':
-      return formatAmount(contract.totalAmount);
+      return showAmounts ? formatAmount(contract.totalAmount) : <MaskedAmount />;
     case 'serviceDescription':
       return contract.serviceDescription ?? '—';
     case 'package':
@@ -73,7 +83,7 @@ function renderCell(contract: Contract, key: string): React.ReactNode {
     case 'providerExpiryDate':
       return formatDate(contract.providerExpiryDate);
     case 'providerCost':
-      return formatAmount(contract.providerCost);
+      return showAmounts ? formatAmount(contract.providerCost) : <MaskedAmount />;
     default:
       return '—';
   }
@@ -88,6 +98,7 @@ export default function ContractRow({
   canDelete,
   isSuperadmin,
   clientOptions,
+  showAmounts,
 }: {
   contract: Contract;
   dataColumns: { key: string; label: string }[];
@@ -95,6 +106,7 @@ export default function ContractRow({
   canDelete: boolean;
   isSuperadmin: boolean;
   clientOptions: { id: string; name: string }[];
+  showAmounts: boolean;
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -143,7 +155,7 @@ export default function ContractRow({
           key={col.key}
           className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border bg-card-bg px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary [&:first-child]:font-semibold [&:first-child]:tracking-[0.01em] [&:first-child]:text-primary"
         >
-          {renderCell(contract, col.key)}
+          {renderCell(contract, col.key, showAmounts)}
         </div>
       ))}
       <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 border-b border-l border-grid-border bg-card-bg px-4 group-hover:bg-row-hover">

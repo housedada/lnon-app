@@ -52,8 +52,6 @@ const NAV_ITEMS: NavItem[] = [
 function shouldShowNavItem(resource: string, permissions: string[]): boolean {
   if (permissions.length === 0) return false;
   if (resource === 'users') return permissions.includes('invite') || permissions.includes('create');
-  // Le fatture generate dal completamento progetti sono visibili solo agli admin
-  if (resource === 'invoices') return permissions.includes('create') || permissions.includes('update');
   return true;
 }
 

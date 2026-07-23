@@ -6,6 +6,7 @@ import { Archive, Trash2, Bug, FileOutput } from 'lucide-react';
 import RowContextMenu from '@/components/RowContextMenu';
 import InvoiceRowSelectCheckbox from '@/components/InvoiceRowSelectCheckbox';
 import DoubleConfirmModal from '@/components/DoubleConfirmModal';
+import MaskedAmount from '@/components/MaskedAmount';
 import { archiveProjectInvoicesAction, deleteProjectInvoiceAction, generateFicInvoiceAction } from '@/lib/actions/projectInvoices';
 import { notify } from '@/lib/notify';
 import type { ProjectInvoice, ProjectInvoiceStatus } from '@/lib/types';
@@ -34,7 +35,17 @@ function formatDate(value: Date) {
 
 const MENU_ROW_CLASS = 'flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-secondary transition hover:bg-row-hover hover:text-primary';
 
-export default function ProjectInvoiceRow({ invoice, isSuperadmin }: { invoice: ProjectInvoice; isSuperadmin: boolean }) {
+export default function ProjectInvoiceRow({
+  invoice,
+  isSuperadmin,
+  canManage,
+  showAmounts,
+}: {
+  invoice: ProjectInvoice;
+  isSuperadmin: boolean;
+  canManage: boolean;
+  showAmounts: boolean;
+}) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const router = useRouter();
 
@@ -59,6 +70,50 @@ export default function ProjectInvoiceRow({ invoice, isSuperadmin }: { invoice: 
   function handleInspect() {
     console.log('[Ispeziona] Fattura progetto', invoice);
     notify('Dati fattura loggati in console (apri gli strumenti sviluppatore).');
+  }
+
+  const cells = (
+    <>
+      {canManage && (
+        <div className="list-cell-deco flex items-center justify-center border-b border-grid-border px-1 py-2 group-hover:bg-row-hover">
+          <InvoiceRowSelectCheckbox invoiceId={invoice.id} />
+        </div>
+      )}
+      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{invoice.clientName}</div>
+      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{invoice.projectTitle}</div>
+      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{invoice.jobTitle ?? '—'}</div>
+      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{showAmounts ? formatAmount(invoice.netAmount) : <MaskedAmount />}</div>
+      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{invoice.vatRate}%</div>
+      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 font-semibold text-primary group-hover:bg-row-hover">{showAmounts ? formatAmount(invoice.totalAmount) : <MaskedAmount />}</div>
+      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
+        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE[invoice.status]}`}>{STATUS_LABEL[invoice.status]}</span>
+      </div>
+      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(invoice.createdAt)}</div>
+
+      {canManage && (
+        <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-4 group-hover:bg-row-hover">
+          <button type="button" onClick={handleArchive} aria-label="Archivia fattura" title="Archivia fattura" className="text-secondary transition hover:text-primary">
+            <Archive size={15} strokeWidth={1.75} />
+          </button>
+          <button type="button" onClick={() => setDeleteOpen(true)} aria-label="Elimina fattura" title="Elimina fattura" className="text-secondary transition hover:text-red-600">
+            <Trash2 size={15} strokeWidth={1.75} />
+          </button>
+        </div>
+      )}
+
+      {deleteOpen && (
+        <DoubleConfirmModal
+          firstMessage={`Sei sicuro di voler eliminare la fattura di "${invoice.clientName}"?`}
+          secondMessage="Confermi in modo definitivo? La fattura verrà spostata nel cestino: potrai ripristinarla in seguito."
+          onConfirm={handleDeleteConfirm}
+          onClose={() => setDeleteOpen(false)}
+        />
+      )}
+    </>
+  );
+
+  if (!canManage) {
+    return <div className="group contents">{cells}</div>;
   }
 
   return (
@@ -91,37 +146,7 @@ export default function ProjectInvoiceRow({ invoice, isSuperadmin }: { invoice: 
         </>
       }
     >
-      <div className="list-cell-deco flex items-center justify-center border-b border-grid-border px-1 py-2 group-hover:bg-row-hover">
-        <InvoiceRowSelectCheckbox invoiceId={invoice.id} />
-      </div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{invoice.clientName}</div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{invoice.projectTitle}</div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{invoice.jobTitle ?? '—'}</div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatAmount(invoice.netAmount)}</div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{invoice.vatRate}%</div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 font-semibold text-primary group-hover:bg-row-hover">{formatAmount(invoice.totalAmount)}</div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
-        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE[invoice.status]}`}>{STATUS_LABEL[invoice.status]}</span>
-      </div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(invoice.createdAt)}</div>
-
-      <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-4 group-hover:bg-row-hover">
-        <button type="button" onClick={handleArchive} aria-label="Archivia fattura" title="Archivia fattura" className="text-secondary transition hover:text-primary">
-          <Archive size={15} strokeWidth={1.75} />
-        </button>
-        <button type="button" onClick={() => setDeleteOpen(true)} aria-label="Elimina fattura" title="Elimina fattura" className="text-secondary transition hover:text-red-600">
-          <Trash2 size={15} strokeWidth={1.75} />
-        </button>
-      </div>
-
-      {deleteOpen && (
-        <DoubleConfirmModal
-          firstMessage={`Sei sicuro di voler eliminare la fattura di "${invoice.clientName}"?`}
-          secondMessage="Confermi in modo definitivo? La fattura verrà spostata nel cestino: potrai ripristinarla in seguito."
-          onConfirm={handleDeleteConfirm}
-          onClose={() => setDeleteOpen(false)}
-        />
-      )}
+      {cells}
     </RowContextMenu>
   );
 }

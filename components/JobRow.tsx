@@ -13,6 +13,7 @@ import JobLinkButton from '@/components/JobLinkButton';
 import ApproveJobButton from '@/components/ApproveJobButton';
 import ArchiveJobButton from '@/components/ArchiveJobButton';
 import DoubleConfirmModal from '@/components/DoubleConfirmModal';
+import MaskedAmount from '@/components/MaskedAmount';
 import { deleteJobFromListAction } from '@/lib/actions/jobs';
 import { notify } from '@/lib/notify';
 import type { Job, JobStatus } from '@/lib/types';
@@ -56,6 +57,7 @@ export default function JobRow({
   isSuperadmin,
   clientOptions,
   userOptions,
+  showAmounts,
 }: {
   job: Job;
   canCreateProjects: boolean;
@@ -65,6 +67,7 @@ export default function JobRow({
   isSuperadmin: boolean;
   clientOptions: { id: string; name: string }[];
   userOptions: { id: string; name: string; color?: string }[];
+  showAmounts: boolean;
 }) {
   const [modal, setModal] = useState<ModalKind>(null);
   const router = useRouter();
@@ -133,7 +136,7 @@ export default function JobRow({
         <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE[job.status]}`}>{STATUS_LABEL[job.status]}</span>
       </div>
       <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{job.assignedToName ?? '—'}</div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatAmount(job.estimatedBudget)}</div>
+      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{showAmounts ? formatAmount(job.estimatedBudget) : <MaskedAmount />}</div>
       <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(job.endDate)}</div>
 
       <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-4 group-hover:bg-row-hover">

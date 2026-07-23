@@ -27,7 +27,7 @@ export default async function TasksPage({
 
   return (
     <div className="flex h-[calc(100vh-50px)] flex-col">
-      <div className="flex shrink-0 items-center gap-1 border-b border-grid-border px-4 py-2">
+      <div className="task-toolbar-border flex shrink-0 items-center gap-1 px-4 py-2">
         <Link
           href="/dashboard/tasks?view=team"
           className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
