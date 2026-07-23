@@ -19,6 +19,8 @@ export default function ListNavigator({
   currentPage,
   totalPages,
   showSyncFilter,
+  totalCount,
+  totalLabel,
   children,
 }: {
   basePath: string;
@@ -28,6 +30,8 @@ export default function ListNavigator({
   currentPage: number;
   totalPages: number;
   showSyncFilter: boolean;
+  totalCount?: number;
+  totalLabel?: string;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -83,26 +87,34 @@ export default function ListNavigator({
 
   return (
     <>
-      <div className="flex flex-wrap items-center justify-between gap-4 px-6 pt-6">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            navigate({ q: query, page: 1 });
-          }}
-        >
-          <div className="relative max-w-sm">
-            <Search size={16} strokeWidth={1.75} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-secondary" aria-hidden="true" />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={searchPlaceholder}
-              className="w-full rounded-lg border border-grid-border bg-card-bg py-2 pl-9 pr-3 text-[12px] text-primary"
-            />
-          </div>
-        </form>
-
+      <div className="flex flex-wrap items-center gap-4 px-6 pt-6">
         <div className="flex items-center gap-3">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              navigate({ q: query, page: 1 });
+            }}
+          >
+            <div className="relative max-w-sm">
+              <Search size={16} strokeWidth={1.75} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-secondary" aria-hidden="true" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={searchPlaceholder}
+                className="w-full rounded-lg border border-grid-border bg-card-bg py-2 pl-9 pr-3 text-[12px] text-primary"
+              />
+            </div>
+          </form>
+
+          {totalCount !== undefined && (
+            <span className="text-[11px] text-secondary whitespace-nowrap">
+              <strong className="font-bold text-primary">{totalCount}</strong> {totalLabel} totali
+            </span>
+          )}
+        </div>
+
+        <div className="ml-auto flex items-center gap-3">
           <span className="text-[9px] text-secondary whitespace-nowrap">
             Pagina {currentPage} di {totalPages}
           </span>
@@ -124,7 +136,7 @@ export default function ListNavigator({
         </div>
       </div>
 
-      <div className="relative">
+      <div className="list-fade-in relative">
         {children}
         {isPending && (
           <div

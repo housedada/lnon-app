@@ -174,9 +174,10 @@ async function ContractsListSection({
       currentPage={currentPage}
       totalPages={totalPages}
       showSyncFilter={false}
+      totalCount={total}
+      totalLabel="contratti"
     >
-      <p className="mx-6 mt-6 text-sm text-secondary">{total} contratti totali</p>
-      <div className="mx-6 mt-2 overflow-x-auto border-t border-grid-border">
+      <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
         <div className="grid w-fit min-w-full gap-x-[2px] text-[12px]" style={{ gridTemplateColumns: GRID_TEMPLATE }}>
           {DATA_COLUMNS.map((col) => (
             <div

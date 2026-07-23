@@ -145,9 +145,10 @@ async function JobsListSection({
       currentPage={currentPage}
       totalPages={totalPages}
       showSyncFilter={false}
+      totalCount={total}
+      totalLabel="lavori"
     >
-      <p className="mx-6 mt-6 text-sm text-secondary">{total} lavori totali</p>
-      <div className="mx-6 mt-2 grid grid-cols-[2fr_1.5fr_auto_1fr_1fr_1fr_1fr_40px_40px_40px_40px] gap-x-[2px] border-t border-grid-border text-[12px]">
+      <div className="mx-6 mt-6 grid grid-cols-[2fr_1.5fr_auto_1fr_1fr_1fr_1fr_40px_40px_40px_40px] gap-x-[2px] border-t border-grid-border text-[12px]">
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Titolo</div>
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Cliente</div>
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Sync</div>

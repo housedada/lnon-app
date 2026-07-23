@@ -413,9 +413,27 @@ input[type='radio']:focus-visible {
   transform-origin: top;
 }
 
-/* Cursor custom: leggermente più grande del default, colore accento, su
-   tutti gli elementi interattivi (bottoni, link, controlli form). Gli
-   elementi disabilitati mostrano invece not-allowed. */
+/* Fade-in per il contenuto lista dopo il placeholder: solo opacità/traslazione,
+   niente scaleY (che romperebbe/glitcherebbe le colonne sticky della griglia). */
+@keyframes list-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.list-fade-in {
+  animation: list-fade-in 220ms ease-out;
+}
+
+/* Cursor custom: manina col ditino, leggermente più grande del default,
+   colore accento, su tutti gli elementi interattivi (bottoni, toggle,
+   azioni, link, controlli form). Gli elementi disabilitati mostrano
+   invece not-allowed. */
 button:not(:disabled),
 a[href],
 [role='button'],
@@ -424,11 +442,40 @@ input[type='radio']:not(:disabled),
 select:not(:disabled),
 summary,
 .cursor-pointer {
-  cursor: url('/cursor-pointer.svg') 4 3, pointer;
+  cursor: url('/cursor-hand.svg') 13 3, pointer;
 }
 
 button:disabled,
 input:disabled,
 select:disabled {
   cursor: not-allowed;
+}
+
+/* Pulse di feedback al click su elementi interattivi, nel colore
+   personale dell'utente (o accento di default). */
+.click-pulse {
+  position: fixed;
+  z-index: 9999;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background: var(--pulse-color, var(--accent-to));
+  pointer-events: none;
+  animation: click-pulse-anim 480ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+@keyframes click-pulse-anim {
+  0% {
+    transform: scale(0.3);
+    opacity: 0.6;
+  }
+  70% {
+    opacity: 0.28;
+  }
+  100% {
+    transform: scale(4.2);
+    opacity: 0;
+  }
 }

@@ -95,10 +95,11 @@ async function ProductsListSection({
       currentPage={currentPage}
       totalPages={totalPages}
       showSyncFilter={ficConnection}
+      totalCount={total}
+      totalLabel="prodotti"
     >
-      <p className="mx-6 mt-6 text-sm text-secondary">{total} prodotti totali</p>
       <div
-        className={`mx-6 mt-2 grid gap-x-[2px] border-t border-grid-border text-[10px] ${
+        className={`mx-6 mt-6 grid gap-x-[2px] border-t border-grid-border text-[10px] ${
           ficConnection ? 'grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]' : 'grid-cols-[2fr_1fr_1fr_1fr_auto]'
         }`}
       >
