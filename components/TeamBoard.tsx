@@ -14,7 +14,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, horizontalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { GripVertical, Briefcase, CheckCircle2, ChevronDown, Trash2 } from 'lucide-react';
+import { GripVertical, Briefcase, CheckCircle2, ChevronDown, Trash2, Maximize2 } from 'lucide-react';
 import { saveTeamColumnOrderAction } from '@/lib/actions/projects';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
 import { useTaskBoardScrollStore } from '@/lib/store/taskBoardScrollStore';
@@ -23,6 +23,7 @@ import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/Projec
 import ProjectShareBadge from '@/components/ProjectShareBadge';
 import MarkProjectCompletedButton from '@/components/MarkProjectCompletedButton';
 import SortableColumn from '@/components/SortableColumn';
+import TeamMemberDetailModal from '@/components/TeamMemberDetailModal';
 import type { Project, ProjectTask } from '@/lib/types';
 
 interface TeamMember {
@@ -46,6 +47,7 @@ export default function TeamBoard({
 }) {
   const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
   const listRefs = useRef<Map<string, ProjectTaskListHandle>>(new Map());
+  const [detailMemberId, setDetailMemberId] = useState<string | null>(null);
 
   function toggleProject(projectId: string) {
     setCollapsedProjects((prev) => {
@@ -125,13 +127,66 @@ export default function TeamBoard({
     });
   }
 
-  const isMasonry = density === 'masonry';
-  const containerClass = isMasonry
-    ? 'h-full columns-1 gap-3 overflow-y-auto px-4 pb-4 pt-3 sm:columns-2 lg:columns-3 xl:columns-4'
+  const isGrid = density === 'masonry';
+  const containerClass = isGrid
+    ? 'grid h-full auto-rows-[176px] grid-cols-2 content-start gap-3 overflow-y-auto px-4 pb-4 pt-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
     : 'flex h-full gap-3 overflow-x-auto px-4 pb-4 pt-3';
-  const cardWidthClass = isMasonry ? 'mb-3 w-full break-inside-avoid' : density === 'wide' ? 'w-[30%] min-w-[400px]' : 'w-[20%] min-w-[400px]';
+  const cardWidthClass = density === 'wide' ? 'w-[30%] min-w-[400px]' : 'w-[20%] min-w-[400px]';
 
   const activeMember = activeId ? membersById.get(activeId) : undefined;
+  const detailMember = detailMemberId ? membersById.get(detailMemberId) : undefined;
+
+  if (isGrid) {
+    return (
+      <div className={containerClass}>
+        {order.map((userId) => {
+          const member = membersById.get(userId);
+          if (!member) return null;
+          const projects = projectsByUser[userId] ?? [];
+          const headerStyle = member.color ? { background: member.color } : undefined;
+          const headerTextClass = member.color ? 'text-neutral-800' : 'text-primary';
+          const headerSubTextClass = member.color ? 'text-neutral-700/70' : 'text-secondary';
+
+          return (
+            <div key={userId} className="relative flex flex-col overflow-hidden rounded-xl border border-grid-border bg-grid-header-bg">
+              <div className="flex-1 p-3 pb-9" style={headerStyle}>
+                <p className={`truncate text-sm font-semibold ${headerTextClass}`}>{member.name}</p>
+                <p className={`mt-1 text-[11px] ${headerSubTextClass}`}>{projects.length} progett{projects.length === 1 ? 'o' : 'i'}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDetailMemberId(userId)}
+                className="absolute inset-x-0 bottom-0 flex h-9 items-center justify-center gap-1.5 border-t border-grid-border bg-card-bg text-xs font-medium text-secondary transition hover:bg-row-hover hover:text-primary"
+              >
+                <Maximize2 size={12} strokeWidth={1.75} aria-hidden="true" />
+                Dettagli
+              </button>
+            </div>
+          );
+        })}
+
+        {order.length === 0 && (
+          <p className="col-span-full px-6 py-12 text-sm text-secondary">
+            Nessun membro del team attivo.{' '}
+            <Link href="/dashboard/users" className="underline">
+              Gestisci utenti
+            </Link>
+          </p>
+        )}
+
+        {detailMember && (
+          <TeamMemberDetailModal
+            member={detailMember}
+            projects={projectsByUser[detailMember.id] ?? []}
+            tasksByProject={tasksByProject}
+            userOptions={userOptions}
+            canManageInvoices={canManageInvoices}
+            onClose={() => setDetailMemberId(null)}
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -146,7 +201,7 @@ export default function TeamBoard({
             const headerSubTextClass = member.color ? 'text-neutral-700/70' : 'text-secondary';
 
             return (
-              <SortableColumn key={userId} id={userId} disabled={isMasonry}>
+              <SortableColumn key={userId} id={userId}>
                 {({ setNodeRef, setActivatorNodeRef, style, attributes, listeners, isDragging }) => (
                   <div
                     ref={(el) => {
@@ -154,7 +209,7 @@ export default function TeamBoard({
                       registerColumnRef(userId, el);
                     }}
                     style={style}
-                    className={`flex shrink-0 flex-col rounded-xl border border-grid-border bg-grid-header-bg transition-opacity duration-150 ${cardWidthClass} ${isMasonry ? '' : 'self-start'} ${isDragging ? 'opacity-40' : 'opacity-100'}`}
+                    className={`flex shrink-0 flex-col self-start rounded-xl border border-grid-border bg-grid-header-bg transition-opacity duration-150 ${cardWidthClass} ${isDragging ? 'opacity-40' : 'opacity-100'}`}
                   >
                     <div
                       className="flex items-center gap-1.5 rounded-t-xl border-b border-grid-border px-3 py-2"

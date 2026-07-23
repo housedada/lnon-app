@@ -13,7 +13,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, horizontalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { Briefcase, CheckCircle2, ChevronDown, GripVertical, Trash2 } from 'lucide-react';
+import { Briefcase, CheckCircle2, ChevronDown, GripVertical, Maximize2, Trash2 } from 'lucide-react';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
 import { useTaskBoardScrollStore } from '@/lib/store/taskBoardScrollStore';
 import { useTaskBoardExpandStore } from '@/lib/store/taskBoardExpandStore';
@@ -22,6 +22,7 @@ import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/Projec
 import ProjectShareBadge from '@/components/ProjectShareBadge';
 import MarkProjectCompletedButton from '@/components/MarkProjectCompletedButton';
 import SortableColumn from '@/components/SortableColumn';
+import ProjectDetailModal from '@/components/ProjectDetailModal';
 import type { Project, ProjectTask } from '@/lib/types';
 
 function projectHeaderBackground(project: Project, productColorsByJob: Record<string, string[]>): string | undefined {
@@ -49,6 +50,7 @@ export default function PersonalBoard({
   const [order, setOrder] = useState<string[]>(() => projects.map((p) => p.id));
   const [prevProjectIds, setPrevProjectIds] = useState<string[]>(() => projects.map((p) => p.id));
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [detailProjectId, setDetailProjectId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const setScrollContainer = useTaskBoardScrollStore((s) => s.setScrollContainer);
   const setColumns = useTaskBoardScrollStore((s) => s.setColumns);
@@ -130,15 +132,63 @@ export default function PersonalBoard({
     );
   }
 
-  const isMasonry = density === 'masonry';
-  const containerClass = isMasonry
-    ? 'h-full columns-1 gap-3 overflow-y-auto px-4 pb-4 pt-3 sm:columns-2 lg:columns-3 xl:columns-4'
+  const isGrid = density === 'masonry';
+  const containerClass = isGrid
+    ? 'grid h-full auto-rows-[176px] grid-cols-2 content-start gap-3 overflow-y-auto px-4 pb-4 pt-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
     : 'flex h-full gap-3 overflow-x-auto px-4 pb-4 pt-3';
-  const cardWidthClass = isMasonry ? 'mb-3 w-full break-inside-avoid' : density === 'wide' ? 'w-[30%] min-w-[400px]' : 'w-[20%] min-w-[400px]';
+  const cardWidthClass = density === 'wide' ? 'w-[30%] min-w-[400px]' : 'w-[20%] min-w-[400px]';
 
   const orderedProjects = order.map((id) => projectsById.get(id)).filter((p): p is Project => Boolean(p));
   const activeProject = activeId ? projectsById.get(activeId) : undefined;
   const activeBackground = activeProject ? projectHeaderBackground(activeProject, productColorsByJob) : undefined;
+  const detailProject = detailProjectId ? projectsById.get(detailProjectId) : undefined;
+  const detailBackground = detailProject ? projectHeaderBackground(detailProject, productColorsByJob) : undefined;
+
+  if (isGrid) {
+    return (
+      <div className={containerClass}>
+        {orderedProjects.map((project) => {
+          const background = projectHeaderBackground(project, productColorsByJob);
+          const headerStyle = background ? { background } : undefined;
+          const headerTextClass = headerStyle ? 'text-neutral-800' : 'text-primary';
+          const headerSubTextClass = headerStyle ? 'text-neutral-700/70' : 'text-secondary';
+
+          return (
+            <div key={project.id} className="relative flex flex-col overflow-hidden rounded-xl border border-grid-border bg-grid-header-bg">
+              <div className="flex-1 p-3 pb-9" style={headerStyle}>
+                <p className={`truncate text-sm font-semibold ${headerTextClass}`}>{project.title}</p>
+                {project.jobTitle && (
+                  <p className={`mt-1 flex items-center gap-1 truncate text-[11px] ${headerSubTextClass}`}>
+                    <Briefcase size={11} strokeWidth={1.75} aria-hidden="true" />
+                    {project.jobTitle}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setDetailProjectId(project.id)}
+                className="absolute inset-x-0 bottom-0 flex h-9 items-center justify-center gap-1.5 border-t border-grid-border bg-card-bg text-xs font-medium text-secondary transition hover:bg-row-hover hover:text-primary"
+              >
+                <Maximize2 size={12} strokeWidth={1.75} aria-hidden="true" />
+                Dettagli
+              </button>
+            </div>
+          );
+        })}
+
+        {detailProject && (
+          <ProjectDetailModal
+            project={detailProject}
+            background={detailBackground}
+            initialTasks={tasksByProject[detailProject.id] ?? []}
+            userOptions={userOptions}
+            canManageInvoices={canManageInvoices}
+            onClose={() => setDetailProjectId(null)}
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -152,7 +202,7 @@ export default function PersonalBoard({
             const isCollapsed = collapsedProjects.has(project.id);
 
             return (
-              <SortableColumn key={project.id} id={project.id} disabled={isMasonry}>
+              <SortableColumn key={project.id} id={project.id}>
                 {({ setNodeRef, setActivatorNodeRef, style, attributes, listeners, isDragging }) => (
                   <div
                     ref={(el) => {
@@ -160,7 +210,7 @@ export default function PersonalBoard({
                       registerColumnRef(project.id, el);
                     }}
                     style={style}
-                    className={`group flex shrink-0 flex-col rounded-xl border border-grid-border bg-grid-header-bg transition-opacity duration-150 ${cardWidthClass} ${isMasonry ? '' : 'self-start'} ${isDragging ? 'opacity-40' : 'opacity-100'}`}
+                    className={`group flex shrink-0 flex-col self-start rounded-xl border border-grid-border bg-grid-header-bg transition-opacity duration-150 ${cardWidthClass} ${isDragging ? 'opacity-40' : 'opacity-100'}`}
                   >
                     <div
                       className="flex w-full items-center justify-between gap-2 rounded-t-xl border-b border-grid-border px-3 py-2"
