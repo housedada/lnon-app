@@ -2,14 +2,19 @@
 
 import { Briefcase } from 'lucide-react';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
-import type { Project } from '@/lib/types';
+import ProjectTaskList from '@/components/ProjectTaskList';
+import type { Project, ProjectTask } from '@/lib/types';
 
 export default function PersonalBoard({
   projects,
   productColorsByJob,
+  tasksByProject,
+  userOptions,
 }: {
   projects: Project[];
   productColorsByJob: Record<string, string[]>;
+  tasksByProject: Record<string, ProjectTask[]>;
+  userOptions: { id: string; name: string; color?: string }[];
 }) {
   const density = useTaskBoardViewStore((s) => s.density);
 
@@ -43,7 +48,7 @@ export default function PersonalBoard({
         return (
           <div
             key={project.id}
-            className={`flex shrink-0 flex-col rounded-xl border border-grid-border bg-grid-header-bg ${cardWidthClass} ${isMasonry ? '' : 'self-start'}`}
+            className={`group flex shrink-0 flex-col rounded-xl border border-grid-border bg-grid-header-bg ${cardWidthClass} ${isMasonry ? '' : 'self-start'}`}
           >
             <div className="rounded-t-xl border-b border-grid-border px-3 py-2" style={headerStyle}>
               <p className={`text-sm font-semibold ${headerTextClass}`}>{project.title}</p>
@@ -54,8 +59,8 @@ export default function PersonalBoard({
                 </p>
               )}
             </div>
-            <div className="flex flex-1 items-center justify-center p-4">
-              <p className="text-center text-[11px] text-secondary">Task in arrivo</p>
+            <div className="flex-1 p-2">
+              <ProjectTaskList projectId={project.id} initialTasks={tasksByProject[project.id] ?? []} userOptions={userOptions} />
             </div>
           </div>
         );

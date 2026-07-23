@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Users2, User } from 'lucide-react';
 import { auth } from '@/lib/auth';
-import { getUsers, getAllAssignedProjects, getProjectsByAssignee, getTeamColumnOrder, getProductColorsForJobs } from '@/lib/db';
+import { getUsers, getAllAssignedProjects, getProjectsByAssignee, getTeamColumnOrder, getProductColorsForJobs, getProjectTasks } from '@/lib/db';
 import TeamBoard from '@/components/TeamBoard';
 import PersonalBoard from '@/components/PersonalBoard';
 import TaskBoardViewToggle from '@/components/TaskBoardViewToggle';
@@ -79,8 +79,22 @@ async function TeamView({ currentUserId }: { currentUserId: string }) {
 async function PersonalView({ userId }: { userId: string }) {
   const projects = userId ? await getProjectsByAssignee(userId) : [];
   const jobIds = Array.from(new Set(projects.map((p) => p.jobId).filter((id): id is string => Boolean(id))));
-  const productColorsMap = await getProductColorsForJobs(jobIds);
-  const productColorsByJob = Object.fromEntries(productColorsMap);
 
-  return <PersonalBoard projects={projects} productColorsByJob={productColorsByJob} />;
+  const [productColorsMap, allUsers, taskLists] = await Promise.all([
+    getProductColorsForJobs(jobIds),
+    getUsers(),
+    Promise.all(projects.map((p) => getProjectTasks(p.id))),
+  ]);
+  const productColorsByJob = Object.fromEntries(productColorsMap);
+  const userOptions = allUsers.filter((u) => u.isActive).map((u) => ({ id: u.id, name: u.name, color: u.color }));
+  const tasksByProject = Object.fromEntries(projects.map((p, i) => [p.id, taskLists[i]]));
+
+  return (
+    <PersonalBoard
+      projects={projects}
+      productColorsByJob={productColorsByJob}
+      tasksByProject={tasksByProject}
+      userOptions={userOptions}
+    />
+  );
 }

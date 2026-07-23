@@ -13,6 +13,8 @@ import type {
   Product,
   Contract,
   Project,
+  ProjectTask,
+  ProjectTaskStatus,
 } from './types';
 import { buildProductColorMap } from './productColors';
 
@@ -1634,4 +1636,99 @@ export async function saveTeamColumnOrder(userId: string, orderedUserIds: string
   if (error) throw error;
 }
 
-export type { User, Client, Job, Task, Invoice, Invitation, ActivityLog, Product, Contract, Project };
+function projectTaskRowToProjectTask(row: Record<string, any>): ProjectTask {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    title: row.title,
+    status: row.status,
+    assignedTo: row.assigned_to ?? undefined,
+    position: row.position,
+    createdBy: row.created_by,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+    deletedAt: row.deleted_at ? new Date(row.deleted_at) : undefined,
+    assignedToName: row.assigned_user?.name ?? undefined,
+    assignedToColor: row.assigned_user?.color ?? undefined,
+  };
+}
+
+/**
+ * Sotto task di un progetto, in ordine di posizione
+ */
+export async function getProjectTasks(projectId: string): Promise<ProjectTask[]> {
+  const { data, error } = await supabaseServer
+    .from('project_tasks')
+    .select('*, assigned_user:users!project_tasks_assigned_to_fkey(name, color)')
+    .eq('project_id', projectId)
+    .is('deleted_at', null)
+    .order('position', { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []).map(projectTaskRowToProjectTask);
+}
+
+/**
+ * Crea un nuovo sotto task per un progetto, in coda all'elenco esistente
+ */
+export async function createProjectTask(data: { projectId: string; title: string; createdBy: string }): Promise<ProjectTask> {
+  const { data: existing, error: countError } = await supabaseServer
+    .from('project_tasks')
+    .select('position')
+    .eq('project_id', data.projectId)
+    .is('deleted_at', null)
+    .order('position', { ascending: false })
+    .limit(1);
+  if (countError) throw countError;
+  const nextPosition = (existing?.[0]?.position ?? -1) + 1;
+
+  const { data: row, error } = await supabaseServer
+    .from('project_tasks')
+    .insert([{ project_id: data.projectId, title: data.title, created_by: data.createdBy, position: nextPosition }])
+    .select('*, assigned_user:users!project_tasks_assigned_to_fkey(name, color)')
+    .single();
+
+  if (error) throw error;
+  return projectTaskRowToProjectTask(row);
+}
+
+/**
+ * Aggiorna lo stato di un sotto task (todo / in_progress / completed)
+ */
+export async function updateProjectTaskStatus(taskId: string, status: ProjectTaskStatus): Promise<ProjectTask> {
+  const { data, error } = await supabaseServer
+    .from('project_tasks')
+    .update({ status })
+    .eq('id', taskId)
+    .select('*, assigned_user:users!project_tasks_assigned_to_fkey(name, color)')
+    .single();
+
+  if (error) throw error;
+  return projectTaskRowToProjectTask(data);
+}
+
+/**
+ * Aggiorna l'assegnatario di un sotto task
+ */
+export async function updateProjectTaskAssignee(taskId: string, assignedTo: string | null): Promise<ProjectTask> {
+  const { data, error } = await supabaseServer
+    .from('project_tasks')
+    .update({ assigned_to: assignedTo })
+    .eq('id', taskId)
+    .select('*, assigned_user:users!project_tasks_assigned_to_fkey(name, color)')
+    .single();
+
+  if (error) throw error;
+  return projectTaskRowToProjectTask(data);
+}
+
+/**
+ * Applica il nuovo ordine (drag&drop) dei sotto task di un progetto
+ */
+export async function reorderProjectTasks(orderedTaskIds: string[]): Promise<void> {
+  await Promise.all(
+    orderedTaskIds.map((taskId, index) => supabaseServer.from('project_tasks').update({ position: index }).eq('id', taskId))
+  );
+}
+
+export type { User, Client, Job, Task, Invoice, Invitation, ActivityLog, Product, Contract, Project, ProjectTask };

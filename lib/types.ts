@@ -192,6 +192,24 @@ export interface Project {
   assignedToName?: string;
 }
 
+export type ProjectTaskStatus = 'todo' | 'in_progress' | 'completed';
+
+export interface ProjectTask {
+  id: string;
+  projectId: string;
+  title: string;
+  status: ProjectTaskStatus;
+  assignedTo?: string;
+  position: number;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt?: Date;
+  // Popolati solo in lettura
+  assignedToName?: string;
+  assignedToColor?: string;
+}
+
 export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'done';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 
