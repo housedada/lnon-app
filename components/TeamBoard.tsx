@@ -2,6 +2,18 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
+import { SortableContext, arrayMove, horizontalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { GripVertical, Briefcase, CheckCircle2, ChevronDown, Trash2 } from 'lucide-react';
 import { saveTeamColumnOrderAction } from '@/lib/actions/projects';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
@@ -10,7 +22,7 @@ import { useTaskBoardExpandStore } from '@/lib/store/taskBoardExpandStore';
 import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/ProjectTaskList';
 import ProjectShareBadge from '@/components/ProjectShareBadge';
 import MarkProjectCompletedButton from '@/components/MarkProjectCompletedButton';
-import DropPlaceholder from '@/components/DropPlaceholder';
+import SortableColumn from '@/components/SortableColumn';
 import type { Project, ProjectTask } from '@/lib/types';
 
 interface TeamMember {
@@ -46,9 +58,7 @@ export default function TeamBoard({
 
   const [order, setOrder] = useState<string[]>(() => members.map((m) => m.id));
   const [prevMemberIds, setPrevMemberIds] = useState<string[]>(() => members.map((m) => m.id));
-  const [dragId, setDragId] = useState<string | null>(null);
-  const [dragOverId, setDragOverId] = useState<string | null>(null);
-  const [dragOverSide, setDragOverSide] = useState<'before' | 'after' | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const density = useTaskBoardViewStore((s) => s.density);
   const setScrollContainer = useTaskBoardScrollStore((s) => s.setScrollContainer);
@@ -56,6 +66,11 @@ export default function TeamBoard({
   const registerColumnRef = useTaskBoardScrollStore((s) => s.registerColumnRef);
   const expandSignal = useTaskBoardExpandStore((s) => s.signal);
   const expandTarget = useTaskBoardExpandStore((s) => s.expanded);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const membersById = new Map(members.map((m) => [m.id, m]));
 
@@ -90,29 +105,24 @@ export default function TeamBoard({
     setOrder([...kept, ...added]);
   }
 
-  function clearDragState() {
-    setDragId(null);
-    setDragOverId(null);
-    setDragOverSide(null);
+  function handleDragStart(e: DragStartEvent) {
+    setActiveId(String(e.active.id));
   }
 
-  function handleDrop(targetId: string) {
-    if (!dragId || dragId === targetId) {
-      clearDragState();
-      return;
-    }
-    const side = dragOverSide ?? 'before';
+  function handleDragEnd(e: DragEndEvent) {
+    setActiveId(null);
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
     setOrder((prev) => {
-      const next = prev.filter((id) => id !== dragId);
-      const targetIndex = next.indexOf(targetId);
-      const insertIndex = side === 'before' ? targetIndex : targetIndex + 1;
-      next.splice(insertIndex, 0, dragId);
+      const oldIndex = prev.indexOf(String(active.id));
+      const newIndex = prev.indexOf(String(over.id));
+      if (oldIndex === -1 || newIndex === -1) return prev;
+      const next = arrayMove(prev, oldIndex, newIndex);
       startTransition(() => {
         saveTeamColumnOrderAction(next);
       });
       return next;
     });
-    clearDragState();
   }
 
   const isMasonry = density === 'masonry';
@@ -121,124 +131,140 @@ export default function TeamBoard({
     : 'flex h-full gap-3 overflow-x-auto px-4 pb-4 pt-3';
   const cardWidthClass = isMasonry ? 'mb-3 w-full break-inside-avoid' : density === 'wide' ? 'w-[30%] min-w-[400px]' : 'w-[20%] min-w-[400px]';
 
+  const activeMember = activeId ? membersById.get(activeId) : undefined;
+
   return (
-    <div className={containerClass} ref={(el) => setScrollContainer(el)}>
-      {order.map((userId) => {
-        const member = membersById.get(userId);
-        if (!member) return null;
-        const projects = projectsByUser[userId] ?? [];
-        const headerStyle = member.color ? { background: member.color } : undefined;
-        const headerTextClass = member.color ? 'text-neutral-800' : 'text-primary';
-        const headerSubTextClass = member.color ? 'text-neutral-700/70' : 'text-secondary';
-        const isDragTarget = !isMasonry && dragOverId === userId && dragId !== userId;
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <div className={containerClass} ref={(el) => setScrollContainer(el)}>
+        <SortableContext items={order} strategy={horizontalListSortingStrategy}>
+          {order.map((userId) => {
+            const member = membersById.get(userId);
+            if (!member) return null;
+            const projects = projectsByUser[userId] ?? [];
+            const headerStyle = member.color ? { background: member.color } : undefined;
+            const headerTextClass = member.color ? 'text-neutral-800' : 'text-primary';
+            const headerSubTextClass = member.color ? 'text-neutral-700/70' : 'text-secondary';
 
-        return (
-          <div key={userId} className="contents">
-            {isDragTarget && dragOverSide === 'before' && <DropPlaceholder orientation="horizontal" size="28px" />}
-            <div
-              ref={(el) => registerColumnRef(userId, el)}
-              draggable
-              onDragStart={() => setDragId(userId)}
-              onDragEnd={clearDragState}
-              onDragOver={(e) => {
-                e.preventDefault();
-                if (isMasonry) return;
-                const rect = e.currentTarget.getBoundingClientRect();
-                const side: 'before' | 'after' = e.clientX < rect.left + rect.width / 2 ? 'before' : 'after';
-                if (dragOverId !== userId || dragOverSide !== side) {
-                  setDragOverId(userId);
-                  setDragOverSide(side);
-                }
-              }}
-              onDrop={() => handleDrop(userId)}
-              className={`flex shrink-0 flex-col rounded-xl border border-grid-border bg-grid-header-bg transition-opacity duration-150 ${cardWidthClass} ${isMasonry ? '' : 'self-start'} ${dragId === userId ? 'opacity-40' : 'opacity-100'}`}
-            >
-            <div
-              className="flex cursor-grab items-center gap-1.5 rounded-t-xl border-b border-grid-border px-3 py-2 active:cursor-grabbing"
-              style={headerStyle}
-            >
-              <GripVertical size={14} strokeWidth={1.75} className={headerSubTextClass} aria-hidden="true" />
-              <span className={`text-sm font-semibold ${headerTextClass}`}>{member.name}</span>
-              <span className={`ml-auto text-[10px] ${headerSubTextClass}`}>{projects.length}</span>
-            </div>
-
-            <div className="flex flex-1 flex-col gap-2 p-2">
-              {projects.length === 0 && <p className="px-2 py-4 text-center text-[11px] text-secondary">Nessun progetto</p>}
-              {projects.map((project) => {
-                const isCollapsed = collapsedProjects.has(project.id);
-                return (
-                  <div key={project.id} className="card-shadow group rounded-lg border border-grid-border bg-card-bg">
-                    <div className="flex w-full items-center justify-between gap-2 p-3">
-                      <button type="button" onClick={() => toggleProject(project.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-primary">{project.title}</p>
-                          {project.jobTitle && (
-                            <p className="mt-1 flex items-center gap-1 truncate text-[11px] text-secondary">
-                              <Briefcase size={11} strokeWidth={1.75} aria-hidden="true" />
-                              {project.jobTitle}
-                            </p>
-                          )}
-                        </div>
-                      </button>
-                      {project.jobId && (
-                        <ProjectShareBadge projectId={project.id} share={project.budgetShare} textClass="text-secondary" />
-                      )}
-                      {project.jobId && canManageInvoices && (
-                        project.completedAt ? (
-                          <span title="Progetto completato" className="shrink-0">
-                            <CheckCircle2 size={13} strokeWidth={1.75} className="text-secondary" aria-label="Progetto completato" />
-                          </span>
-                        ) : (
-                          <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} budgetShare={project.budgetShare} />
-                        )
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => listRefs.current.get(project.id)?.openTrash()}
-                        aria-label="Cestino task"
-                        title="Cestino task"
-                        className="shrink-0 text-secondary opacity-0 transition-opacity group-hover:opacity-100 hover:text-primary"
+            return (
+              <SortableColumn key={userId} id={userId} disabled={isMasonry}>
+                {({ setNodeRef, setActivatorNodeRef, style, attributes, listeners, isDragging }) => (
+                  <div
+                    ref={(el) => {
+                      setNodeRef(el);
+                      registerColumnRef(userId, el);
+                    }}
+                    style={style}
+                    className={`flex shrink-0 flex-col rounded-xl border border-grid-border bg-grid-header-bg transition-opacity duration-150 ${cardWidthClass} ${isMasonry ? '' : 'self-start'} ${isDragging ? 'opacity-40' : 'opacity-100'}`}
+                  >
+                    <div
+                      className="flex items-center gap-1.5 rounded-t-xl border-b border-grid-border px-3 py-2"
+                      style={headerStyle}
+                    >
+                      <span
+                        ref={setActivatorNodeRef}
+                        {...attributes}
+                        {...listeners}
+                        className="cursor-grab touch-none active:cursor-grabbing"
                       >
-                        <Trash2 size={13} strokeWidth={1.75} aria-hidden="true" />
-                      </button>
-                      <button type="button" onClick={() => toggleProject(project.id)} className="shrink-0" aria-label={isCollapsed ? 'Espandi progetto' : 'Comprimi progetto'}>
-                        <ChevronDown
-                          size={14}
-                          strokeWidth={2}
-                          className={`text-secondary transition-transform ${isCollapsed ? '-rotate-90' : ''}`}
-                          aria-hidden="true"
-                        />
-                      </button>
+                        <GripVertical size={14} strokeWidth={1.75} className={headerSubTextClass} aria-hidden="true" />
+                      </span>
+                      <span className={`text-sm font-semibold ${headerTextClass}`}>{member.name}</span>
+                      <span className={`ml-auto text-[10px] ${headerSubTextClass}`}>{projects.length}</span>
                     </div>
-                    <div className={`border-t border-grid-border p-2 ${isCollapsed ? 'hidden' : ''}`}>
-                      <ProjectTaskList
-                        ref={(el) => {
-                          if (el) listRefs.current.set(project.id, el);
-                          else listRefs.current.delete(project.id);
-                        }}
-                        projectId={project.id}
-                        initialTasks={tasksByProject[project.id] ?? []}
-                        userOptions={userOptions}
-                      />
+
+                    <div className="flex flex-1 flex-col gap-2 p-2">
+                      {projects.length === 0 && <p className="px-2 py-4 text-center text-[11px] text-secondary">Nessun progetto</p>}
+                      {projects.map((project) => {
+                        const isCollapsed = collapsedProjects.has(project.id);
+                        return (
+                          <div key={project.id} className="card-shadow group rounded-lg border border-grid-border bg-card-bg">
+                            <div className="flex w-full items-center justify-between gap-2 p-3">
+                              <button type="button" onClick={() => toggleProject(project.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                                <div className="min-w-0">
+                                  <p className="truncate text-sm font-medium text-primary">{project.title}</p>
+                                  {project.jobTitle && (
+                                    <p className="mt-1 flex items-center gap-1 truncate text-[11px] text-secondary">
+                                      <Briefcase size={11} strokeWidth={1.75} aria-hidden="true" />
+                                      {project.jobTitle}
+                                    </p>
+                                  )}
+                                </div>
+                              </button>
+                              {project.jobId && (
+                                <ProjectShareBadge projectId={project.id} share={project.budgetShare} textClass="text-secondary" />
+                              )}
+                              {project.jobId && canManageInvoices && (
+                                project.completedAt ? (
+                                  <span title="Progetto completato" className="shrink-0">
+                                    <CheckCircle2 size={13} strokeWidth={1.75} className="text-secondary" aria-label="Progetto completato" />
+                                  </span>
+                                ) : (
+                                  <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} budgetShare={project.budgetShare} />
+                                )
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => listRefs.current.get(project.id)?.openTrash()}
+                                aria-label="Cestino task"
+                                title="Cestino task"
+                                className="shrink-0 text-secondary opacity-0 transition-opacity group-hover:opacity-100 hover:text-primary"
+                              >
+                                <Trash2 size={13} strokeWidth={1.75} aria-hidden="true" />
+                              </button>
+                              <button type="button" onClick={() => toggleProject(project.id)} className="shrink-0" aria-label={isCollapsed ? 'Espandi progetto' : 'Comprimi progetto'}>
+                                <ChevronDown
+                                  size={14}
+                                  strokeWidth={2}
+                                  className={`text-secondary transition-transform ${isCollapsed ? '-rotate-90' : ''}`}
+                                  aria-hidden="true"
+                                />
+                              </button>
+                            </div>
+                            <div className={`border-t border-grid-border p-2 ${isCollapsed ? 'hidden' : ''}`}>
+                              <ProjectTaskList
+                                ref={(el) => {
+                                  if (el) listRefs.current.set(project.id, el);
+                                  else listRefs.current.delete(project.id);
+                                }}
+                                projectId={project.id}
+                                initialTasks={tasksByProject[project.id] ?? []}
+                                userOptions={userOptions}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-            </div>
-            {isDragTarget && dragOverSide === 'after' && <DropPlaceholder orientation="horizontal" size="28px" />}
-          </div>
-        );
-      })}
+                )}
+              </SortableColumn>
+            );
+          })}
+        </SortableContext>
 
-      {order.length === 0 && (
-        <p className="px-6 py-12 text-sm text-secondary">
-          Nessun membro del team attivo.{' '}
-          <Link href="/dashboard/users" className="underline">
-            Gestisci utenti
-          </Link>
-        </p>
-      )}
-    </div>
+        {order.length === 0 && (
+          <p className="px-6 py-12 text-sm text-secondary">
+            Nessun membro del team attivo.{' '}
+            <Link href="/dashboard/users" className="underline">
+              Gestisci utenti
+            </Link>
+          </p>
+        )}
+      </div>
+
+      <DragOverlay>
+        {activeMember && (
+          <div
+            className={`rounded-xl border border-grid-border bg-grid-header-bg shadow-lg ${cardWidthClass}`}
+            style={activeMember.color ? { background: activeMember.color } : undefined}
+          >
+            <div className="flex items-center gap-1.5 rounded-xl px-3 py-2">
+              <GripVertical size={14} strokeWidth={1.75} className={activeMember.color ? 'text-neutral-700/70' : 'text-secondary'} aria-hidden="true" />
+              <span className={`text-sm font-semibold ${activeMember.color ? 'text-neutral-800' : 'text-primary'}`}>{activeMember.name}</span>
+            </div>
+          </div>
+        )}
+      </DragOverlay>
+    </DndContext>
   );
 }

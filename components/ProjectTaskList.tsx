@@ -1,9 +1,21 @@
 'use client';
 
 import { forwardRef, useImperativeHandle, useMemo, useState, useTransition } from 'react';
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
+import { SortableContext, arrayMove, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { Plus } from 'lucide-react';
 import TaskChip from '@/components/TaskChip';
-import DropPlaceholder from '@/components/DropPlaceholder';
+import SortableColumn from '@/components/SortableColumn';
 import ProjectTaskTrashModal from '@/components/ProjectTaskTrashModal';
 import {
   createProjectTaskAction,
@@ -35,12 +47,15 @@ const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
   const [tasks, setTasks] = useState<ProjectTask[]>(initialTasks);
   const [creatingFor, setCreatingFor] = useState<string | null | undefined>(undefined);
   const [title, setTitle] = useState('');
-  const [dragId, setDragId] = useState<string | null>(null);
-  const [dragOverId, setDragOverId] = useState<string | null>(null);
-  const [dragOverSide, setDragOverSide] = useState<'before' | 'after' | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [showTrash, setShowTrash] = useState(false);
   const [, startTransition] = useTransition();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const childrenByParent = useMemo(() => {
     const map = new Map<string, ProjectTask[]>();
@@ -66,12 +81,6 @@ const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
     },
   }));
 
-  function clearDragState() {
-    setDragId(null);
-    setDragOverId(null);
-    setDragOverSide(null);
-  }
-
   function toggleCollapse(taskId: string) {
     setCollapsed((prev) => {
       const next = new Set(prev);
@@ -85,31 +94,31 @@ const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
     return (childrenByParent.get(parentId ?? '__root__') ?? []).map((t) => t.id);
   }
 
-  function handleDrop(task: ProjectTask, targetId: string) {
-    if (!dragId || dragId === targetId) {
-      clearDragState();
-      return;
-    }
-    const dragged = tasks.find((t) => t.id === dragId);
-    if (!dragged || dragged.parentTaskId !== task.parentTaskId) {
-      clearDragState();
-      return;
-    }
-    const side = dragOverSide ?? 'before';
+  function handleDragStart(e: DragStartEvent) {
+    setActiveId(String(e.active.id));
+  }
+
+  function handleDragEnd(e: DragEndEvent) {
+    setActiveId(null);
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const activeTask = tasks.find((t) => t.id === active.id);
+    const overTask = tasks.find((t) => t.id === over.id);
+    if (!activeTask || !overTask || activeTask.parentTaskId !== overTask.parentTaskId) return;
+
     setTasks((prev) => {
-      const siblings = siblingIds(task.parentTaskId);
-      const filtered = siblings.filter((id) => id !== dragId);
-      const targetIndex = filtered.indexOf(targetId);
-      const insertIndex = side === 'before' ? targetIndex : targetIndex + 1;
-      filtered.splice(insertIndex, 0, dragId);
-      const order = new Map(filtered.map((id, idx) => [id, idx]));
+      const siblings = siblingIds(activeTask.parentTaskId);
+      const oldIndex = siblings.indexOf(String(active.id));
+      const newIndex = siblings.indexOf(String(over.id));
+      if (oldIndex === -1 || newIndex === -1) return prev;
+      const reordered = arrayMove(siblings, oldIndex, newIndex);
+      const order = new Map(reordered.map((id, idx) => [id, idx]));
       const next = prev.map((t) => (order.has(t.id) ? { ...t, position: order.get(t.id)! } : t));
       startTransition(() => {
-        reorderProjectTasksAction(filtered);
+        reorderProjectTasksAction(reordered);
       });
       return next;
     });
-    clearDragState();
   }
 
   function handleStatusClick(task: ProjectTask) {
@@ -211,77 +220,85 @@ const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
   function renderNode(task: ProjectTask, level: number): React.ReactNode {
     const children = childrenByParent.get(task.id) ?? [];
     const isCollapsed = collapsed.has(task.id);
-    const isDragTarget = dragOverId === task.id && dragId !== task.id;
     return (
       <div key={task.id} className="flex flex-col gap-1.5">
-        {isDragTarget && dragOverSide === 'before' && <DropPlaceholder orientation="vertical" size="34px" />}
-        <TaskChip
-          task={task}
-          level={level}
-          hasChildren={children.length > 0}
-          collapsed={isCollapsed}
-          userOptions={userOptions}
-          isDragging={dragId === task.id}
-          onToggleCollapse={() => toggleCollapse(task.id)}
-          onDragStart={() => setDragId(task.id)}
-          onDragEnd={clearDragState}
-          onDragOver={(e) => {
-            e.preventDefault();
-            const rect = e.currentTarget.getBoundingClientRect();
-            const side: 'before' | 'after' = e.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
-            if (dragOverId !== task.id || dragOverSide !== side) {
-              setDragOverId(task.id);
-              setDragOverSide(side);
-            }
-          }}
-          onDrop={() => handleDrop(task, task.id)}
-          onStatusClick={() => handleStatusClick(task)}
-          onToggleAssignee={(userId) => handleToggleAssignee(task, userId)}
-          onRename={(newTitle) => handleRename(task, newTitle)}
-          onDelete={() => handleDelete(task)}
-          onAddSubtask={() => {
-            setCreatingFor(task.id);
-            setTitle('');
-            setCollapsed((prev) => { const next = new Set(prev); next.delete(task.id); return next; });
-          }}
-        />
-        {isDragTarget && dragOverSide === 'after' && <DropPlaceholder orientation="vertical" size="34px" />}
+        <SortableColumn id={task.id}>
+          {({ setNodeRef, setActivatorNodeRef, style, attributes, listeners, isDragging }) => (
+            <TaskChip
+              task={task}
+              level={level}
+              hasChildren={children.length > 0}
+              collapsed={isCollapsed}
+              userOptions={userOptions}
+              isDragging={isDragging}
+              dragRef={setNodeRef}
+              dragStyle={style}
+              dragHandleRef={setActivatorNodeRef}
+              dragHandleProps={{ ...attributes, ...listeners }}
+              onToggleCollapse={() => toggleCollapse(task.id)}
+              onStatusClick={() => handleStatusClick(task)}
+              onToggleAssignee={(userId) => handleToggleAssignee(task, userId)}
+              onRename={(newTitle) => handleRename(task, newTitle)}
+              onDelete={() => handleDelete(task)}
+              onAddSubtask={() => {
+                setCreatingFor(task.id);
+                setTitle('');
+                setCollapsed((prev) => { const next = new Set(prev); next.delete(task.id); return next; });
+              }}
+            />
+          )}
+        </SortableColumn>
         {!isCollapsed && creatingFor === task.id && renderCreateInput(task.id, level + 1)}
-        {!isCollapsed && children.map((child) => renderNode(child, level + 1))}
+        {!isCollapsed && children.length > 0 && (
+          <SortableContext items={children.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+            {children.map((child) => renderNode(child, level + 1))}
+          </SortableContext>
+        )}
       </div>
     );
   }
 
   const rootTasks = childrenByParent.get('__root__') ?? [];
+  const activeTask = activeId ? tasks.find((t) => t.id === activeId) : undefined;
 
   return (
-    <div className="flex flex-col gap-1.5">
-      {rootTasks.map((task) => renderNode(task, 0))}
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <div className="flex flex-col gap-1.5">
+        <SortableContext items={rootTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+          {rootTasks.map((task) => renderNode(task, 0))}
+        </SortableContext>
 
-      {creatingFor === null ? (
-        renderCreateInput(null, 0)
-      ) : (
-        <button
-          type="button"
-          onClick={() => {
-            setCreatingFor(null);
-            setTitle('');
-          }}
-          className="flex items-center justify-center gap-1 rounded border border-dashed border-grid-border py-1.5 text-[11px] text-secondary transition hover:border-solid hover:text-primary"
-        >
-          <Plus size={12} strokeWidth={2} aria-hidden="true" />
-          Aggiungi Task
-        </button>
-      )}
+        {creatingFor === null ? (
+          renderCreateInput(null, 0)
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setCreatingFor(null);
+              setTitle('');
+            }}
+            className="flex items-center justify-center gap-1 rounded border border-dashed border-grid-border py-1.5 text-[11px] text-secondary transition hover:border-solid hover:text-primary"
+          >
+            <Plus size={12} strokeWidth={2} aria-hidden="true" />
+            Aggiungi Task
+          </button>
+        )}
 
-      {showTrash && (
-        <ProjectTaskTrashModal
-          projectId={projectId}
-          onClose={() => setShowTrash(false)}
-          onRestore={(task) => setTasks((prev) => [...prev, task])}
-        />
-      )}
-    </div>
+        {showTrash && (
+          <ProjectTaskTrashModal
+            projectId={projectId}
+            onClose={() => setShowTrash(false)}
+            onRestore={(task) => setTasks((prev) => [...prev, task])}
+          />
+        )}
+      </div>
+
+      <DragOverlay>
+        {activeTask && (
+          <div className="rounded border border-grid-border bg-card-bg px-2 py-1.5 text-xs text-primary shadow-lg">{activeTask.title}</div>
+        )}
+      </DragOverlay>
+    </DndContext>
   );
 });
 

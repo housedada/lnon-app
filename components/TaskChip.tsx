@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { GripVertical, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import AssigneeFloatingMenu from '@/components/AssigneeFloatingMenu';
 import RowContextMenu from '@/components/RowContextMenu';
@@ -27,10 +27,10 @@ export default function TaskChip({
   collapsed,
   userOptions,
   onToggleCollapse,
-  onDragStart,
-  onDragEnd,
-  onDragOver,
-  onDrop,
+  dragRef,
+  dragStyle,
+  dragHandleRef,
+  dragHandleProps,
   onStatusClick,
   onToggleAssignee,
   onRename,
@@ -44,10 +44,10 @@ export default function TaskChip({
   collapsed: boolean;
   userOptions: { id: string; name: string; color?: string }[];
   onToggleCollapse: () => void;
-  onDragStart: () => void;
-  onDragEnd: () => void;
-  onDragOver: (e: React.DragEvent) => void;
-  onDrop: () => void;
+  dragRef: (el: HTMLElement | null) => void;
+  dragStyle: CSSProperties;
+  dragHandleRef: (el: HTMLElement | null) => void;
+  dragHandleProps: Record<string, unknown>;
   onStatusClick: () => void;
   onToggleAssignee: (userId: string) => void;
   onRename: (title: string) => void;
@@ -82,16 +82,14 @@ export default function TaskChip({
       }
     >
     <div
-      onDragOver={onDragOver}
-      onDrop={onDrop}
+      ref={dragRef}
       className={`group/task relative flex items-center gap-1.5 rounded border px-2 py-1.5 text-xs transition-[opacity,background-color,border-color] duration-150 ${STATUS_STYLE[task.status]} ${level > 0 ? 'border-l-2 border-l-secondary/30' : ''} ${isDragging ? 'opacity-40' : 'opacity-100'}`}
-      style={{ marginLeft: level * 16, width: `calc(100% - ${level * 16}px)`, paddingRight: hasChildren ? 168 : 148 }}
+      style={{ ...dragStyle, marginLeft: level * 16, width: `calc(100% - ${level * 16}px)`, paddingRight: hasChildren ? 168 : 148 }}
     >
       <span
-        draggable
-        onDragStart={onDragStart}
-        onDragEnd={onDragEnd}
-        className="flex h-4 w-4 shrink-0 cursor-grab items-center justify-center active:cursor-grabbing"
+        ref={dragHandleRef}
+        {...dragHandleProps}
+        className="flex h-4 w-4 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
         aria-label="Trascina per riordinare"
       >
         <GripVertical

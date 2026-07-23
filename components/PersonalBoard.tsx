@@ -1,6 +1,18 @@
 'use client';
 
 import { useEffect, useRef, useState, useTransition } from 'react';
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
+import { SortableContext, arrayMove, horizontalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { Briefcase, CheckCircle2, ChevronDown, GripVertical, Trash2 } from 'lucide-react';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
 import { useTaskBoardScrollStore } from '@/lib/store/taskBoardScrollStore';
@@ -9,7 +21,7 @@ import { savePersonalColumnOrderAction } from '@/lib/actions/projects';
 import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/ProjectTaskList';
 import ProjectShareBadge from '@/components/ProjectShareBadge';
 import MarkProjectCompletedButton from '@/components/MarkProjectCompletedButton';
-import DropPlaceholder from '@/components/DropPlaceholder';
+import SortableColumn from '@/components/SortableColumn';
 import type { Project, ProjectTask } from '@/lib/types';
 
 function projectHeaderBackground(project: Project, productColorsByJob: Record<string, string[]>): string | undefined {
@@ -36,15 +48,18 @@ export default function PersonalBoard({
   const listRefs = useRef<Map<string, ProjectTaskListHandle>>(new Map());
   const [order, setOrder] = useState<string[]>(() => projects.map((p) => p.id));
   const [prevProjectIds, setPrevProjectIds] = useState<string[]>(() => projects.map((p) => p.id));
-  const [dragId, setDragId] = useState<string | null>(null);
-  const [dragOverId, setDragOverId] = useState<string | null>(null);
-  const [dragOverSide, setDragOverSide] = useState<'before' | 'after' | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const setScrollContainer = useTaskBoardScrollStore((s) => s.setScrollContainer);
   const setColumns = useTaskBoardScrollStore((s) => s.setColumns);
   const registerColumnRef = useTaskBoardScrollStore((s) => s.registerColumnRef);
   const expandSignal = useTaskBoardExpandStore((s) => s.signal);
   const expandTarget = useTaskBoardExpandStore((s) => s.expanded);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const projectsById = new Map(projects.map((p) => [p.id, p]));
 
@@ -87,29 +102,24 @@ export default function PersonalBoard({
     });
   }
 
-  function clearDragState() {
-    setDragId(null);
-    setDragOverId(null);
-    setDragOverSide(null);
+  function handleDragStart(e: DragStartEvent) {
+    setActiveId(String(e.active.id));
   }
 
-  function handleDrop(targetId: string) {
-    if (!dragId || dragId === targetId) {
-      clearDragState();
-      return;
-    }
-    const side = dragOverSide ?? 'before';
+  function handleDragEnd(e: DragEndEvent) {
+    setActiveId(null);
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
     setOrder((prev) => {
-      const next = prev.filter((id) => id !== dragId);
-      const targetIndex = next.indexOf(targetId);
-      const insertIndex = side === 'before' ? targetIndex : targetIndex + 1;
-      next.splice(insertIndex, 0, dragId);
+      const oldIndex = prev.indexOf(String(active.id));
+      const newIndex = prev.indexOf(String(over.id));
+      if (oldIndex === -1 || newIndex === -1) return prev;
+      const next = arrayMove(prev, oldIndex, newIndex);
       startTransition(() => {
         savePersonalColumnOrderAction(next);
       });
       return next;
     });
-    clearDragState();
   }
 
   if (projects.length === 0) {
@@ -127,100 +137,112 @@ export default function PersonalBoard({
   const cardWidthClass = isMasonry ? 'mb-3 w-full break-inside-avoid' : density === 'wide' ? 'w-[30%] min-w-[400px]' : 'w-[20%] min-w-[400px]';
 
   const orderedProjects = order.map((id) => projectsById.get(id)).filter((p): p is Project => Boolean(p));
+  const activeProject = activeId ? projectsById.get(activeId) : undefined;
+  const activeBackground = activeProject ? projectHeaderBackground(activeProject, productColorsByJob) : undefined;
 
   return (
-    <div className={containerClass} ref={(el) => setScrollContainer(el)}>
-      {orderedProjects.map((project) => {
-        const background = projectHeaderBackground(project, productColorsByJob);
-        const headerStyle = background ? { background } : undefined;
-        const headerTextClass = headerStyle ? 'text-neutral-800' : 'text-primary';
-        const headerSubTextClass = headerStyle ? 'text-neutral-700/70' : 'text-secondary';
-        const isCollapsed = collapsedProjects.has(project.id);
-        const isDragTarget = !isMasonry && dragOverId === project.id && dragId !== project.id;
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <div className={containerClass} ref={(el) => setScrollContainer(el)}>
+        <SortableContext items={order} strategy={horizontalListSortingStrategy}>
+          {orderedProjects.map((project) => {
+            const background = projectHeaderBackground(project, productColorsByJob);
+            const headerStyle = background ? { background } : undefined;
+            const headerTextClass = headerStyle ? 'text-neutral-800' : 'text-primary';
+            const headerSubTextClass = headerStyle ? 'text-neutral-700/70' : 'text-secondary';
+            const isCollapsed = collapsedProjects.has(project.id);
 
-        return (
-          <div key={project.id} className="contents">
-          {isDragTarget && dragOverSide === 'before' && <DropPlaceholder orientation="horizontal" size="28px" />}
-          <div
-            ref={(el) => registerColumnRef(project.id, el)}
-            draggable
-            onDragStart={() => setDragId(project.id)}
-            onDragEnd={clearDragState}
-            onDragOver={(e) => {
-              e.preventDefault();
-              if (isMasonry) return;
-              const rect = e.currentTarget.getBoundingClientRect();
-              const side: 'before' | 'after' = e.clientX < rect.left + rect.width / 2 ? 'before' : 'after';
-              if (dragOverId !== project.id || dragOverSide !== side) {
-                setDragOverId(project.id);
-                setDragOverSide(side);
-              }
-            }}
-            onDrop={() => handleDrop(project.id)}
-            className={`group flex shrink-0 flex-col rounded-xl border border-grid-border bg-grid-header-bg transition-opacity duration-150 ${cardWidthClass} ${isMasonry ? '' : 'self-start'} ${dragId === project.id ? 'opacity-40' : 'opacity-100'}`}
-          >
-            <div
-              className="flex w-full cursor-grab items-center justify-between gap-2 rounded-t-xl border-b border-grid-border px-3 py-2 active:cursor-grabbing"
-              style={headerStyle}
-            >
-              <GripVertical size={13} strokeWidth={1.75} className={`shrink-0 ${headerSubTextClass}`} aria-hidden="true" />
-              <button type="button" onClick={() => toggleProject(project.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
-                <div className="min-w-0">
-                  <p className={`truncate text-sm font-semibold ${headerTextClass}`}>{project.title}</p>
-                  {project.jobTitle && (
-                    <p className={`mt-1 flex items-center gap-1 truncate text-[11px] ${headerSubTextClass}`}>
-                      <Briefcase size={11} strokeWidth={1.75} aria-hidden="true" />
-                      {project.jobTitle}
-                    </p>
-                  )}
-                </div>
-              </button>
-              {project.jobId && (
-                <ProjectShareBadge projectId={project.id} share={project.budgetShare} textClass={headerSubTextClass} />
-              )}
-              {project.jobId && canManageInvoices && (
-                project.completedAt ? (
-                  <span title="Progetto completato" className="shrink-0">
-                    <CheckCircle2 size={13} strokeWidth={1.75} className={headerTextClass} aria-label="Progetto completato" />
-                  </span>
-                ) : (
-                  <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} budgetShare={project.budgetShare} />
-                )
-              )}
-              <button
-                type="button"
-                onClick={() => listRefs.current.get(project.id)?.openTrash()}
-                aria-label="Cestino task"
-                title="Cestino task"
-                className={`shrink-0 opacity-0 transition-opacity group-hover:opacity-100 ${headerTextClass}`}
-              >
-                <Trash2 size={13} strokeWidth={1.75} aria-hidden="true" />
-              </button>
-              <button type="button" onClick={() => toggleProject(project.id)} className="shrink-0" aria-label={isCollapsed ? 'Espandi progetto' : 'Comprimi progetto'}>
-                <ChevronDown
-                  size={14}
-                  strokeWidth={2}
-                  className={`transition-transform ${headerTextClass} ${isCollapsed ? '-rotate-90' : ''}`}
-                  aria-hidden="true"
-                />
-              </button>
-            </div>
-            <div className={`flex-1 p-2 ${isCollapsed ? 'hidden' : ''}`}>
-              <ProjectTaskList
-                ref={(el) => {
-                  if (el) listRefs.current.set(project.id, el);
-                  else listRefs.current.delete(project.id);
-                }}
-                projectId={project.id}
-                initialTasks={tasksByProject[project.id] ?? []}
-                userOptions={userOptions}
-              />
+            return (
+              <SortableColumn key={project.id} id={project.id} disabled={isMasonry}>
+                {({ setNodeRef, setActivatorNodeRef, style, attributes, listeners, isDragging }) => (
+                  <div
+                    ref={(el) => {
+                      setNodeRef(el);
+                      registerColumnRef(project.id, el);
+                    }}
+                    style={style}
+                    className={`group flex shrink-0 flex-col rounded-xl border border-grid-border bg-grid-header-bg transition-opacity duration-150 ${cardWidthClass} ${isMasonry ? '' : 'self-start'} ${isDragging ? 'opacity-40' : 'opacity-100'}`}
+                  >
+                    <div
+                      className="flex w-full items-center justify-between gap-2 rounded-t-xl border-b border-grid-border px-3 py-2"
+                      style={headerStyle}
+                    >
+                      <span
+                        ref={setActivatorNodeRef}
+                        {...attributes}
+                        {...listeners}
+                        className={`shrink-0 cursor-grab touch-none active:cursor-grabbing ${headerSubTextClass}`}
+                      >
+                        <GripVertical size={13} strokeWidth={1.75} aria-hidden="true" />
+                      </span>
+                      <button type="button" onClick={() => toggleProject(project.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                        <div className="min-w-0">
+                          <p className={`truncate text-sm font-semibold ${headerTextClass}`}>{project.title}</p>
+                          {project.jobTitle && (
+                            <p className={`mt-1 flex items-center gap-1 truncate text-[11px] ${headerSubTextClass}`}>
+                              <Briefcase size={11} strokeWidth={1.75} aria-hidden="true" />
+                              {project.jobTitle}
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                      {project.jobId && (
+                        <ProjectShareBadge projectId={project.id} share={project.budgetShare} textClass={headerSubTextClass} />
+                      )}
+                      {project.jobId && canManageInvoices && (
+                        project.completedAt ? (
+                          <span title="Progetto completato" className="shrink-0">
+                            <CheckCircle2 size={13} strokeWidth={1.75} className={headerTextClass} aria-label="Progetto completato" />
+                          </span>
+                        ) : (
+                          <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} budgetShare={project.budgetShare} />
+                        )
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => listRefs.current.get(project.id)?.openTrash()}
+                        aria-label="Cestino task"
+                        title="Cestino task"
+                        className={`shrink-0 opacity-0 transition-opacity group-hover:opacity-100 ${headerTextClass}`}
+                      >
+                        <Trash2 size={13} strokeWidth={1.75} aria-hidden="true" />
+                      </button>
+                      <button type="button" onClick={() => toggleProject(project.id)} className="shrink-0" aria-label={isCollapsed ? 'Espandi progetto' : 'Comprimi progetto'}>
+                        <ChevronDown
+                          size={14}
+                          strokeWidth={2}
+                          className={`transition-transform ${headerTextClass} ${isCollapsed ? '-rotate-90' : ''}`}
+                          aria-hidden="true"
+                        />
+                      </button>
+                    </div>
+                    <div className={`flex-1 p-2 ${isCollapsed ? 'hidden' : ''}`}>
+                      <ProjectTaskList
+                        ref={(el) => {
+                          if (el) listRefs.current.set(project.id, el);
+                          else listRefs.current.delete(project.id);
+                        }}
+                        projectId={project.id}
+                        initialTasks={tasksByProject[project.id] ?? []}
+                        userOptions={userOptions}
+                      />
+                    </div>
+                  </div>
+                )}
+              </SortableColumn>
+            );
+          })}
+        </SortableContext>
+      </div>
+
+      <DragOverlay>
+        {activeProject && (
+          <div className={`rounded-xl border border-grid-border bg-grid-header-bg shadow-lg ${cardWidthClass}`}>
+            <div className="rounded-xl px-3 py-2" style={activeBackground ? { background: activeBackground } : undefined}>
+              <p className={`truncate text-sm font-semibold ${activeBackground ? 'text-neutral-800' : 'text-primary'}`}>{activeProject.title}</p>
             </div>
           </div>
-          {isDragTarget && dragOverSide === 'after' && <DropPlaceholder orientation="horizontal" size="28px" />}
-          </div>
-        );
-      })}
-    </div>
+        )}
+      </DragOverlay>
+    </DndContext>
   );
 }
