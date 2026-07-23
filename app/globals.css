@@ -287,6 +287,20 @@ textarea::placeholder {
   background-image: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 2%, transparent) 0%, transparent 65%);
 }
 
+/* Task completato: effetto "barrato" via pseudo-elemento (non text-decoration),
+   una linea bianca opaca 1px che sfuma verso destra fino a opacity 6%. */
+.task-title-done::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  transform: translateY(-50%);
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.06));
+  pointer-events: none;
+}
+
 /* CTA "Crea Task" nelle card progetto: nascosta finché non si passa sopra
    la card, poi appare con fade + slide dall'alto verso il basso, lenta. */
 .task-create-cta {

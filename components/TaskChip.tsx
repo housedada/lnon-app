@@ -132,7 +132,7 @@ export default function TaskChip({
       ) : (
         <span
           onClick={() => setEditing(true)}
-          className="min-w-0 flex-1 cursor-text truncate text-primary"
+          className={`relative min-w-0 flex-1 cursor-text truncate text-primary ${task.status === 'completed' ? 'task-title-done' : ''}`}
           title="Clicca per rinominare"
         >
           {task.title}
