@@ -169,6 +169,7 @@ export interface Job {
   deletedAt?: Date;
   approvedAt?: Date;
   approvedBy?: string;
+  archivedAt?: Date;
   productIds?: string[];
   // Popolati solo dalla lista/dettaglio, se collegati
   clientName?: string;

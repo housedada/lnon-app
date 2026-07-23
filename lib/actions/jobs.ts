@@ -5,7 +5,17 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { hasPermission, canDeleteResource } from '@/lib/permissions';
-import { createDbJob, updateDbJob, softDeleteJob, approveJob, getUnlinkedJobs, getAllClientNames, linkJobToClient } from '@/lib/db';
+import {
+  createDbJob,
+  updateDbJob,
+  softDeleteJob,
+  approveJob,
+  archiveJob,
+  unarchiveJob,
+  getUnlinkedJobs,
+  getAllClientNames,
+  linkJobToClient,
+} from '@/lib/db';
 import type { Job } from '@/lib/types';
 
 type JobFormData = Omit<Job, 'id' | 'createdBy' | 'createdAt' | 'updatedAt' | 'clientName' | 'contractLabel' | 'assignedToName' | 'approvedAt' | 'approvedBy'>;
@@ -97,6 +107,34 @@ export async function approveJobAction(jobId: string): Promise<{ success: boolea
   await approveJob(jobId, userId);
   revalidatePath('/dashboard/jobs');
   return { success: true, message: 'Lavoro approvato.' };
+}
+
+export async function archiveJobAction(jobId: string): Promise<{ success: boolean; message: string }> {
+  const session = await auth();
+  const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role;
+
+  if (!role || !hasPermission(role, 'jobs', 'update')) {
+    return { success: false, message: 'Non hai il permesso di archiviare i lavori.' };
+  }
+
+  await archiveJob(jobId);
+  revalidatePath('/dashboard/jobs');
+  revalidatePath('/dashboard/jobs/archive');
+  return { success: true, message: 'Lavoro archiviato.' };
+}
+
+export async function unarchiveJobAction(jobId: string): Promise<{ success: boolean; message: string }> {
+  const session = await auth();
+  const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role;
+
+  if (!role || !hasPermission(role, 'jobs', 'update')) {
+    return { success: false, message: 'Non hai il permesso di ripristinare i lavori.' };
+  }
+
+  await unarchiveJob(jobId);
+  revalidatePath('/dashboard/jobs');
+  revalidatePath('/dashboard/jobs/archive');
+  return { success: true, message: 'Lavoro ripristinato.' };
 }
 
 function normalizeName(value: string): string {

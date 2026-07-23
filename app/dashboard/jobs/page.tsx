@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { Pencil } from 'lucide-react';
+import { Pencil, Archive } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { getJobs, getAllClientNames, getAllContractOptions, getAllProductNames, getUsers } from '@/lib/db';
 import { hasPermission } from '@/lib/permissions';
@@ -11,6 +11,7 @@ import SyncJobsClientsButton from '@/components/SyncJobsClientsButton';
 import JobLinkButton from '@/components/JobLinkButton';
 import JobsFilterBar from '@/components/JobsFilterBar';
 import CreateProjectFromJobButton from '@/components/CreateProjectFromJobButton';
+import ArchiveJobButton from '@/components/ArchiveJobButton';
 import NewJobButton from '@/components/NewJobButton';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import type { JobStatus } from '@/lib/types';
@@ -82,6 +83,15 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
             />
           )}
           {canUpdate && <SyncJobsClientsButton />}
+          <Link
+            href="/dashboard/jobs/archive"
+            aria-label="Archivio lavori"
+            title="Archivio lavori"
+            className="flex items-center gap-1.5 rounded-lg border border-grid-border px-3 py-2 text-sm font-medium text-secondary transition hover:bg-row-hover hover:text-primary"
+          >
+            <Archive size={16} strokeWidth={1.75} aria-hidden="true" />
+            Archivio
+          </Link>
         </div>
       </div>
 
@@ -148,7 +158,7 @@ async function JobsListSection({
       totalCount={total}
       totalLabel="lavori"
     >
-      <div className="mx-6 mt-6 grid grid-cols-[2fr_1.5fr_auto_1fr_1fr_1fr_1fr_40px_40px_40px_40px] gap-x-[2px] border-t border-grid-border text-[12px]">
+      <div className="mx-6 mt-6 grid grid-cols-[2fr_1.5fr_auto_1fr_1fr_1fr_1fr_40px_40px_40px_40px_40px] gap-x-[2px] border-t border-grid-border text-[12px]">
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Titolo</div>
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Cliente</div>
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Sync</div>
@@ -156,6 +166,7 @@ async function JobsListSection({
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Assegnato a</div>
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Budget stimato</div>
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Scadenza</div>
+        <div className="sticky right-40 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
         <div className="sticky right-30 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
         <div className="sticky right-20 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
         <div className="sticky right-10 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
@@ -186,18 +197,21 @@ async function JobsListSection({
             <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{job.assignedToName ?? '—'}</div>
             <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatAmount(job.estimatedBudget)}</div>
             <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(job.endDate)}</div>
-            <div className="sticky right-30 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
+            <div className="sticky right-40 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
               {canCreateProjects && (
                 <CreateProjectFromJobButton jobId={job.id} jobTitle={job.title} userOptions={userOptions} />
               )}
             </div>
-            <div className="sticky right-20 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
+            <div className="sticky right-30 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
               {canUpdate && !job.clientId && job.clientNameRaw && (
                 <JobLinkButton jobId={job.id} jobClientName={job.clientNameRaw} clientOptions={clientOptions} />
               )}
             </div>
-            <div className="sticky right-10 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
+            <div className="sticky right-20 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
               {canApprove && job.status === 'pending_approval' && <ApproveJobButton jobId={job.id} />}
+            </div>
+            <div className="sticky right-10 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
+              {canUpdate && job.status === 'completed' && !job.archivedAt && <ArchiveJobButton jobId={job.id} />}
             </div>
             <div className="sticky right-0 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
               {canUpdate && (

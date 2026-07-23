@@ -314,6 +314,7 @@ function jobRowToJob(row: Record<string, any>): Job {
     deletedAt: row.deleted_at ? new Date(row.deleted_at) : undefined,
     approvedAt: row.approved_at ? new Date(row.approved_at) : undefined,
     approvedBy: row.approved_by ?? undefined,
+    archivedAt: row.archived_at ? new Date(row.archived_at) : undefined,
     clientName: row.clients?.name ?? undefined,
     contractLabel: row.contracts ? (row.contracts.clients?.name ?? row.contracts.client_name_raw) : undefined,
     assignedToName: row.assigned_user?.name ?? undefined,
@@ -365,6 +366,8 @@ export async function getJobs(filters?: {
   status?: string;
   assignedTo?: string;
   sync?: string; // 'synced' | 'not_synced'
+  archived?: boolean;
+  archivedYear?: number;
   limit?: number;
   offset?: number;
 }): Promise<{ data: Job[]; total: number }> {
@@ -373,6 +376,17 @@ export async function getJobs(filters?: {
     .select('*, clients(name), contracts(client_name_raw, clients(name))', { count: 'exact' })
     .is('deleted_at', null)
     .order('created_at', { ascending: false });
+
+  if (filters?.archived) {
+    query = query.not('archived_at', 'is', null);
+    if (filters.archivedYear) {
+      const start = `${filters.archivedYear}-01-01T00:00:00.000Z`;
+      const end = `${filters.archivedYear + 1}-01-01T00:00:00.000Z`;
+      query = query.gte('archived_at', start).lt('archived_at', end);
+    }
+  } else {
+    query = query.is('archived_at', null);
+  }
 
   if (filters?.search) {
     query = query.ilike('title', `%${filters.search}%`);
@@ -508,6 +522,49 @@ export async function approveJob(jobId: string, userId: string): Promise<Job> {
 
   if (error) throw error;
   return jobRowToJob(data);
+}
+
+/**
+ * Archivia un lavoro completato (archivio annuale)
+ */
+export async function archiveJob(jobId: string): Promise<Job> {
+  const { data, error } = await supabaseServer
+    .from('jobs')
+    .update({ archived_at: new Date().toISOString() })
+    .eq('id', jobId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return jobRowToJob(data);
+}
+
+/**
+ * Ripristina un lavoro archiviato nella lista attiva
+ */
+export async function unarchiveJob(jobId: string): Promise<Job> {
+  const { data, error } = await supabaseServer
+    .from('jobs')
+    .update({ archived_at: null })
+    .eq('id', jobId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return jobRowToJob(data);
+}
+
+/**
+ * Anni distinti per cui esistono lavori archiviati (per il filtro archivio)
+ */
+export async function getArchivedJobYears(): Promise<number[]> {
+  const { data, error } = await supabaseServer.from('jobs').select('archived_at').not('archived_at', 'is', null);
+  if (error) throw error;
+  const years = new Set<number>();
+  for (const row of data ?? []) {
+    if (row.archived_at) years.add(new Date(row.archived_at).getFullYear());
+  }
+  return Array.from(years).sort((a, b) => b - a);
 }
 
 /**
