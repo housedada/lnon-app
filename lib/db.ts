@@ -373,9 +373,8 @@ export async function getJobs(filters?: {
 }): Promise<{ data: Job[]; total: number }> {
   let query = supabaseServer
     .from('jobs')
-    .select('*, clients(name), contracts(client_name_raw, clients(name))', { count: 'exact' })
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false });
+    .select('*, clients(name), contracts(client_name_raw, clients(name))')
+    .is('deleted_at', null);
 
   if (filters?.archived) {
     query = query.not('archived_at', 'is', null);
@@ -410,18 +409,36 @@ export async function getJobs(filters?: {
     query = query.eq('assigned_to', filters.assignedTo);
   }
 
-  if (filters?.limit) {
-    query = query.limit(filters.limit);
-  }
-
-  if (filters?.offset) {
-    query = query.range(filters.offset, filters.offset + (filters.limit || 10) - 1);
-  }
-
-  const { data, error, count } = await query;
-
+  const { data, error } = await query;
   if (error) throw error;
-  return { data: (data ?? []).map(jobRowToJob), total: count ?? 0 };
+
+  let jobs = (data ?? []).map(jobRowToJob);
+
+  // Ordinamento per priorità di stato (non alfabetico): lavori approvati
+  // e in corso in cima, poi via via gli altri stati; a parità di stato,
+  // i più recenti prima.
+  const STATUS_PRIORITY: Record<Job['status'], number> = {
+    approved: 0,
+    in_progress: 1,
+    pending_approval: 2,
+    draft: 3,
+    completed: 4,
+    cancelled: 5,
+  };
+  jobs.sort((a, b) => {
+    const priorityDiff = STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status];
+    if (priorityDiff !== 0) return priorityDiff;
+    return b.createdAt.getTime() - a.createdAt.getTime();
+  });
+
+  const total = jobs.length;
+  if (filters?.limit !== undefined || filters?.offset !== undefined) {
+    const offset = filters.offset ?? 0;
+    const limit = filters.limit ?? total;
+    jobs = jobs.slice(offset, offset + limit);
+  }
+
+  return { data: jobs, total };
 }
 
 /**
