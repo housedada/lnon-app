@@ -31,7 +31,7 @@ export default function TaskChip({
   onDragOver,
   onDrop,
   onStatusClick,
-  onAssigneeSelect,
+  onToggleAssignee,
   onRename,
   onAddSubtask,
   onDelete,
@@ -46,7 +46,7 @@ export default function TaskChip({
   onDragOver: (e: React.DragEvent) => void;
   onDrop: () => void;
   onStatusClick: () => void;
-  onAssigneeSelect: (userId: string | null) => void;
+  onToggleAssignee: (userId: string) => void;
   onRename: (title: string) => void;
   onAddSubtask: () => void;
   onDelete: () => void;
@@ -80,8 +80,8 @@ export default function TaskChip({
     <div
       onDragOver={onDragOver}
       onDrop={onDrop}
-      style={{ marginLeft: level * 16, width: `calc(100% - ${level * 16}px)` }}
-      className={`group/task relative flex items-center gap-1.5 rounded border px-2 py-1.5 pr-20 text-xs transition-colors ${STATUS_STYLE[task.status]} ${level > 0 ? 'border-l-2 border-l-secondary/30' : ''}`}
+      className={`group/task relative flex items-center gap-1.5 rounded border px-2 py-1.5 text-xs transition-colors ${STATUS_STYLE[task.status]} ${level > 0 ? 'border-l-2 border-l-secondary/30' : ''}`}
+      style={{ marginLeft: level * 16, width: `calc(100% - ${level * 16}px)`, paddingRight: hasChildren ? 168 : 148 }}
     >
       <span
         draggable
@@ -96,19 +96,6 @@ export default function TaskChip({
           aria-hidden="true"
         />
       </span>
-
-      {hasChildren ? (
-        <button
-          type="button"
-          onClick={onToggleCollapse}
-          aria-label={collapsed ? 'Espandi sotto task' : 'Comprimi sotto task'}
-          className="flex h-4 w-4 shrink-0 items-center justify-center text-secondary"
-        >
-          <ChevronRight size={12} strokeWidth={2} className={`transition-transform ${collapsed ? '' : 'rotate-90'}`} aria-hidden="true" />
-        </button>
-      ) : (
-        <span className="w-4 shrink-0" />
-      )}
 
       {editing ? (
         <input
@@ -160,7 +147,39 @@ export default function TaskChip({
         >
           <span className={`h-2.5 w-2.5 rounded-full ${STATUS_DOT[task.status]}`} aria-hidden="true" />
         </button>
-        <AssigneeFloatingMenu userOptions={userOptions} currentAssignee={task.assignedTo} onSelect={onAssigneeSelect} />
+
+        {task.assignedToUsers.length > 0 && (
+          <div className="flex -space-x-1.5">
+            {task.assignedToUsers.slice(0, 3).map((u) => (
+              <span
+                key={u.id}
+                title={u.name}
+                className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-card-bg text-[8px] font-semibold text-neutral-800"
+                style={{ background: u.color ?? 'var(--color-grid-border)' }}
+              >
+                {u.name.charAt(0).toUpperCase()}
+              </span>
+            ))}
+            {task.assignedToUsers.length > 3 && (
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-card-bg bg-grid-border text-[8px] font-semibold text-secondary">
+                +{task.assignedToUsers.length - 3}
+              </span>
+            )}
+          </div>
+        )}
+
+        <AssigneeFloatingMenu userOptions={userOptions} assignedIds={task.assignedToIds} onToggle={onToggleAssignee} />
+
+        {hasChildren && (
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            aria-label={collapsed ? 'Espandi sotto task' : 'Comprimi sotto task'}
+            className="flex h-4 w-4 shrink-0 items-center justify-center text-secondary"
+          >
+            <ChevronRight size={12} strokeWidth={2} className={`transition-transform ${collapsed ? '' : 'rotate-90'}`} aria-hidden="true" />
+          </button>
+        )}
       </div>
     </div>
     </RowContextMenu>

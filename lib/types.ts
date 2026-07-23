@@ -200,15 +200,14 @@ export interface ProjectTask {
   parentTaskId?: string;
   title: string;
   status: ProjectTaskStatus;
-  assignedTo?: string;
   position: number;
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;
-  // Popolati solo in lettura
-  assignedToName?: string;
-  assignedToColor?: string;
+  // Popolati solo in lettura: un task può essere condiviso tra più membri
+  assignedToIds: string[];
+  assignedToUsers: { id: string; name: string; color?: string }[];
 }
 
 export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'done';

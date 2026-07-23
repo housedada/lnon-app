@@ -1643,15 +1643,38 @@ function projectTaskRowToProjectTask(row: Record<string, any>): ProjectTask {
     parentTaskId: row.parent_task_id ?? undefined,
     title: row.title,
     status: row.status,
-    assignedTo: row.assigned_to ?? undefined,
     position: row.position,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
     deletedAt: row.deleted_at ? new Date(row.deleted_at) : undefined,
-    assignedToName: row.assigned_user?.name ?? undefined,
-    assignedToColor: row.assigned_user?.color ?? undefined,
+    assignedToIds: [],
+    assignedToUsers: [],
   };
+}
+
+/**
+ * Popola assignedToIds/assignedToUsers per un elenco di task, condivisibili tra più membri
+ */
+async function attachProjectTaskAssignees(tasks: ProjectTask[]): Promise<ProjectTask[]> {
+  if (tasks.length === 0) return tasks;
+  const { data, error } = await supabaseServer
+    .from('project_task_assignees')
+    .select('task_id, user:users(id, name, color)')
+    .in('task_id', tasks.map((t) => t.id));
+  if (error) throw error;
+
+  const byTask = new Map<string, { id: string; name: string; color?: string }[]>();
+  for (const row of (data ?? []) as any[]) {
+    if (!row.user) continue;
+    const list = byTask.get(row.task_id) ?? [];
+    list.push({ id: row.user.id, name: row.user.name, color: row.user.color ?? undefined });
+    byTask.set(row.task_id, list);
+  }
+  return tasks.map((t) => {
+    const users = byTask.get(t.id) ?? [];
+    return { ...t, assignedToUsers: users, assignedToIds: users.map((u) => u.id) };
+  });
 }
 
 /**
@@ -1660,13 +1683,13 @@ function projectTaskRowToProjectTask(row: Record<string, any>): ProjectTask {
 export async function getProjectTasks(projectId: string): Promise<ProjectTask[]> {
   const { data, error } = await supabaseServer
     .from('project_tasks')
-    .select('*, assigned_user:users!project_tasks_assigned_to_fkey(name, color)')
+    .select('*')
     .eq('project_id', projectId)
     .is('deleted_at', null)
     .order('position', { ascending: true });
 
   if (error) throw error;
-  return (data ?? []).map(projectTaskRowToProjectTask);
+  return attachProjectTaskAssignees((data ?? []).map(projectTaskRowToProjectTask));
 }
 
 /**
@@ -1688,7 +1711,7 @@ export async function createProjectTask(data: { projectId: string; title: string
   const { data: row, error } = await supabaseServer
     .from('project_tasks')
     .insert([{ project_id: data.projectId, title: data.title, created_by: data.createdBy, position: nextPosition, parent_task_id: data.parentTaskId ?? null }])
-    .select('*, assigned_user:users!project_tasks_assigned_to_fkey(name, color)')
+    .select('*')
     .single();
 
   if (error) throw error;
@@ -1703,11 +1726,12 @@ export async function updateProjectTaskTitle(taskId: string, title: string): Pro
     .from('project_tasks')
     .update({ title })
     .eq('id', taskId)
-    .select('*, assigned_user:users!project_tasks_assigned_to_fkey(name, color)')
+    .select('*')
     .single();
 
   if (error) throw error;
-  return projectTaskRowToProjectTask(data);
+  const [task] = await attachProjectTaskAssignees([projectTaskRowToProjectTask(data)]);
+  return task;
 }
 
 /**
@@ -1718,26 +1742,38 @@ export async function updateProjectTaskStatus(taskId: string, status: ProjectTas
     .from('project_tasks')
     .update({ status })
     .eq('id', taskId)
-    .select('*, assigned_user:users!project_tasks_assigned_to_fkey(name, color)')
+    .select('*')
     .single();
 
   if (error) throw error;
-  return projectTaskRowToProjectTask(data);
+  const [task] = await attachProjectTaskAssignees([projectTaskRowToProjectTask(data)]);
+  return task;
 }
 
 /**
- * Aggiorna l'assegnatario di un sotto task
+ * Aggiunge o rimuove un membro tra gli assegnatari di un sotto task (task condivisibile tra più membri)
  */
-export async function updateProjectTaskAssignee(taskId: string, assignedTo: string | null): Promise<ProjectTask> {
-  const { data, error } = await supabaseServer
-    .from('project_tasks')
-    .update({ assigned_to: assignedTo })
-    .eq('id', taskId)
-    .select('*, assigned_user:users!project_tasks_assigned_to_fkey(name, color)')
-    .single();
+export async function toggleProjectTaskAssignee(taskId: string, userId: string): Promise<ProjectTask> {
+  const { data: existing, error: checkError } = await supabaseServer
+    .from('project_task_assignees')
+    .select('task_id')
+    .eq('task_id', taskId)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (checkError) throw checkError;
 
+  if (existing) {
+    const { error } = await supabaseServer.from('project_task_assignees').delete().eq('task_id', taskId).eq('user_id', userId);
+    if (error) throw error;
+  } else {
+    const { error } = await supabaseServer.from('project_task_assignees').insert([{ task_id: taskId, user_id: userId }]);
+    if (error) throw error;
+  }
+
+  const { data: row, error } = await supabaseServer.from('project_tasks').select('*').eq('id', taskId).single();
   if (error) throw error;
-  return projectTaskRowToProjectTask(data);
+  const [task] = await attachProjectTaskAssignees([projectTaskRowToProjectTask(row)]);
+  return task;
 }
 
 /**
@@ -1769,10 +1805,11 @@ export async function restoreProjectTask(taskId: string): Promise<ProjectTask> {
     .from('project_tasks')
     .update({ deleted_at: null })
     .eq('id', taskId)
-    .select('*, assigned_user:users!project_tasks_assigned_to_fkey(name, color)')
+    .select('*')
     .single();
   if (error) throw error;
-  return projectTaskRowToProjectTask(data);
+  const [task] = await attachProjectTaskAssignees([projectTaskRowToProjectTask(data)]);
+  return task;
 }
 
 /**
@@ -1781,12 +1818,12 @@ export async function restoreProjectTask(taskId: string): Promise<ProjectTask> {
 export async function getDeletedProjectTasks(projectId: string): Promise<ProjectTask[]> {
   const { data, error } = await supabaseServer
     .from('project_tasks')
-    .select('*, assigned_user:users!project_tasks_assigned_to_fkey(name, color)')
+    .select('*')
     .eq('project_id', projectId)
     .not('deleted_at', 'is', null)
     .order('deleted_at', { ascending: false });
   if (error) throw error;
-  return (data ?? []).map(projectTaskRowToProjectTask);
+  return attachProjectTaskAssignees((data ?? []).map(projectTaskRowToProjectTask));
 }
 
 /**

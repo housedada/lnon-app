@@ -7,7 +7,7 @@ import ProjectTaskTrashModal from '@/components/ProjectTaskTrashModal';
 import {
   createProjectTaskAction,
   updateProjectTaskStatusAction,
-  updateProjectTaskAssigneeAction,
+  toggleProjectTaskAssigneeAction,
   updateProjectTaskTitleAction,
   reorderProjectTasksAction,
   deleteProjectTaskAction,
@@ -95,11 +95,20 @@ const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
     });
   }
 
-  function handleAssigneeSelect(task: ProjectTask, userId: string | null) {
+  function handleToggleAssignee(task: ProjectTask, userId: string) {
     const user = userOptions.find((u) => u.id === userId);
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, assignedTo: userId ?? undefined, assignedToName: user?.name, assignedToColor: user?.color } : t)));
+    if (!user) return;
+    setTasks((prev) =>
+      prev.map((t) => {
+        if (t.id !== task.id) return t;
+        const already = t.assignedToIds.includes(userId);
+        return already
+          ? { ...t, assignedToIds: t.assignedToIds.filter((id) => id !== userId), assignedToUsers: t.assignedToUsers.filter((u2) => u2.id !== userId) }
+          : { ...t, assignedToIds: [...t.assignedToIds, userId], assignedToUsers: [...t.assignedToUsers, user] };
+      })
+    );
     startTransition(async () => {
-      const res = await updateProjectTaskAssigneeAction(task.id, userId);
+      const res = await toggleProjectTaskAssigneeAction(task.id, userId);
       if (!res.success) notify(res.message);
     });
   }
@@ -189,7 +198,7 @@ const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
           onDragOver={(e) => e.preventDefault()}
           onDrop={() => handleDrop(task, task.id)}
           onStatusClick={() => handleStatusClick(task)}
-          onAssigneeSelect={(userId) => handleAssigneeSelect(task, userId)}
+          onToggleAssignee={(userId) => handleToggleAssignee(task, userId)}
           onRename={(newTitle) => handleRename(task, newTitle)}
           onDelete={() => handleDelete(task)}
           onAddSubtask={() => {

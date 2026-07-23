@@ -6,7 +6,7 @@ import { hasPermission } from '@/lib/permissions';
 import {
   createProjectTask,
   updateProjectTaskStatus,
-  updateProjectTaskAssignee,
+  toggleProjectTaskAssignee,
   updateProjectTaskTitle,
   reorderProjectTasks,
   softDeleteProjectTask,
@@ -74,17 +74,17 @@ export async function updateProjectTaskStatusAction(
   }
 }
 
-export async function updateProjectTaskAssigneeAction(
+export async function toggleProjectTaskAssigneeAction(
   taskId: string,
-  assignedTo: string | null
+  userId: string
 ): Promise<{ success: boolean; message: string; task?: ProjectTask }> {
   try {
     await requireCanManage();
-    const task = await updateProjectTaskAssignee(taskId, assignedTo);
+    const task = await toggleProjectTaskAssignee(taskId, userId);
     revalidatePath('/dashboard/tasks');
-    return { success: true, message: 'Assegnatario aggiornato.', task };
+    return { success: true, message: 'Assegnazione aggiornata.', task };
   } catch (err) {
-    return { success: false, message: err instanceof Error ? err.message : 'Errore nell\'aggiornamento dell\'assegnatario.' };
+    return { success: false, message: err instanceof Error ? err.message : 'Errore nell\'aggiornamento dell\'assegnazione.' };
   }
 }
 

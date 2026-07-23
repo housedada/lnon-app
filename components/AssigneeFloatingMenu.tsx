@@ -2,16 +2,16 @@
 
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { UserRound } from 'lucide-react';
+import { UserRoundPlus, Check } from 'lucide-react';
 
 export default function AssigneeFloatingMenu({
   userOptions,
-  currentAssignee,
-  onSelect,
+  assignedIds,
+  onToggle,
 }: {
   userOptions: { id: string; name: string; color?: string }[];
-  currentAssignee?: string;
-  onSelect: (userId: string | null) => void;
+  assignedIds: string[];
+  onToggle: (userId: string) => void;
 }) {
   const btnRef = useRef<HTMLButtonElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
@@ -20,7 +20,7 @@ export default function AssigneeFloatingMenu({
     const rect = btnRef.current?.getBoundingClientRect();
     if (!rect) return;
     const menuWidth = 200;
-    const menuHeight = Math.min(320, 56 + userOptions.length * 34);
+    const menuHeight = Math.min(320, 16 + userOptions.length * 34);
     let left = rect.right - menuWidth;
     let top = rect.bottom + 4;
     if (left < 8) left = 8;
@@ -34,20 +34,18 @@ export default function AssigneeFloatingMenu({
     setPos(null);
   }
 
-  const current = userOptions.find((u) => u.id === currentAssignee);
-
   return (
     <>
       <button
         ref={btnRef}
         type="button"
         onClick={open}
-        aria-label="Assegna task"
-        title={current ? `Assegnato a ${current.name}` : 'Assegna task'}
-        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition"
-        style={{ background: current?.color ?? 'var(--color-grid-border)' }}
+        aria-label="Gestisci assegnatari"
+        title="Gestisci assegnatari"
+        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-secondary transition hover:text-primary"
+        style={{ background: 'var(--color-grid-border)' }}
       >
-        {!current && <UserRound size={11} strokeWidth={2} className="text-secondary" aria-hidden="true" />}
+        <UserRoundPlus size={11} strokeWidth={2} aria-hidden="true" />
       </button>
       {pos &&
         createPortal(
@@ -58,30 +56,24 @@ export default function AssigneeFloatingMenu({
               className="modal-panel card-shadow fixed z-[200] max-h-80 w-52 overflow-y-auto rounded-lg border border-grid-border bg-card-bg py-1.5 text-sm"
               style={{ top: pos.top, left: pos.left }}
             >
-              <button
-                type="button"
-                onClick={() => {
-                  onSelect(null);
-                  close();
-                }}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-secondary transition hover:bg-row-hover hover:text-primary"
-              >
-                — Non assegnato —
-              </button>
-              {userOptions.map((u) => (
-                <button
-                  key={u.id}
-                  type="button"
-                  onClick={() => {
-                    onSelect(u.id);
-                    close();
-                  }}
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-primary transition hover:bg-row-hover"
-                >
-                  <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: u.color ?? 'var(--color-grid-border)' }} aria-hidden="true" />
-                  {u.name}
-                </button>
-              ))}
+              {userOptions.length === 0 && (
+                <p className="px-3 py-1.5 text-xs text-secondary">Nessun membro disponibile.</p>
+              )}
+              {userOptions.map((u) => {
+                const active = assignedIds.includes(u.id);
+                return (
+                  <button
+                    key={u.id}
+                    type="button"
+                    onClick={() => onToggle(u.id)}
+                    className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-primary transition hover:bg-row-hover"
+                  >
+                    <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: u.color ?? 'var(--color-grid-border)' }} aria-hidden="true" />
+                    <span className="min-w-0 flex-1 truncate">{u.name}</span>
+                    {active && <Check size={13} strokeWidth={2.5} className="shrink-0 text-green-600" aria-hidden="true" />}
+                  </button>
+                );
+              })}
             </div>
           </>,
           document.body
