@@ -35,7 +35,7 @@ const STATUS_LABEL: Record<JobStatus, string> = {
 const STATUS_BADGE: Record<JobStatus, string> = {
   draft: 'bg-grid-header-bg text-secondary',
   pending_approval: 'bg-amber-500/10 text-amber-700',
-  approved: 'bg-sky-500/10 text-sky-700',
+  approved: 'bg-yellow-300/20 text-yellow-700',
   in_progress: 'bg-blue-600/10 text-blue-700',
   completed: 'bg-green-600/10 text-green-700',
   cancelled: 'bg-red-600/10 text-red-700',
