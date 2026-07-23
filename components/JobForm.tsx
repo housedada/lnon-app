@@ -3,6 +3,7 @@
 import { Save, Briefcase, Calendar, Euro } from 'lucide-react';
 import type { Job, JobStatus } from '@/lib/types';
 import AssignedToPicker from '@/components/AssignedToPicker';
+import ProductTagPicker from '@/components/ProductTagPicker';
 
 interface JobFormProps {
   job?: Job;
@@ -174,15 +175,7 @@ export default function JobForm({
 
       <section className="card-shadow space-y-3 rounded-xl border border-grid-border bg-card-bg p-6">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-secondary">Prodotti/servizi coinvolti</h2>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-          {productOptions.map((p) => (
-            <label key={p.id} className="flex items-center gap-2 text-sm text-primary">
-              <input type="checkbox" name="productIds" value={p.id} defaultChecked={job?.productIds?.includes(p.id)} />
-              {p.name}
-            </label>
-          ))}
-          {productOptions.length === 0 && <p className="text-xs text-secondary">Nessun prodotto in catalogo.</p>}
-        </div>
+        <ProductTagPicker productOptions={productOptions} defaultSelected={job?.productIds} />
       </section>
 
       <div className="flex items-center justify-between gap-3">
