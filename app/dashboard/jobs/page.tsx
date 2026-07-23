@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { Plus, Pencil } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import { auth } from '@/lib/auth';
-import { getJobs, getAllClientNames, getUsers } from '@/lib/db';
+import { getJobs, getAllClientNames, getAllContractOptions, getAllProductNames, getUsers } from '@/lib/db';
 import { hasPermission } from '@/lib/permissions';
 import ListNavigator from '@/components/ListNavigator';
 import ApproveJobButton from '@/components/ApproveJobButton';
@@ -9,6 +9,7 @@ import SyncJobsClientsButton from '@/components/SyncJobsClientsButton';
 import JobLinkButton from '@/components/JobLinkButton';
 import JobsFilterBar from '@/components/JobsFilterBar';
 import CreateProjectFromJobButton from '@/components/CreateProjectFromJobButton';
+import NewJobButton from '@/components/NewJobButton';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import type { JobStatus } from '@/lib/types';
 
@@ -47,7 +48,7 @@ export default async function JobsPage({
   const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role ?? 'dipendente';
   const userId = (session?.user as { id?: string } | undefined)?.id;
 
-  const [{ data: jobs, total }, clientOptions, allUsers] = await Promise.all([
+  const [{ data: jobs, total }, clientOptions, contractOptions, productOptions, allUsers] = await Promise.all([
     getJobs({
       search: q,
       clientId,
@@ -58,6 +59,8 @@ export default async function JobsPage({
       offset,
     }),
     getAllClientNames(),
+    getAllContractOptions(),
+    getAllProductNames(),
     getUsers(),
   ]);
   const userOptions = allUsers.filter((u) => u.isActive).map((u) => ({ id: u.id, name: u.name, color: u.color }));
@@ -86,13 +89,12 @@ export default async function JobsPage({
         </div>
         <div className="flex items-center gap-3">
           {canCreate && (
-            <Link
-              href="/dashboard/jobs/new"
-              className="btn-accent flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
-            >
-              <Plus size={16} strokeWidth={2} aria-hidden="true" />
-              Nuovo Lavoro
-            </Link>
+            <NewJobButton
+              clientOptions={clientOptions}
+              contractOptions={contractOptions}
+              productOptions={productOptions}
+              userOptions={userOptions}
+            />
           )}
           {canUpdate && <SyncJobsClientsButton />}
         </div>

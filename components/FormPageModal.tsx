@@ -8,17 +8,25 @@ export default function FormPageModal({
   title,
   icon,
   closeHref,
+  onClose,
   children,
 }: {
   title: string;
   icon?: React.ReactNode;
-  closeHref: string;
+  /** Usato solo come fallback quando la modale è una pagina a sé (accesso diretto via URL). */
+  closeHref?: string;
+  /** Chiusura in-place (nessuna navigazione), preferita quando la modale è aperta da uno stato client su una lista già montata. */
+  onClose?: () => void;
   children: React.ReactNode;
 }) {
   const router = useRouter();
 
   function handleClose() {
-    router.push(closeHref);
+    if (onClose) {
+      onClose();
+    } else if (closeHref) {
+      router.push(closeHref);
+    }
   }
 
   return (

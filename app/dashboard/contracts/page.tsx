@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Plus, Pencil } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { getContracts, getContractsStats, getAllClientNames } from '@/lib/db';
 import { hasPermission } from '@/lib/permissions';
@@ -8,6 +8,7 @@ import ContractsFilterWidget from '@/components/ContractsFilterWidget';
 import ContractsStatsWidget from '@/components/ContractsStatsWidget';
 import SyncContractsClientsButton from '@/components/SyncContractsClientsButton';
 import ContractLinkButton from '@/components/ContractLinkButton';
+import NewContractButton from '@/components/NewContractButton';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import type { Contract, ContractStatus } from '@/lib/types';
 
@@ -142,15 +143,7 @@ export default async function ContractsPage({
           <p className="mt-1 text-sm text-secondary">{total} contratti totali</p>
         </div>
         <div className="flex items-center gap-3">
-          {canCreate && (
-            <Link
-              href="/dashboard/contracts/new"
-              className="btn-accent flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
-            >
-              <Plus size={16} strokeWidth={2} aria-hidden="true" />
-              Nuovo Contratto
-            </Link>
-          )}
+          {canCreate && <NewContractButton clientOptions={clientOptions} />}
           {canUpdate && <SyncContractsClientsButton />}
         </div>
       </div>

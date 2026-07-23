@@ -1,9 +1,10 @@
 import Link from 'next/link';
-import { Plus, Pencil, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Pencil, RefreshCw, AlertTriangle } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { getProducts, getFicConnection } from '@/lib/db';
 import { hasPermission } from '@/lib/permissions';
 import ImportFicProductsButton from '@/components/ImportFicProductsButton';
+import NewProductButton from '@/components/NewProductButton';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import ListNavigator from '@/components/ListNavigator';
 
@@ -55,15 +56,7 @@ export default async function ProductsPage({
           <p className="mt-1 text-sm text-secondary">{total} prodotti totali</p>
         </div>
         <div className="flex items-center gap-3">
-          {canCreate && (
-            <Link
-              href="/dashboard/settings/fic/products/new"
-              className="btn-accent flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
-            >
-              <Plus size={16} strokeWidth={2} aria-hidden="true" />
-              Nuovo Prodotto
-            </Link>
-          )}
+          {canCreate && <NewProductButton />}
           {ficConnection && isSuperadmin && <ImportFicProductsButton />}
         </div>
       </div>
