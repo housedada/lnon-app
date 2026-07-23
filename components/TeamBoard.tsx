@@ -1,10 +1,11 @@
 'use client';
 
-import { useRef, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { GripVertical, Briefcase, CheckCircle2, ChevronDown, Trash2 } from 'lucide-react';
 import { saveTeamColumnOrderAction } from '@/lib/actions/projects';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
+import { useTaskBoardScrollStore } from '@/lib/store/taskBoardScrollStore';
 import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/ProjectTaskList';
 import ProjectShareBadge from '@/components/ProjectShareBadge';
 import MarkProjectCompletedButton from '@/components/MarkProjectCompletedButton';
@@ -44,8 +45,15 @@ export default function TeamBoard({
   const [dragId, setDragId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const density = useTaskBoardViewStore((s) => s.density);
+  const setScrollContainer = useTaskBoardScrollStore((s) => s.setScrollContainer);
+  const setColumns = useTaskBoardScrollStore((s) => s.setColumns);
+  const registerColumnRef = useTaskBoardScrollStore((s) => s.registerColumnRef);
 
   const membersById = new Map(members.map((m) => [m.id, m]));
+
+  useEffect(() => {
+    setColumns(members.map((m) => ({ id: m.id, label: m.name })));
+  }, [members, setColumns]);
 
   function handleDrop(targetId: string) {
     if (!dragId || dragId === targetId) return;
@@ -65,10 +73,10 @@ export default function TeamBoard({
   const containerClass = isMasonry
     ? 'h-full columns-1 gap-3 overflow-y-auto px-4 pb-4 pt-3 sm:columns-2 lg:columns-3 xl:columns-4'
     : 'flex h-full gap-3 overflow-x-auto px-4 pb-4 pt-3';
-  const cardWidthClass = isMasonry ? 'mb-3 w-full break-inside-avoid' : density === 'wide' ? 'w-[23%] min-w-[240px]' : 'w-48';
+  const cardWidthClass = isMasonry ? 'mb-3 w-full break-inside-avoid' : density === 'wide' ? 'w-[30%] min-w-[400px]' : 'w-[20%] min-w-[400px]';
 
   return (
-    <div className={containerClass}>
+    <div className={containerClass} ref={(el) => setScrollContainer(el)}>
       {order.map((userId) => {
         const member = membersById.get(userId);
         if (!member) return null;
@@ -80,6 +88,7 @@ export default function TeamBoard({
         return (
           <div
             key={userId}
+            ref={(el) => registerColumnRef(userId, el)}
             draggable
             onDragStart={() => setDragId(userId)}
             onDragOver={(e) => e.preventDefault()}

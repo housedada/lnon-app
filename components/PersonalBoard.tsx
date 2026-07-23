@@ -1,8 +1,9 @@
 'use client';
 
-import { useRef, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { Briefcase, CheckCircle2, ChevronDown, GripVertical, Trash2 } from 'lucide-react';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
+import { useTaskBoardScrollStore } from '@/lib/store/taskBoardScrollStore';
 import { savePersonalColumnOrderAction } from '@/lib/actions/projects';
 import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/ProjectTaskList';
 import ProjectShareBadge from '@/components/ProjectShareBadge';
@@ -28,8 +29,15 @@ export default function PersonalBoard({
   const [order, setOrder] = useState<string[]>(projects.map((p) => p.id));
   const [dragId, setDragId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const setScrollContainer = useTaskBoardScrollStore((s) => s.setScrollContainer);
+  const setColumns = useTaskBoardScrollStore((s) => s.setColumns);
+  const registerColumnRef = useTaskBoardScrollStore((s) => s.registerColumnRef);
 
   const projectsById = new Map(projects.map((p) => [p.id, p]));
+
+  useEffect(() => {
+    setColumns(projects.map((p) => ({ id: p.id, label: p.title })));
+  }, [projects, setColumns]);
 
   function toggleProject(projectId: string) {
     setCollapsedProjects((prev) => {
@@ -66,12 +74,12 @@ export default function PersonalBoard({
   const containerClass = isMasonry
     ? 'h-full columns-1 gap-3 overflow-y-auto px-4 pb-4 pt-3 sm:columns-2 lg:columns-3 xl:columns-4'
     : 'flex h-full gap-3 overflow-x-auto px-4 pb-4 pt-3';
-  const cardWidthClass = isMasonry ? 'mb-3 w-full break-inside-avoid' : density === 'wide' ? 'w-[23%] min-w-[240px]' : 'w-48';
+  const cardWidthClass = isMasonry ? 'mb-3 w-full break-inside-avoid' : density === 'wide' ? 'w-[30%] min-w-[400px]' : 'w-[20%] min-w-[400px]';
 
   const orderedProjects = order.map((id) => projectsById.get(id)).filter((p): p is Project => Boolean(p));
 
   return (
-    <div className={containerClass}>
+    <div className={containerClass} ref={(el) => setScrollContainer(el)}>
       {orderedProjects.map((project) => {
         const colors = project.jobId ? productColorsByJob[project.jobId] : undefined;
         const headerStyle =
@@ -87,6 +95,7 @@ export default function PersonalBoard({
         return (
           <div
             key={project.id}
+            ref={(el) => registerColumnRef(project.id, el)}
             draggable
             onDragStart={() => setDragId(project.id)}
             onDragOver={(e) => e.preventDefault()}

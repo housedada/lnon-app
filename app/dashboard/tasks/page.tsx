@@ -5,6 +5,8 @@ import { getUsers, getAllAssignedProjects, getProjectsByAssignee, getTeamColumnO
 import TeamBoard from '@/components/TeamBoard';
 import PersonalBoard from '@/components/PersonalBoard';
 import TaskBoardViewToggle from '@/components/TaskBoardViewToggle';
+import TaskBoardBottomNav from '@/components/TaskBoardBottomNav';
+import DemoDataControls from '@/components/DemoDataControls';
 import type { Project } from '@/lib/types';
 
 export const metadata = { title: 'Task' };
@@ -12,15 +14,16 @@ export const metadata = { title: 'Task' };
 export default async function TasksPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<{ view?: string; demo?: string }>;
 }) {
-  const { view } = await searchParams;
+  const { view, demo } = await searchParams;
   const mode = view === 'personal' ? 'personal' : 'team';
 
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id ?? '';
   const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role;
   const canManageInvoices = role === 'superadmin' || role === 'admin';
+  const includeDemo = canManageInvoices && demo === '1';
 
   return (
     <div className="flex h-[calc(100vh-50px)] flex-col">
@@ -44,23 +47,33 @@ export default async function TasksPage({
           Personale
         </Link>
         <TaskBoardViewToggle />
+        {canManageInvoices && <DemoDataControls />}
       </div>
 
       <div className="min-h-0 flex-1">
         {mode === 'team' ? (
-          <TeamView currentUserId={userId} canManageInvoices={canManageInvoices} />
+          <TeamView currentUserId={userId} canManageInvoices={canManageInvoices} includeDemo={includeDemo} />
         ) : (
-          <PersonalView userId={userId} canManageInvoices={canManageInvoices} />
+          <PersonalView userId={userId} canManageInvoices={canManageInvoices} includeDemo={includeDemo} />
         )}
       </div>
+      <TaskBoardBottomNav />
     </div>
   );
 }
 
-async function TeamView({ currentUserId, canManageInvoices }: { currentUserId: string; canManageInvoices: boolean }) {
+async function TeamView({
+  currentUserId,
+  canManageInvoices,
+  includeDemo,
+}: {
+  currentUserId: string;
+  canManageInvoices: boolean;
+  includeDemo: boolean;
+}) {
   const [users, allProjects, savedOrder] = await Promise.all([
-    getUsers(),
-    getAllAssignedProjects(),
+    getUsers({ includeDemo }),
+    getAllAssignedProjects({ includeDemo }),
     currentUserId ? getTeamColumnOrder(currentUserId) : Promise.resolve([]),
   ]);
 
@@ -94,13 +107,21 @@ async function TeamView({ currentUserId, canManageInvoices }: { currentUserId: s
   );
 }
 
-async function PersonalView({ userId, canManageInvoices }: { userId: string; canManageInvoices: boolean }) {
-  const projects = userId ? await getProjectsByAssignee(userId) : [];
+async function PersonalView({
+  userId,
+  canManageInvoices,
+  includeDemo,
+}: {
+  userId: string;
+  canManageInvoices: boolean;
+  includeDemo: boolean;
+}) {
+  const projects = userId ? await getProjectsByAssignee(userId, { includeDemo }) : [];
   const jobIds = Array.from(new Set(projects.map((p) => p.jobId).filter((id): id is string => Boolean(id))));
 
   const [productColorsMap, allUsers, taskLists, savedOrder] = await Promise.all([
     getProductColorsForJobs(jobIds),
-    getUsers(),
+    getUsers({ includeDemo }),
     Promise.all(projects.map((p) => getProjectTasks(p.id))),
     userId ? getPersonalColumnOrder(userId) : Promise.resolve([]),
   ]);

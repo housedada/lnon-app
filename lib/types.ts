@@ -10,6 +10,7 @@ export interface User {
   role: UserRole;
   isActive: boolean;
   color?: string;
+  isDemo?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -187,6 +188,7 @@ export interface Project {
   // dei progetti attivi di uno stesso lavoro deve sempre dare 100.
   budgetShare: number;
   completedAt?: Date;
+  isDemo?: boolean;
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
