@@ -11,6 +11,7 @@ import {
   softDeleteJob,
   approveJob,
   archiveJob,
+  archiveJobs,
   unarchiveJob,
   getUnlinkedJobs,
   getAllClientNames,
@@ -121,6 +122,26 @@ export async function archiveJobAction(jobId: string): Promise<{ success: boolea
   revalidatePath('/dashboard/jobs');
   revalidatePath('/dashboard/jobs/archive');
   return { success: true, message: 'Lavoro archiviato.' };
+}
+
+export async function archiveJobsAction(jobIds: string[]): Promise<{ success: boolean; message: string }> {
+  const session = await auth();
+  const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role;
+
+  if (!role || !hasPermission(role, 'jobs', 'update')) {
+    return { success: false, message: 'Non hai il permesso di archiviare i lavori.' };
+  }
+  if (jobIds.length === 0) {
+    return { success: false, message: 'Nessun lavoro selezionato.' };
+  }
+
+  const count = await archiveJobs(jobIds);
+  revalidatePath('/dashboard/jobs');
+  revalidatePath('/dashboard/jobs/archive');
+  return {
+    success: count > 0,
+    message: count > 0 ? `${count} lavori archiviati.` : 'Nessun lavoro completato tra quelli selezionati.',
+  };
 }
 
 export async function unarchiveJobAction(jobId: string): Promise<{ success: boolean; message: string }> {

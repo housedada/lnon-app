@@ -557,6 +557,24 @@ export async function archiveJob(jobId: string): Promise<Job> {
 }
 
 /**
+ * Archivia in blocco i lavori completati fra quelli indicati (ignora
+ * silenziosamente eventuali id non completati o già archiviati).
+ */
+export async function archiveJobs(jobIds: string[]): Promise<number> {
+  if (jobIds.length === 0) return 0;
+  const { data, error } = await supabaseServer
+    .from('jobs')
+    .update({ archived_at: new Date().toISOString() })
+    .in('id', jobIds)
+    .eq('status', 'completed')
+    .is('archived_at', null)
+    .select('id');
+
+  if (error) throw error;
+  return (data ?? []).length;
+}
+
+/**
  * Ripristina un lavoro archiviato nella lista attiva
  */
 export async function unarchiveJob(jobId: string): Promise<Job> {

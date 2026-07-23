@@ -21,6 +21,7 @@ export default function ListNavigator({
   showSyncFilter,
   totalCount,
   totalLabel,
+  extraTopControls,
   children,
 }: {
   basePath: string;
@@ -32,6 +33,7 @@ export default function ListNavigator({
   showSyncFilter: boolean;
   totalCount?: number;
   totalLabel?: string;
+  extraTopControls?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -115,6 +117,7 @@ export default function ListNavigator({
         </div>
 
         <div className="ml-auto flex items-center gap-3">
+          {extraTopControls}
           <span className="text-[9px] text-secondary whitespace-nowrap">
             Pagina {currentPage} di {totalPages}
           </span>

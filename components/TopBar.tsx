@@ -6,10 +6,11 @@ import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { User, LogOut, History, Bell, SlidersHorizontal, BarChart3 } from 'lucide-react';
 import type { UserRole } from '@/lib/types';
-import { getRoleLabel } from '@/lib/permissions';
+import { getRoleLabel, hasPermission } from '@/lib/permissions';
 import ThemeToggle from '@/components/ThemeToggle';
 import Popover from '@/components/Popover';
 import UserColorPicker from '@/components/UserColorPicker';
+import JobsSelectionToggle from '@/components/JobsSelectionToggle';
 import { useContractsFilterStore } from '@/lib/store/contractsFilterStore';
 import { useContractsStatsStore } from '@/lib/store/contractsStatsStore';
 import { useJobsFilterStore } from '@/lib/store/jobsFilterStore';
@@ -28,6 +29,8 @@ export default function TopBar({
   const pathname = usePathname();
   const isContractsPage = pathname?.startsWith('/dashboard/contracts');
   const isJobsPage = pathname?.startsWith('/dashboard/jobs');
+  const isJobsListPage = pathname === '/dashboard/jobs';
+  const canUpdateJobs = hasPermission(role, 'jobs', 'update');
   const contractsFilterVisible = useContractsFilterStore((s) => s.visible);
   const toggleContractsFilter = useContractsFilterStore((s) => s.toggle);
   const contractsStatsVisible = useContractsStatsStore((s) => s.visible);
@@ -82,6 +85,8 @@ export default function TopBar({
             <SlidersHorizontal size={17} strokeWidth={1.75} aria-hidden="true" />
           </button>
         )}
+
+        {isJobsListPage && canUpdateJobs && <JobsSelectionToggle />}
 
         <Popover
           trigger={({ toggle }) => (

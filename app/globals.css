@@ -288,7 +288,7 @@ input[type='radio'] {
   position: relative;
   margin: 0;
   border: 2px solid var(--color-grid-border);
-  border-radius: 3px;
+  border-radius: 4px;
   background: transparent;
   cursor: pointer;
   transition: border-color 150ms ease;
@@ -312,8 +312,8 @@ input[type='radio']:checked::after {
   left: 2px;
   right: 2px;
   bottom: 2px;
-  border-radius: 4px;
-  background: linear-gradient(180deg, var(--accent-from), var(--accent-to));
+  border-radius: 3px;
+  background: var(--accent-to);
 }
 
 input[type='checkbox']:focus-visible,

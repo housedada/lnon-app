@@ -13,6 +13,9 @@ import JobsFilterBar from '@/components/JobsFilterBar';
 import CreateProjectFromJobButton from '@/components/CreateProjectFromJobButton';
 import ArchiveJobButton from '@/components/ArchiveJobButton';
 import NewJobButton from '@/components/NewJobButton';
+import JobRowSelectCheckbox from '@/components/JobRowSelectCheckbox';
+import JobsSelectAllCheckbox from '@/components/JobsSelectAllCheckbox';
+import JobsBulkArchiveButton from '@/components/JobsBulkArchiveButton';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import type { JobStatus } from '@/lib/types';
 
@@ -157,8 +160,12 @@ async function JobsListSection({
       showSyncFilter={false}
       totalCount={total}
       totalLabel="lavori"
+      extraTopControls={<JobsBulkArchiveButton />}
     >
-      <div className="mx-6 mt-6 grid grid-cols-[2fr_1.5fr_auto_1fr_1fr_1fr_1fr_40px_40px_40px_40px_40px] gap-x-[2px] border-t border-grid-border text-[12px]">
+      <div className="mx-6 mt-6 grid grid-cols-[32px_2fr_1.5fr_auto_1fr_1fr_1fr_1fr_40px_40px_40px_40px_40px] gap-x-[2px] border-t border-grid-border text-[12px]">
+        <div className="flex items-center justify-center border-b border-grid-border bg-grid-header-bg px-1 py-2">
+          <JobsSelectAllCheckbox jobIds={jobs.map((j) => j.id)} />
+        </div>
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Titolo</div>
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Cliente</div>
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Sync</div>
@@ -180,6 +187,9 @@ async function JobsListSection({
 
         {jobs.map((job) => (
           <div key={job.id} className="group contents">
+            <div className="flex items-center justify-center border-b border-grid-border px-1 py-2 group-hover:bg-row-hover">
+              <JobRowSelectCheckbox jobId={job.id} />
+            </div>
             <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{job.title}</div>
             <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">
               {job.clientName ?? job.clientNameRaw ?? '—'}
