@@ -114,41 +114,42 @@ async function ClientsListSection({
       totalCount={total}
       totalLabel="clienti"
     >
-      <div
-        className={`mx-6 mt-6 grid gap-x-[2px] border-t border-grid-border text-[12px] ${
-          ficConnection ? 'grid-cols-[2fr_1fr_1fr_1fr_150px]' : 'grid-cols-[2fr_1fr_1fr_150px]'
-        }`}
-      >
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Nome</div>
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Città</div>
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">P.IVA</div>
-        {ficConnection && (
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">FIC</div>
-        )}
-        <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
+      <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
+        <div
+          className="grid w-fit min-w-full text-[12px]"
+          style={{ gridTemplateColumns: ficConnection ? 'repeat(4, max-content) max-content' : 'repeat(3, max-content) max-content' }}
+        >
+          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Nome</div>
+          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Città</div>
+          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">P.IVA</div>
+          {ficConnection && (
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">FIC</div>
+          )}
+          <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
 
-        {clients.length === 0 && (
-          <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
-            Nessun cliente trovato{q ? ` per “${q}”` : ''}.
-          </div>
-        )}
+          {clients.length === 0 && (
+            <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
+              Nessun cliente trovato{q ? ` per “${q}”` : ''}.
+            </div>
+          )}
 
-        {clients.map((client) => (
-          <ClientRow
-            key={client.id}
-            client={client}
-            canUpdate={canUpdate}
-            canDelete={canDelete}
-            isSuperadmin={isSuperadmin}
-            ficConnection={ficConnection}
-            canSyncFic={isSuperadmin}
-            canCreateJobs={canCreateJobs}
-            clientOptions={clientOptions}
-            contractOptions={contractOptions}
-            productOptions={productOptions}
-            userOptions={userOptions}
-          />
-        ))}
+          {clients.map((client) => (
+            <ClientRow
+              key={client.id}
+              client={client}
+              canUpdate={canUpdate}
+              canDelete={canDelete}
+              isSuperadmin={isSuperadmin}
+              ficConnection={ficConnection}
+              canSyncFic={isSuperadmin}
+              canCreateJobs={canCreateJobs}
+              clientOptions={clientOptions}
+              contractOptions={contractOptions}
+              productOptions={productOptions}
+              userOptions={userOptions}
+            />
+          ))}
+        </div>
       </div>
     </ListNavigator>
   );

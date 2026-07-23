@@ -270,11 +270,28 @@ textarea::placeholder {
   position: relative;
   transform-origin: left center;
   transition: transform 160ms cubic-bezier(0.4, 0, 0.2, 1), color 160ms ease, background-color 160ms ease;
+  border-right: 1px solid var(--color-grid-border);
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 4%, transparent) 0%, transparent 65%);
 }
 
 .group:hover .list-row-cell {
   transform: scale(1.12);
   z-index: 2;
+}
+
+/* Divisori verticali reali (non più basati su gap): stessa decorazione di
+   .list-row-cell ma senza lo zoom hover, per le celle utility (checkbox,
+   pallino colore) che non lo usano. */
+.list-cell-deco {
+  border-right: 1px solid var(--color-grid-border);
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 4%, transparent) 0%, transparent 65%);
+}
+
+/* Intestazioni di lista: stesso divisore verticale, scoping esplicito
+   (non un piggyback su .bg-grid-header-bg, che è usato anche per badge
+   e pillole altrove nell'app e non deve avere bordi). */
+.list-header-cell {
+  border-right: 1px solid var(--color-grid-border);
 }
 
 /* Checkbox e radio custom: solo outline, quadratino pieno quando selezionati */

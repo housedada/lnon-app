@@ -39,7 +39,7 @@ const DATA_COLUMNS: { key: string; label: string }[] = [
   { key: 'providerCost', label: 'Costo provider' },
 ];
 
-const GRID_TEMPLATE = `repeat(${DATA_COLUMNS.length}, max-content) 150px`;
+const GRID_TEMPLATE = `repeat(${DATA_COLUMNS.length}, max-content) max-content`;
 
 type SearchParams = { q?: string; page?: string; status?: string; categories?: string };
 
@@ -112,11 +112,11 @@ async function ContractsListSection({
       totalLabel="contratti"
     >
       <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
-        <div className="grid w-fit min-w-full gap-x-[2px] text-[12px]" style={{ gridTemplateColumns: GRID_TEMPLATE }}>
+        <div className="grid w-fit min-w-full text-[12px]" style={{ gridTemplateColumns: GRID_TEMPLATE }}>
           {DATA_COLUMNS.map((col) => (
             <div
               key={col.key}
-              className="flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary"
+              className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary"
             >
               {col.label}
             </div>

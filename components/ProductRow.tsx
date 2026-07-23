@@ -86,18 +86,18 @@ export default function ProductRow({
       <div className="list-row-cell flex items-center justify-center border-b border-grid-border group-hover:bg-row-hover">
         <span className="h-3.5 w-3.5 rounded-full border border-black/10" style={{ background: color }} aria-hidden="true" />
       </div>
-      <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{product.name}</div>
-      <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{product.code ?? '—'}</div>
-      <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">
+      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{product.name}</div>
+      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{product.code ?? '—'}</div>
+      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">
         {product.netPrice != null ? `€ ${product.netPrice.toFixed(2)}` : '—'}
       </div>
-      <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">
+      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">
         {product.defaultVatRate != null ? `${product.defaultVatRate}%` : '—'}
       </div>
       {ficConnection && (
-        <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">{ficBadge(product.ficSyncStatus)}</div>
+        <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">{ficBadge(product.ficSyncStatus)}</div>
       )}
-      <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 border-b border-l border-grid-border bg-card-bg px-2 group-hover:bg-row-hover">
+      <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-2 group-hover:bg-row-hover">
         {ficConnection && isSuperadmin && product.ficSyncStatus !== 'synced' && (
           <Link
             href={`/dashboard/settings/products/${product.id}/sync-fic`}

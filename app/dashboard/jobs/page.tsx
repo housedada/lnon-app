@@ -146,38 +146,43 @@ async function JobsListSection({
       totalLabel="lavori"
       extraTopControls={<JobsBulkArchiveButton />}
     >
-      <div className="mx-6 mt-6 grid grid-cols-[32px_2fr_1.5fr_auto_1fr_1fr_1fr_1fr_150px] gap-x-[2px] border-t border-grid-border text-[12px]">
-        <div className="flex items-center justify-center border-b border-grid-border bg-grid-header-bg px-1 py-2">
-          <JobsSelectAllCheckbox jobIds={jobs.map((j) => j.id)} />
-        </div>
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Titolo</div>
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Cliente</div>
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Sync</div>
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Stato</div>
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Assegnato a</div>
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Budget stimato</div>
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Scadenza</div>
-        <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
-
-        {jobs.length === 0 && (
-          <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
-            Nessun lavoro trovato{q ? ` per “${q}”` : ''}.
+      <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
+        <div
+          className="grid w-fit min-w-full text-[12px]"
+          style={{ gridTemplateColumns: '32px repeat(7, max-content) max-content' }}
+        >
+          <div className="list-cell-deco flex items-center justify-center border-b border-grid-border bg-grid-header-bg px-1 py-2">
+            <JobsSelectAllCheckbox jobIds={jobs.map((j) => j.id)} />
           </div>
-        )}
+          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Titolo</div>
+          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Cliente</div>
+          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Sync</div>
+          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Stato</div>
+          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Assegnato a</div>
+          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Budget stimato</div>
+          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Scadenza</div>
+          <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
 
-        {jobs.map((job) => (
-          <JobRow
-            key={job.id}
-            job={job}
-            canCreateProjects={canCreateProjects}
-            canUpdate={canUpdate}
-            canApprove={canApprove}
-            canDelete={canDelete}
-            isSuperadmin={isSuperadmin}
-            clientOptions={clientOptions}
-            userOptions={userOptions}
-          />
-        ))}
+          {jobs.length === 0 && (
+            <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
+              Nessun lavoro trovato{q ? ` per “${q}”` : ''}.
+            </div>
+          )}
+
+          {jobs.map((job) => (
+            <JobRow
+              key={job.id}
+              job={job}
+              canCreateProjects={canCreateProjects}
+              canUpdate={canUpdate}
+              canApprove={canApprove}
+              canDelete={canDelete}
+              isSuperadmin={isSuperadmin}
+              clientOptions={clientOptions}
+              userOptions={userOptions}
+            />
+          ))}
+        </div>
       </div>
     </ListNavigator>
   );

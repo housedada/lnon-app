@@ -79,7 +79,7 @@ async function ProductsListSection({
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const colorMap = buildProductColorMap(allProductNames);
 
-  const gridCols = ficConnection ? '40px_2fr_1fr_1fr_1fr_1fr_150px' : '40px_2fr_1fr_1fr_1fr_150px';
+  const gridCols = ficConnection ? '40px repeat(4, max-content) max-content' : '40px repeat(3, max-content) max-content';
 
   return (
     <ListNavigator
@@ -93,34 +93,36 @@ async function ProductsListSection({
       totalCount={total}
       totalLabel="prodotti"
     >
-      <div className="mx-6 mt-6 grid gap-x-[2px] border-t border-grid-border text-[12px]" style={{ gridTemplateColumns: gridCols }}>
-        <div className="border-b border-grid-border bg-grid-header-bg" />
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Nome</div>
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Codice</div>
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Prezzo netto</div>
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">IVA</div>
-        {ficConnection && (
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">FIC</div>
-        )}
-        <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
+      <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
+        <div className="grid w-fit min-w-full text-[12px]" style={{ gridTemplateColumns: gridCols }}>
+          <div className="list-cell-deco border-b border-grid-border bg-grid-header-bg" />
+          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Nome</div>
+          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Codice</div>
+          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Prezzo netto</div>
+          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">IVA</div>
+          {ficConnection && (
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">FIC</div>
+          )}
+          <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
 
-        {products.length === 0 && (
-          <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
-            Nessun prodotto trovato{q ? ` per “${q}”` : ''}.
-          </div>
-        )}
+          {products.length === 0 && (
+            <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
+              Nessun prodotto trovato{q ? ` per “${q}”` : ''}.
+            </div>
+          )}
 
-        {products.map((product) => (
-          <ProductRow
-            key={product.id}
-            product={product}
-            color={colorMap.get(product.id) ?? '#e5e5e5'}
-            ficConnection={ficConnection}
-            canUpdate={canUpdate}
-            canDelete={canDelete}
-            isSuperadmin={isSuperadmin}
-          />
-        ))}
+          {products.map((product) => (
+            <ProductRow
+              key={product.id}
+              product={product}
+              color={colorMap.get(product.id) ?? '#e5e5e5'}
+              ficConnection={ficConnection}
+              canUpdate={canUpdate}
+              canDelete={canDelete}
+              isSuperadmin={isSuperadmin}
+            />
+          ))}
+        </div>
       </div>
     </ListNavigator>
   );

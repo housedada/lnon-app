@@ -153,32 +153,32 @@ export default function ClientRow({
     >
       <div
         onClick={() => setDetailOpen(true)}
-        className="list-row-cell flex cursor-pointer items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover"
+        className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover"
       >
         {client.name}
       </div>
       <div
         onClick={() => setDetailOpen(true)}
-        className="list-row-cell flex cursor-pointer items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary"
+        className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary"
       >
         {client.city ?? '—'}
       </div>
       <div
         onClick={() => setDetailOpen(true)}
-        className="list-row-cell flex cursor-pointer items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary"
+        className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary"
       >
         {client.taxId ?? '—'}
       </div>
       {ficConnection && (
         <div
           onClick={() => setDetailOpen(true)}
-          className="list-row-cell flex cursor-pointer items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover"
+          className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 group-hover:bg-row-hover"
         >
           {ficBadge(client.ficSyncStatus)}
         </div>
       )}
 
-      <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 border-b border-l border-grid-border bg-card-bg px-2 group-hover:bg-row-hover">
+      <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-2 group-hover:bg-row-hover">
         {canCreateJobs && (
           <NewJobFromClientButton
             clientId={client.id}
