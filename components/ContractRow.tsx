@@ -146,7 +146,7 @@ export default function ContractRow({
           {renderCell(contract, col.key)}
         </div>
       ))}
-      <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 border-b border-l border-grid-border bg-card-bg px-2 group-hover:bg-row-hover">
+      <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 border-b border-l border-grid-border bg-card-bg px-4 group-hover:bg-row-hover">
         {canUpdate && !contract.clientId && (
           <ContractLinkButton contractId={contract.id} contractClientName={contract.clientNameRaw} clientOptions={clientOptions} />
         )}

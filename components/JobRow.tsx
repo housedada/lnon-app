@@ -8,6 +8,7 @@ import RowContextMenu from '@/components/RowContextMenu';
 import JobRowSelectCheckbox from '@/components/JobRowSelectCheckbox';
 import CreateProjectFromJobButton from '@/components/CreateProjectFromJobButton';
 import CreateProjectFromJobModal from '@/components/CreateProjectFromJobModal';
+import CreateTaskButton from '@/components/CreateTaskButton';
 import JobLinkButton from '@/components/JobLinkButton';
 import ApproveJobButton from '@/components/ApproveJobButton';
 import ArchiveJobButton from '@/components/ArchiveJobButton';
@@ -135,8 +136,9 @@ export default function JobRow({
       <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatAmount(job.estimatedBudget)}</div>
       <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(job.endDate)}</div>
 
-      <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-2 group-hover:bg-row-hover">
+      <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-4 group-hover:bg-row-hover">
         {canCreateProjects && <CreateProjectFromJobButton jobId={job.id} jobTitle={job.title} userOptions={userOptions} />}
+        <CreateTaskButton />
         {canUpdate && !job.clientId && job.clientNameRaw && (
           <JobLinkButton jobId={job.id} jobClientName={job.clientNameRaw} clientOptions={clientOptions} />
         )}

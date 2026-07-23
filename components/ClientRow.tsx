@@ -178,7 +178,7 @@ export default function ClientRow({
         </div>
       )}
 
-      <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-2 group-hover:bg-row-hover">
+      <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-4 group-hover:bg-row-hover">
         {canCreateJobs && (
           <NewJobFromClientButton
             clientId={client.id}

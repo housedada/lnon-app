@@ -97,7 +97,7 @@ export default function ProductRow({
       {ficConnection && (
         <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">{ficBadge(product.ficSyncStatus)}</div>
       )}
-      <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-2 group-hover:bg-row-hover">
+      <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-4 group-hover:bg-row-hover">
         {ficConnection && isSuperadmin && product.ficSyncStatus !== 'synced' && (
           <Link
             href={`/dashboard/settings/products/${product.id}/sync-fic`}
