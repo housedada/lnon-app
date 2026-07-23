@@ -14,7 +14,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, horizontalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { GripVertical, Briefcase, CheckCircle2, ChevronDown, Trash2, Plus, FolderKanban, ListChecks, AlertCircle } from 'lucide-react';
+import { GripVertical, Briefcase, CheckCircle2, ChevronDown, Trash2, Plus } from 'lucide-react';
 import { saveTeamColumnOrderAction } from '@/lib/actions/projects';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
 import { useTaskBoardScrollStore } from '@/lib/store/taskBoardScrollStore';
@@ -144,7 +144,7 @@ export default function TeamBoard({
 
   const isGrid = density === 'masonry';
   const containerClass = isGrid
-    ? 'grid h-full auto-rows-[212px] grid-cols-2 content-start gap-3 overflow-y-auto px-4 pb-4 pt-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
+    ? 'grid h-full auto-rows-[236px] grid-cols-2 content-start gap-3 overflow-y-auto px-4 pb-4 pt-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
     : 'flex h-full gap-3 overflow-x-auto px-4 pb-4 pt-3';
   const cardWidthClass = density === 'wide' ? 'w-[30%] min-w-[400px]' : 'w-[20%] min-w-[400px]';
 
@@ -157,6 +157,7 @@ export default function TeamBoard({
         {order.map((userId) => {
           const member = membersById.get(userId);
           if (!member) return null;
+          const memberProjects = projectsByUser[userId] ?? [];
           const headerStyle = member.color ? { background: member.color } : undefined;
           const headerTextClass = member.color ? 'text-neutral-800' : 'text-primary';
           const stats = memberStats(userId);
@@ -169,26 +170,43 @@ export default function TeamBoard({
               className="group relative flex flex-col overflow-hidden rounded-xl border border-grid-border bg-grid-header-bg text-left transition hover:border-secondary"
             >
               <span
-                className="pointer-events-none absolute right-4 top-4 opacity-0 -translate-x-1.5 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:translate-x-0"
+                className="pointer-events-none absolute right-4 top-4 z-10 opacity-0 -translate-x-1.5 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:translate-x-0"
                 aria-hidden="true"
               >
                 <Plus size={14} strokeWidth={2} className={headerTextClass} />
               </span>
-              <div className="p-3" style={headerStyle}>
+              <div className="shrink-0 p-3" style={headerStyle}>
                 <p className={`truncate pr-6 text-sm font-semibold ${headerTextClass}`}>{member.name}</p>
               </div>
-              <div className="flex flex-1 flex-col justify-center gap-1.5 px-3 py-2">
-                <div className="flex items-center gap-1.5 text-[11px] text-secondary">
-                  <FolderKanban size={12} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
-                  <span>{stats.projectCount} progett{stats.projectCount === 1 ? 'o' : 'i'}</span>
+
+              <div className="relative min-h-0 flex-1">
+                <div className="flex flex-col gap-1 px-3 pt-2">
+                  {memberProjects.length === 0 && <p className="text-[11px] text-secondary">Nessun progetto</p>}
+                  {memberProjects.slice(0, 3).map((project) => (
+                    <p key={project.id} className="truncate text-[11px] text-secondary">
+                      {project.title}
+                    </p>
+                  ))}
                 </div>
-                <div className="flex items-center gap-1.5 text-[11px] text-secondary">
-                  <ListChecks size={12} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
-                  <span>{stats.assigned} task assegnat{stats.assigned === 1 ? 'o' : 'i'}</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-[11px] text-secondary">
-                  <AlertCircle size={12} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
-                  <span>{stats.toResolve} da risolvere</span>
+
+                <div
+                  className="absolute inset-x-0 bottom-0 flex h-14 items-end"
+                  style={{ background: 'linear-gradient(to bottom, color-mix(in srgb, var(--color-grid-header-bg) 0%, transparent), var(--color-grid-header-bg) 55%)' }}
+                >
+                  <div className="grid w-full grid-cols-3 divide-x divide-grid-border border-t border-grid-border">
+                    <div className="px-1 py-1.5 text-center">
+                      <p className="text-base font-bold text-primary">{stats.projectCount}</p>
+                      <p className="detail-label">Progetti</p>
+                    </div>
+                    <div className="px-1 py-1.5 text-center">
+                      <p className="text-base font-bold text-primary">{stats.assigned}</p>
+                      <p className="detail-label">Task</p>
+                    </div>
+                    <div className="px-1 py-1.5 text-center">
+                      <p className="text-base font-bold text-primary">{stats.toResolve}</p>
+                      <p className="detail-label">Da fare</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </button>
