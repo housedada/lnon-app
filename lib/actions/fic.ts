@@ -221,7 +221,7 @@ export async function searchFicProductsAction(query: string): Promise<FicProduct
 export async function linkProductToFicAction(productId: string, ficId: number) {
   await requireSuperadmin();
   await dbLinkProductToFic(productId, ficId);
-  revalidatePath('/dashboard/settings/fic/products');
+  revalidatePath('/dashboard/settings/products');
 }
 
 /**
@@ -239,8 +239,8 @@ export async function createFicProductFromLnonAction(productId: string) {
   const ficId = await createFicProductFromLnonProduct(product);
   await dbLinkProductToFic(productId, ficId);
 
-  revalidatePath('/dashboard/settings/fic/products');
-  redirect('/dashboard/settings/fic/products');
+  revalidatePath('/dashboard/settings/products');
+  redirect('/dashboard/settings/products');
 }
 
 /**
@@ -249,6 +249,6 @@ export async function createFicProductFromLnonAction(productId: string) {
 export async function importAllFicProductsAction(): Promise<number> {
   await requireSuperadmin();
   const count = await importAllFicProducts();
-  revalidatePath('/dashboard/settings/fic/products');
+  revalidatePath('/dashboard/settings/products');
   return count;
 }

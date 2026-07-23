@@ -1,6 +1,5 @@
-import Link from 'next/link';
 import { headers } from 'next/headers';
-import { CheckCircle2, XCircle, Link2, Package } from 'lucide-react';
+import { CheckCircle2, XCircle, Link2 } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { getFicConnection } from '@/lib/db';
@@ -98,20 +97,6 @@ export default async function FicSettingsPage({
         )}
       </div>
 
-      {connection && (
-        <div className="mx-6 mt-4 max-w-xl">
-          <Link
-            href="/dashboard/settings/fic/products"
-            className="flex items-center gap-3 rounded-lg border border-grid-border p-4 transition hover:bg-row-hover"
-          >
-            <Package size={20} strokeWidth={1.75} className="text-secondary" aria-hidden="true" />
-            <div>
-              <p className="text-sm font-medium text-primary">Catalogo prodotti</p>
-              <p className="text-xs text-secondary">Importa e sincronizza i prodotti da Fatture in Cloud</p>
-            </div>
-          </Link>
-        </div>
-      )}
     </div>
   );
 }

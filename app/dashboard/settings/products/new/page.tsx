@@ -10,7 +10,7 @@ export default function NewProductPage() {
     <FormPageModal
       title="Nuovo Prodotto"
       icon={<Package size={16} strokeWidth={1.75} className="text-white/70" aria-hidden="true" />}
-      closeHref="/dashboard/settings/fic/products"
+      closeHref="/dashboard/settings/products"
     >
       <ProductForm action={createProductAction} />
     </FormPageModal>

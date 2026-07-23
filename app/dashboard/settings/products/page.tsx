@@ -2,8 +2,9 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { Pencil, RefreshCw, AlertTriangle } from 'lucide-react';
 import { auth } from '@/lib/auth';
-import { getProducts, getFicConnection } from '@/lib/db';
+import { getProducts, getFicConnection, getAllProductNames } from '@/lib/db';
 import { hasPermission } from '@/lib/permissions';
+import { buildProductColorMap } from '@/lib/productColors';
 import ImportFicProductsButton from '@/components/ImportFicProductsButton';
 import NewProductButton from '@/components/NewProductButton';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
@@ -83,12 +84,20 @@ async function ProductsListSection({
   const currentPage = Math.max(1, Number(page) || 1);
   const offset = (currentPage - 1) * PAGE_SIZE;
 
-  const { data: products, total } = await getProducts({ search: q, ficSyncStatus: sync, limit: PAGE_SIZE, offset });
+  const [{ data: products, total }, allProductNames] = await Promise.all([
+    getProducts({ search: q, ficSyncStatus: sync, limit: PAGE_SIZE, offset }),
+    getAllProductNames(),
+  ]);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const colorMap = buildProductColorMap(allProductNames);
+
+  const gridCols = ficConnection
+    ? '40px_2fr_1fr_1fr_1fr_1fr_40px_40px'
+    : '40px_2fr_1fr_1fr_1fr_40px_40px';
 
   return (
     <ListNavigator
-      basePath="/dashboard/settings/fic/products"
+      basePath="/dashboard/settings/products"
       searchPlaceholder="Cerca per nome o codice..."
       q={q}
       sync={sync}
@@ -98,11 +107,8 @@ async function ProductsListSection({
       totalCount={total}
       totalLabel="prodotti"
     >
-      <div
-        className={`mx-6 mt-6 grid gap-x-[2px] border-t border-grid-border text-[10px] ${
-          ficConnection ? 'grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]' : 'grid-cols-[2fr_1fr_1fr_1fr_auto]'
-        }`}
-      >
+      <div className="mx-6 mt-6 grid gap-x-[2px] border-t border-grid-border text-[12px]" style={{ gridTemplateColumns: gridCols }}>
+        <div className="border-b border-grid-border bg-grid-header-bg" />
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Nome</div>
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Codice</div>
         <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Prezzo netto</div>
@@ -110,7 +116,8 @@ async function ProductsListSection({
         {ficConnection && (
           <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">FIC</div>
         )}
-        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary" />
+        <div className="sticky right-10 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
+        <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
 
         {products.length === 0 && (
           <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
@@ -120,6 +127,13 @@ async function ProductsListSection({
 
         {products.map((product) => (
           <div key={product.id} className="group contents">
+            <div className="list-row-cell flex items-center justify-center border-b border-grid-border group-hover:bg-row-hover">
+              <span
+                className="h-3.5 w-3.5 rounded-full border border-black/10"
+                style={{ background: colorMap.get(product.id) ?? '#e5e5e5' }}
+                aria-hidden="true"
+              />
+            </div>
             <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{product.name}</div>
             <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{product.code ?? '—'}</div>
             <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">
@@ -133,26 +147,27 @@ async function ProductsListSection({
                 {ficBadge(product.ficSyncStatus)}
               </div>
             )}
-            <div className="flex items-center justify-end gap-3 border-b border-grid-border px-3 py-2 whitespace-nowrap group-hover:bg-row-hover">
+            <div className="sticky right-10 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
               {ficConnection && isSuperadmin && product.ficSyncStatus !== 'synced' && (
                 <Link
-                  href={`/dashboard/settings/fic/products/${product.id}/sync-fic`}
+                  href={`/dashboard/settings/products/${product.id}/sync-fic`}
                   aria-label="Sincronizza con Fatture in Cloud"
                   className="text-secondary transition hover:text-primary"
                 >
                   <RefreshCw size={15} strokeWidth={1.75} />
                 </Link>
               )}
+            </div>
+            <div className="sticky right-0 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
               {canUpdate && (
                 <Link
-                  href={`/dashboard/settings/fic/products/${product.id}/edit`}
+                  href={`/dashboard/settings/products/${product.id}/edit`}
                   aria-label="Modifica prodotto"
                   className="text-secondary transition hover:text-primary"
                 >
                   <Pencil size={15} strokeWidth={1.75} />
                 </Link>
               )}
-              {!canUpdate && <span className="text-muted">—</span>}
             </div>
           </div>
         ))}

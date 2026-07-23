@@ -43,7 +43,7 @@ export async function createProductAction(formData: FormData) {
 
   const data = parseProductFormData(formData);
   await createDbProduct({ ...data, createdBy: userId });
-  redirect('/dashboard/settings/fic/products?saved=1');
+  redirect('/dashboard/settings/products?saved=1');
 }
 
 export async function updateProductAction(id: string, formData: FormData) {
@@ -56,7 +56,7 @@ export async function updateProductAction(id: string, formData: FormData) {
 
   const data = parseProductFormData(formData);
   await updateDbProduct(id, data);
-  redirect('/dashboard/settings/fic/products?saved=1');
+  redirect('/dashboard/settings/products?saved=1');
 }
 
 export async function deleteProductAction(id: string) {
@@ -68,5 +68,5 @@ export async function deleteProductAction(id: string) {
   }
 
   await softDeleteProduct(id);
-  redirect('/dashboard/settings/fic/products');
+  redirect('/dashboard/settings/products');
 }

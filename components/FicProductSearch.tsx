@@ -7,7 +7,7 @@ export default function FicProductSearch({ linkAction }: { linkAction: (ficId: n
   return (
     <FicEntitySearch
       placeholder="Nome o codice prodotto..."
-      redirectTo="/dashboard/settings/fic/products"
+      redirectTo="/dashboard/settings/products"
       linkAction={linkAction}
       searchAction={async (query) => {
         const results = await searchFicProductsAction(query);
