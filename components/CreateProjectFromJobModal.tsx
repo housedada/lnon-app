@@ -78,6 +78,22 @@ export default function CreateProjectFromJobModal({
           <div className="mt-6">
             <AssignedToPicker userOptions={userOptions} />
           </div>
+
+          <div className="field-wrap mt-6">
+            <input
+              type="number"
+              name="budgetShare"
+              id="project-budget-share"
+              min={0}
+              max={100}
+              step="0.01"
+              placeholder=" "
+              className="field-input w-full border border-grid-border bg-transparent px-3 pb-2 pt-4 text-sm text-primary placeholder-transparent"
+            />
+            <label htmlFor="project-budget-share" className="field-floating-label">
+              Quota % budget (lascia vuoto per la ripartizione automatica)
+            </label>
+          </div>
         </div>
 
         <div className="flex justify-end gap-3 border-t border-grid-border px-8 py-5">

@@ -1,10 +1,12 @@
 'use client';
 
 import { useRef, useState, useTransition } from 'react';
-import { Briefcase, ChevronDown, GripVertical, Trash2 } from 'lucide-react';
+import { Briefcase, CheckCircle2, ChevronDown, GripVertical, Trash2 } from 'lucide-react';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
 import { savePersonalColumnOrderAction } from '@/lib/actions/projects';
 import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/ProjectTaskList';
+import ProjectShareBadge from '@/components/ProjectShareBadge';
+import MarkProjectCompletedButton from '@/components/MarkProjectCompletedButton';
 import type { Project, ProjectTask } from '@/lib/types';
 
 export default function PersonalBoard({
@@ -12,11 +14,13 @@ export default function PersonalBoard({
   productColorsByJob,
   tasksByProject,
   userOptions,
+  canManageInvoices,
 }: {
   projects: Project[];
   productColorsByJob: Record<string, string[]>;
   tasksByProject: Record<string, ProjectTask[]>;
   userOptions: { id: string; name: string; color?: string }[];
+  canManageInvoices: boolean;
 }) {
   const density = useTaskBoardViewStore((s) => s.density);
   const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
@@ -105,6 +109,18 @@ export default function PersonalBoard({
                   )}
                 </div>
               </button>
+              {project.jobId && (
+                <ProjectShareBadge projectId={project.id} share={project.budgetShare} textClass={headerSubTextClass} />
+              )}
+              {project.jobId && canManageInvoices && (
+                project.completedAt ? (
+                  <span title="Progetto completato" className="shrink-0">
+                    <CheckCircle2 size={13} strokeWidth={1.75} className={headerTextClass} aria-label="Progetto completato" />
+                  </span>
+                ) : (
+                  <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} budgetShare={project.budgetShare} />
+                )
+              )}
               <button
                 type="button"
                 onClick={() => listRefs.current.get(project.id)?.openTrash()}

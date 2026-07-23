@@ -19,6 +19,8 @@ export default async function TasksPage({
 
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id ?? '';
+  const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role;
+  const canManageInvoices = role === 'superadmin' || role === 'admin';
 
   return (
     <div className="flex h-[calc(100vh-50px)] flex-col">
@@ -45,13 +47,17 @@ export default async function TasksPage({
       </div>
 
       <div className="min-h-0 flex-1">
-        {mode === 'team' ? <TeamView currentUserId={userId} /> : <PersonalView userId={userId} />}
+        {mode === 'team' ? (
+          <TeamView currentUserId={userId} canManageInvoices={canManageInvoices} />
+        ) : (
+          <PersonalView userId={userId} canManageInvoices={canManageInvoices} />
+        )}
       </div>
     </div>
   );
 }
 
-async function TeamView({ currentUserId }: { currentUserId: string }) {
+async function TeamView({ currentUserId, canManageInvoices }: { currentUserId: string; canManageInvoices: boolean }) {
   const [users, allProjects, savedOrder] = await Promise.all([
     getUsers(),
     getAllAssignedProjects(),
@@ -77,10 +83,18 @@ async function TeamView({ currentUserId }: { currentUserId: string }) {
   const tasksByProject = Object.fromEntries(allProjects.map((p, i) => [p.id, taskLists[i]]));
   const userOptions = activeUsers.map((u) => ({ id: u.id, name: u.name, color: u.color }));
 
-  return <TeamBoard members={members} projectsByUser={projectsByUser} tasksByProject={tasksByProject} userOptions={userOptions} />;
+  return (
+    <TeamBoard
+      members={members}
+      projectsByUser={projectsByUser}
+      tasksByProject={tasksByProject}
+      userOptions={userOptions}
+      canManageInvoices={canManageInvoices}
+    />
+  );
 }
 
-async function PersonalView({ userId }: { userId: string }) {
+async function PersonalView({ userId, canManageInvoices }: { userId: string; canManageInvoices: boolean }) {
   const projects = userId ? await getProjectsByAssignee(userId) : [];
   const jobIds = Array.from(new Set(projects.map((p) => p.jobId).filter((id): id is string => Boolean(id))));
 
@@ -106,6 +120,7 @@ async function PersonalView({ userId }: { userId: string }) {
       productColorsByJob={productColorsByJob}
       tasksByProject={tasksByProject}
       userOptions={userOptions}
+      canManageInvoices={canManageInvoices}
     />
   );
 }

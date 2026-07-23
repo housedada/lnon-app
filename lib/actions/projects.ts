@@ -4,7 +4,17 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { hasPermission, canDeleteResource } from '@/lib/permissions';
-import { createDbProject, updateDbProject, softDeleteProject, saveTeamColumnOrder, savePersonalColumnOrder, getJobById } from '@/lib/db';
+import {
+  createDbProject,
+  updateDbProject,
+  softDeleteProject,
+  saveTeamColumnOrder,
+  savePersonalColumnOrder,
+  getJobById,
+  getProjectById,
+  getProjectsByJobId,
+  rebalanceProjectShares,
+} from '@/lib/db';
 
 async function requireRole(resource: string, action: string) {
   const session = await auth();
@@ -42,6 +52,7 @@ export async function createProjectAction(formData: FormData): Promise<{ success
     description: parsed.data.description || undefined,
     assignedTo: parsed.data.assignedTo || undefined,
     jobId: parsed.data.jobId || undefined,
+    budgetShare: 100,
     createdBy: userId,
   });
 
@@ -73,17 +84,44 @@ export async function createProjectFromJobAction(
 
   const title = String(formData.get('title') || job.title);
   const assignedTo = String(formData.get('assignedTo') || '') || undefined;
+  const shareRaw = formData.get('budgetShare');
+  const siblings = await getProjectsByJobId(jobId);
+  const requestedShare = shareRaw != null && shareRaw !== '' ? Number(shareRaw) : Math.round((100 / (siblings.length + 1)) * 100) / 100;
 
-  await createDbProject({
+  const project = await createDbProject({
     title,
     jobId,
     assignedTo,
+    budgetShare: siblings.length === 0 ? 100 : requestedShare,
     createdBy: userId,
   });
+
+  if (siblings.length > 0) {
+    await rebalanceProjectShares(jobId, project.id, requestedShare);
+  }
 
   revalidatePath('/dashboard/tasks');
   revalidatePath('/dashboard/jobs');
   return { success: true, message: `Progetto "${title}" creato da questo lavoro.` };
+}
+
+/**
+ * Aggiorna la quota % budget di un progetto e ridistribuisce automaticamente
+ * il resto tra gli altri progetti dello stesso lavoro.
+ */
+export async function updateProjectShareAction(projectId: string, newShare: number): Promise<{ success: boolean; message: string }> {
+  await requireRole('projects', 'update');
+
+  const project = await getProjectById(projectId);
+  if (!project) return { success: false, message: 'Progetto non trovato.' };
+  if (!project.jobId) return { success: false, message: 'Questo progetto non è collegato a un lavoro: nessuna quota da ripartire.' };
+  if (!Number.isFinite(newShare) || newShare < 0 || newShare > 100) {
+    return { success: false, message: 'La quota deve essere un numero tra 0 e 100.' };
+  }
+
+  await rebalanceProjectShares(project.jobId, projectId, newShare);
+  revalidatePath('/dashboard/tasks');
+  return { success: true, message: 'Quota aggiornata.' };
 }
 
 export async function updateProjectAction(id: string, formData: FormData): Promise<{ success: boolean; message: string }> {

@@ -2,10 +2,12 @@
 
 import { useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { GripVertical, Briefcase, ChevronDown, Trash2 } from 'lucide-react';
+import { GripVertical, Briefcase, CheckCircle2, ChevronDown, Trash2 } from 'lucide-react';
 import { saveTeamColumnOrderAction } from '@/lib/actions/projects';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
 import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/ProjectTaskList';
+import ProjectShareBadge from '@/components/ProjectShareBadge';
+import MarkProjectCompletedButton from '@/components/MarkProjectCompletedButton';
 import type { Project, ProjectTask } from '@/lib/types';
 
 interface TeamMember {
@@ -19,11 +21,13 @@ export default function TeamBoard({
   projectsByUser,
   tasksByProject,
   userOptions,
+  canManageInvoices,
 }: {
   members: TeamMember[];
   projectsByUser: Record<string, Project[]>;
   tasksByProject: Record<string, ProjectTask[]>;
   userOptions: { id: string; name: string; color?: string }[];
+  canManageInvoices: boolean;
 }) {
   const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
   const listRefs = useRef<Map<string, ProjectTaskListHandle>>(new Map());
@@ -109,6 +113,18 @@ export default function TeamBoard({
                           )}
                         </div>
                       </button>
+                      {project.jobId && (
+                        <ProjectShareBadge projectId={project.id} share={project.budgetShare} textClass="text-secondary" />
+                      )}
+                      {project.jobId && canManageInvoices && (
+                        project.completedAt ? (
+                          <span title="Progetto completato" className="shrink-0">
+                            <CheckCircle2 size={13} strokeWidth={1.75} className="text-secondary" aria-label="Progetto completato" />
+                          </span>
+                        ) : (
+                          <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} budgetShare={project.budgetShare} />
+                        )
+                      )}
                       <button
                         type="button"
                         onClick={() => listRefs.current.get(project.id)?.openTrash()}

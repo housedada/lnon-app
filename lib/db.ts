@@ -15,6 +15,7 @@ import type {
   Project,
   ProjectTask,
   ProjectTaskStatus,
+  ProjectInvoice,
 } from './types';
 import { buildProductColorMap } from './productColors';
 
@@ -1512,6 +1513,8 @@ function projectRowToProject(row: Record<string, any>): Project {
     title: row.title,
     description: row.description ?? undefined,
     assignedTo: row.assigned_to ?? undefined,
+    budgetShare: row.budget_share != null ? Number(row.budget_share) : 100,
+    completedAt: row.completed_at ? new Date(row.completed_at) : undefined,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
@@ -1527,6 +1530,8 @@ function projectToRow(data: Partial<Omit<Project, 'id' | 'createdAt' | 'updatedA
   if (data.title !== undefined) row.title = data.title;
   if (data.description !== undefined) row.description = data.description;
   if (data.assignedTo !== undefined) row.assigned_to = data.assignedTo || null;
+  if (data.budgetShare !== undefined) row.budget_share = data.budgetShare;
+  if (data.completedAt !== undefined) row.completed_at = data.completedAt ? data.completedAt.toISOString() : null;
   if (data.createdBy !== undefined) row.created_by = data.createdBy;
   return row;
 }
@@ -1608,6 +1613,248 @@ export async function updateDbProject(
 export async function softDeleteProject(projectId: string): Promise<void> {
   const { error } = await supabaseServer.from('projects').update({ deleted_at: new Date().toISOString() }).eq('id', projectId);
   if (error) throw error;
+}
+
+/**
+ * Progetti attivi collegati a un lavoro (per la ripartizione delle quote budget)
+ */
+export async function getProjectsByJobId(jobId: string): Promise<Project[]> {
+  const { data, error } = await supabaseServer
+    .from('projects')
+    .select('*, jobs(title)')
+    .eq('job_id', jobId)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(projectRowToProject);
+}
+
+/**
+ * Assegna una nuova quota % budget a un progetto e ridistribuisce automaticamente
+ * il resto tra gli altri progetti collegati allo stesso lavoro, in proporzione alle
+ * loro quote attuali (o in parti uguali se gli altri sono tutti a zero), così che la
+ * somma delle quote di tutti i progetti attivi di un lavoro resti sempre 100.
+ */
+export async function rebalanceProjectShares(jobId: string, changedProjectId: string, newShare: number): Promise<void> {
+  const siblings = await getProjectsByJobId(jobId);
+  const others = siblings.filter((p) => p.id !== changedProjectId);
+  const clamped = Math.max(0, Math.min(100, newShare));
+  const remainder = 100 - clamped;
+
+  const updates: { id: string; share: number }[] = [{ id: changedProjectId, share: clamped }];
+
+  if (others.length > 0) {
+    const othersTotal = others.reduce((sum, p) => sum + p.budgetShare, 0);
+    others.forEach((p, idx) => {
+      const isLast = idx === others.length - 1;
+      let share: number;
+      if (isLast) {
+        share = Math.max(0, 100 - updates.reduce((sum, u) => sum + u.share, 0));
+      } else if (othersTotal > 0) {
+        share = Math.round(((p.budgetShare / othersTotal) * remainder) * 100) / 100;
+      } else {
+        share = Math.round((remainder / others.length) * 100) / 100;
+      }
+      updates.push({ id: p.id, share });
+    });
+  }
+
+  await Promise.all(updates.map((u) => supabaseServer.from('projects').update({ budget_share: u.share }).eq('id', u.id)));
+}
+
+function projectInvoiceRowToProjectInvoice(row: Record<string, any>): ProjectInvoice {
+  return {
+    id: row.id,
+    projectId: row.project_id ?? undefined,
+    jobId: row.job_id ?? undefined,
+    clientId: row.client_id ?? undefined,
+    projectTitle: row.project_title,
+    jobTitle: row.job_title ?? undefined,
+    clientName: row.client_name,
+    netAmount: Number(row.net_amount),
+    vatRate: Number(row.vat_rate),
+    vatAmount: Number(row.vat_amount),
+    totalAmount: Number(row.total_amount),
+    lineItems: row.line_items ?? [],
+    status: row.status,
+    mergedIntoId: row.merged_into_id ?? undefined,
+    ficInvoiceId: row.fic_invoice_id ?? undefined,
+    createdBy: row.created_by,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+    archivedAt: row.archived_at ? new Date(row.archived_at) : undefined,
+    deletedAt: row.deleted_at ? new Date(row.deleted_at) : undefined,
+  };
+}
+
+/**
+ * Segna un progetto come completato e genera la relativa fattura interna (bozza),
+ * visibile solo agli admin nella pagina Fatture. L'importo è calcolato dal budget
+ * del lavoro collegato per la quota % assegnata al progetto.
+ */
+export async function markProjectCompleted(
+  projectId: string,
+  input: { netAmount: number; vatRate: number; projectTitle: string; jobId?: string; jobTitle?: string; clientId?: string; clientName: string; createdBy: string }
+): Promise<ProjectInvoice> {
+  const vatAmount = Math.round(input.netAmount * (input.vatRate / 100) * 100) / 100;
+  const totalAmount = Math.round((input.netAmount + vatAmount) * 100) / 100;
+
+  const { error: updateError } = await supabaseServer
+    .from('projects')
+    .update({ completed_at: new Date().toISOString() })
+    .eq('id', projectId);
+  if (updateError) throw updateError;
+
+  const { data, error } = await supabaseServer
+    .from('project_invoices')
+    .insert([
+      {
+        project_id: projectId,
+        job_id: input.jobId ?? null,
+        client_id: input.clientId ?? null,
+        project_title: input.projectTitle,
+        job_title: input.jobTitle ?? null,
+        client_name: input.clientName,
+        net_amount: input.netAmount,
+        vat_rate: input.vatRate,
+        vat_amount: vatAmount,
+        total_amount: totalAmount,
+        created_by: input.createdBy,
+      },
+    ])
+    .select()
+    .single();
+  if (error) throw error;
+  return projectInvoiceRowToProjectInvoice(data);
+}
+
+/**
+ * Elenco fatture progetto (visibile solo agli admin), con filtri per lista/archivio/cestino
+ */
+export async function getProjectInvoices(filters?: {
+  search?: string;
+  clientId?: string;
+  archived?: boolean;
+  archivedYear?: number;
+  trashed?: boolean;
+  limit?: number;
+  offset?: number;
+}): Promise<{ data: ProjectInvoice[]; total: number }> {
+  let query = supabaseServer.from('project_invoices').select('*', { count: 'exact' });
+
+  if (filters?.trashed) {
+    query = query.not('deleted_at', 'is', null);
+  } else {
+    query = query.is('deleted_at', null);
+    if (filters?.archived) {
+      query = query.not('archived_at', 'is', null);
+      if (filters.archivedYear) {
+        const start = `${filters.archivedYear}-01-01T00:00:00.000Z`;
+        const end = `${filters.archivedYear + 1}-01-01T00:00:00.000Z`;
+        query = query.gte('archived_at', start).lt('archived_at', end);
+      }
+    } else {
+      query = query.is('archived_at', null);
+    }
+  }
+
+  if (filters?.clientId) query = query.eq('client_id', filters.clientId);
+  if (filters?.search) {
+    query = query.or(`project_title.ilike.%${filters.search}%,job_title.ilike.%${filters.search}%,client_name.ilike.%${filters.search}%`);
+  }
+
+  query = query.order('created_at', { ascending: false });
+
+  if (filters?.limit != null && filters?.offset != null) {
+    query = query.range(filters.offset, filters.offset + filters.limit - 1);
+  }
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+  return { data: (data ?? []).map(projectInvoiceRowToProjectInvoice), total: count ?? 0 };
+}
+
+/**
+ * Anni distinti in cui sono state archiviate fatture progetto, per i filtri dell'archivio
+ */
+export async function getArchivedProjectInvoiceYears(): Promise<number[]> {
+  const { data, error } = await supabaseServer
+    .from('project_invoices')
+    .select('archived_at')
+    .not('archived_at', 'is', null)
+    .is('deleted_at', null);
+  if (error) throw error;
+  const years = new Set((data ?? []).map((r: any) => new Date(r.archived_at).getFullYear()));
+  return Array.from(years).sort((a, b) => b - a);
+}
+
+export async function archiveProjectInvoices(ids: string[]): Promise<void> {
+  const { error } = await supabaseServer.from('project_invoices').update({ archived_at: new Date().toISOString() }).in('id', ids);
+  if (error) throw error;
+}
+
+export async function unarchiveProjectInvoice(id: string): Promise<void> {
+  const { error } = await supabaseServer.from('project_invoices').update({ archived_at: null }).eq('id', id);
+  if (error) throw error;
+}
+
+export async function softDeleteProjectInvoice(id: string): Promise<void> {
+  const { error } = await supabaseServer.from('project_invoices').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw error;
+}
+
+export async function restoreProjectInvoice(id: string): Promise<void> {
+  const { error } = await supabaseServer.from('project_invoices').update({ deleted_at: null }).eq('id', id);
+  if (error) throw error;
+}
+
+/**
+ * Accorpa più fatture progetto dello stesso cliente in un'unica fattura con più
+ * voci (una riga per fattura di origine); le fatture di origine vengono spostate
+ * nel cestino e collegate alla nuova fattura tramite merged_into_id.
+ */
+export async function mergeProjectInvoices(ids: string[], createdBy: string): Promise<ProjectInvoice> {
+  const { data: rows, error } = await supabaseServer.from('project_invoices').select('*').in('id', ids).is('deleted_at', null);
+  if (error) throw error;
+  const invoices = (rows ?? []).map(projectInvoiceRowToProjectInvoice);
+  if (invoices.length < 2) throw new Error('Servono almeno due fatture da accorpare.');
+
+  const clientIds = new Set(invoices.map((i) => i.clientId ?? i.clientName));
+  if (clientIds.size > 1) throw new Error('Le fatture selezionate devono appartenere allo stesso cliente.');
+
+  const lineItems = invoices.map((i) => ({ label: i.projectTitle, netAmount: i.netAmount }));
+  const netAmount = Math.round(invoices.reduce((sum, i) => sum + i.netAmount, 0) * 100) / 100;
+  const vatRate = invoices[0].vatRate;
+  const vatAmount = Math.round(netAmount * (vatRate / 100) * 100) / 100;
+  const totalAmount = Math.round((netAmount + vatAmount) * 100) / 100;
+
+  const { data: merged, error: insertError } = await supabaseServer
+    .from('project_invoices')
+    .insert([
+      {
+        client_id: invoices[0].clientId ?? null,
+        client_name: invoices[0].clientName,
+        project_title: invoices.map((i) => i.projectTitle).join(' + '),
+        job_title: invoices[0].jobTitle ?? null,
+        net_amount: netAmount,
+        vat_rate: vatRate,
+        vat_amount: vatAmount,
+        total_amount: totalAmount,
+        line_items: lineItems,
+        created_by: createdBy,
+      },
+    ])
+    .select()
+    .single();
+  if (insertError) throw insertError;
+
+  const { error: updateError } = await supabaseServer
+    .from('project_invoices')
+    .update({ status: 'accorpata', merged_into_id: merged.id, deleted_at: new Date().toISOString() })
+    .in('id', ids);
+  if (updateError) throw updateError;
+
+  return projectInvoiceRowToProjectInvoice(merged);
 }
 
 /**
@@ -1861,4 +2108,4 @@ export async function reorderProjectTasks(orderedTaskIds: string[]): Promise<voi
   );
 }
 
-export type { User, Client, Job, Task, Invoice, Invitation, ActivityLog, Product, Contract, Project, ProjectTask };
+export type { User, Client, Job, Task, Invoice, Invitation, ActivityLog, Product, Contract, Project, ProjectTask, ProjectInvoice };

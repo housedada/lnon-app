@@ -183,6 +183,10 @@ export interface Project {
   title: string;
   description?: string;
   assignedTo?: string;
+  // Quota % del budget del lavoro collegato assegnata a questo progetto; la somma
+  // dei progetti attivi di uno stesso lavoro deve sempre dare 100.
+  budgetShare: number;
+  completedAt?: Date;
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
@@ -190,6 +194,36 @@ export interface Project {
   // Popolati solo in lettura, se collegati
   jobTitle?: string;
   assignedToName?: string;
+}
+
+export type ProjectInvoiceStatus = 'da_fatturare' | 'fatturata' | 'annullata' | 'accorpata';
+
+export interface ProjectInvoiceLineItem {
+  label: string;
+  netAmount: number;
+}
+
+export interface ProjectInvoice {
+  id: string;
+  projectId?: string;
+  jobId?: string;
+  clientId?: string;
+  projectTitle: string;
+  jobTitle?: string;
+  clientName: string;
+  netAmount: number;
+  vatRate: number;
+  vatAmount: number;
+  totalAmount: number;
+  lineItems: ProjectInvoiceLineItem[];
+  status: ProjectInvoiceStatus;
+  mergedIntoId?: string;
+  ficInvoiceId?: number;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+  archivedAt?: Date;
+  deletedAt?: Date;
 }
 
 export type ProjectTaskStatus = 'todo' | 'in_progress' | 'completed';
