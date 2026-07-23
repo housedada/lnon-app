@@ -25,9 +25,9 @@ export default function FormPageModal({
     <div className="modal-backdrop fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4" onClick={handleClose}>
       <div
         onClick={(e) => e.stopPropagation()}
-        className="modal-panel card-shadow flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-grid-border bg-card-bg"
+        className="modal-panel card-shadow flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-card-bg"
       >
-        <div className="relative flex shrink-0 items-center justify-between gap-3 overflow-hidden border-b border-grid-border bg-neutral-900 px-8 py-5">
+        <div className="modal-header-gradient relative flex shrink-0 items-center justify-between gap-3 overflow-hidden px-8 py-5">
           <ParticleCanvasHeader />
           <h2 className="relative z-10 flex items-center gap-2 text-sm font-semibold text-white">
             {icon}

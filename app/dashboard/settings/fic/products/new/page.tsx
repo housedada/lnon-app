@@ -1,13 +1,18 @@
+import { Package } from 'lucide-react';
 import ProductForm from '@/components/ProductForm';
+import FormPageModal from '@/components/FormPageModal';
 import { createProductAction } from '@/lib/actions/products';
 
 export const metadata = { title: 'Nuovo Prodotto' };
 
 export default function NewProductPage() {
   return (
-    <div>
-      <h1 className="p-6 pb-0 text-2xl font-semibold text-primary">Nuovo Prodotto</h1>
+    <FormPageModal
+      title="Nuovo Prodotto"
+      icon={<Package size={16} strokeWidth={1.75} className="text-white/70" aria-hidden="true" />}
+      closeHref="/dashboard/settings/fic/products"
+    >
       <ProductForm action={createProductAction} />
-    </div>
+    </FormPageModal>
   );
 }

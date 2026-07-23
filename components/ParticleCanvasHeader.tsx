@@ -17,8 +17,8 @@ interface ParticleState {
   rotateClockwise?: boolean;
 }
 
-const MAX_ALPHA = 0.36;
-const MAX_PARTICLES = 45;
+const MAX_ALPHA = 0.75;
+const MAX_PARTICLES = 40;
 
 function randomFrom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -38,7 +38,8 @@ function createParticle(width: number, height: number): ParticleState {
     strokeWidth: Math.random() * (Math.random() > 0.5 ? 1.2 : 2),
   };
   if (type === 'hexagon') {
-    base.diameter = 3 + Math.random() * 7;
+    const isLarge = Math.random() < 0.12;
+    base.diameter = isLarge ? 35 + Math.random() * 65 : 3 + Math.random() * 7;
   } else {
     base.angle = Math.atan2(y, x);
     base.length = randomFrom([5, 7, 3, 10]);

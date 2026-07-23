@@ -374,3 +374,7 @@ input[type='radio']:focus-visible {
 .modal-panel {
   animation: modal-panel-in 180ms ease-out;
 }
+
+.modal-header-gradient {
+  background: linear-gradient(120deg, #14131a 0%, #26212e 100%);
+}
