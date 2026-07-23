@@ -28,9 +28,9 @@ export default function NewJobFromClientButton({
         onClick={() => setOpen(true)}
         aria-label="Nuovo lavoro per questo cliente"
         title="Nuovo lavoro per questo cliente"
-        className="flex h-6 w-6 items-center justify-center rounded-full bg-neutral-500/10 transition hover:bg-neutral-500/20"
+        className="special-action-btn flex h-6 w-6 items-center justify-center rounded-full bg-neutral-500/10 transition hover:bg-neutral-500/20"
       >
-        <Briefcase size={12} strokeWidth={2} style={{ color: 'var(--accent-to)' }} aria-hidden="true" />
+        <Briefcase size={12} strokeWidth={2} className="special-action-icon" aria-hidden="true" />
       </button>
       {open && (
         <FormPageModal

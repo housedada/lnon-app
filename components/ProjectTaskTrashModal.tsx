@@ -70,8 +70,7 @@ export default function ProjectTaskTrashModal({
                     type="button"
                     disabled={isPending}
                     onClick={() => handleRestore(task.id)}
-                    style={{ color: 'var(--accent-to)' }}
-                    className="flex shrink-0 items-center gap-1 rounded px-2 py-1 text-[11px] font-medium transition hover:bg-row-hover disabled:opacity-60"
+                    className="special-action-icon flex shrink-0 items-center gap-1 rounded px-2 py-1 text-[11px] font-medium transition hover:bg-row-hover disabled:opacity-60"
                   >
                     <RotateCcw size={12} strokeWidth={2} aria-hidden="true" />
                     Ripristina

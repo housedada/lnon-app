@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { hasPermission, canDeleteResource } from '@/lib/permissions';
-import { createDbProject, updateDbProject, softDeleteProject, saveTeamColumnOrder, getJobById } from '@/lib/db';
+import { createDbProject, updateDbProject, softDeleteProject, saveTeamColumnOrder, savePersonalColumnOrder, getJobById } from '@/lib/db';
 
 async function requireRole(resource: string, action: string) {
   const session = await auth();
@@ -124,4 +124,11 @@ export async function saveTeamColumnOrderAction(orderedUserIds: string[]): Promi
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!userId) return;
   await saveTeamColumnOrder(userId, orderedUserIds);
+}
+
+export async function savePersonalColumnOrderAction(orderedProjectIds: string[]): Promise<void> {
+  const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) return;
+  await savePersonalColumnOrder(userId, orderedProjectIds);
 }

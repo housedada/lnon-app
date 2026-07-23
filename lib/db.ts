@@ -1636,6 +1636,32 @@ export async function saveTeamColumnOrder(userId: string, orderedUserIds: string
   if (error) throw error;
 }
 
+/**
+ * Ordine card preferito dall'utente per la board Personale (array di project id)
+ */
+export async function getPersonalColumnOrder(userId: string): Promise<string[]> {
+  const { data, error } = await supabaseServer
+    .from('board_column_orders')
+    .select('personal_column_order')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data?.personal_column_order ?? [];
+}
+
+/**
+ * Salva l'ordine card preferito dall'utente per la board Personale
+ */
+export async function savePersonalColumnOrder(userId: string, orderedProjectIds: string[]): Promise<void> {
+  const { error } = await supabaseServer
+    .from('board_column_orders')
+    .upsert([{ user_id: userId, personal_column_order: orderedProjectIds, updated_at: new Date().toISOString() }], {
+      onConflict: 'user_id',
+    });
+  if (error) throw error;
+}
+
 function projectTaskRowToProjectTask(row: Record<string, any>): ProjectTask {
   return {
     id: row.id,

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Users2, User } from 'lucide-react';
 import { auth } from '@/lib/auth';
-import { getUsers, getAllAssignedProjects, getProjectsByAssignee, getTeamColumnOrder, getProductColorsForJobs, getProjectTasks } from '@/lib/db';
+import { getUsers, getAllAssignedProjects, getProjectsByAssignee, getTeamColumnOrder, getPersonalColumnOrder, getProductColorsForJobs, getProjectTasks } from '@/lib/db';
 import TeamBoard from '@/components/TeamBoard';
 import PersonalBoard from '@/components/PersonalBoard';
 import TaskBoardViewToggle from '@/components/TaskBoardViewToggle';
@@ -84,18 +84,25 @@ async function PersonalView({ userId }: { userId: string }) {
   const projects = userId ? await getProjectsByAssignee(userId) : [];
   const jobIds = Array.from(new Set(projects.map((p) => p.jobId).filter((id): id is string => Boolean(id))));
 
-  const [productColorsMap, allUsers, taskLists] = await Promise.all([
+  const [productColorsMap, allUsers, taskLists, savedOrder] = await Promise.all([
     getProductColorsForJobs(jobIds),
     getUsers(),
     Promise.all(projects.map((p) => getProjectTasks(p.id))),
+    userId ? getPersonalColumnOrder(userId) : Promise.resolve([]),
   ]);
   const productColorsByJob = Object.fromEntries(productColorsMap);
   const userOptions = allUsers.filter((u) => u.isActive).map((u) => ({ id: u.id, name: u.name, color: u.color }));
   const tasksByProject = Object.fromEntries(projects.map((p, i) => [p.id, taskLists[i]]));
 
+  const byId = new Map(projects.map((p) => [p.id, p]));
+  const orderedProjects = [
+    ...savedOrder.filter((id) => byId.has(id)).map((id) => byId.get(id)!),
+    ...projects.filter((p) => !savedOrder.includes(p.id)),
+  ];
+
   return (
     <PersonalBoard
-      projects={projects}
+      projects={orderedProjects}
       productColorsByJob={productColorsByJob}
       tasksByProject={tasksByProject}
       userOptions={userOptions}

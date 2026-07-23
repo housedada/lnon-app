@@ -134,6 +134,28 @@ textarea::placeholder {
   filter: brightness(1.12);
 }
 
+/* Icone azione "speciali" nelle liste (es. genera progetto/lavoro): in chiaro
+   usano il violaceo d'accento, in notte diventano chiare per restare leggibili
+   sul cerchio scuro, con hover bianco pieno. */
+.special-action-icon {
+  color: var(--accent-to);
+  transition: color 0.15s ease;
+}
+
+.special-action-btn:hover .special-action-icon {
+  color: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  .special-action-icon {
+    color: #cfc8e6;
+  }
+}
+
+:root[data-theme='dark'] .special-action-icon {
+  color: #cfc8e6;
+}
+
 /* Area contenuti: sfondo piatto in chiaro, lieve gradiente grigio violaceo scuro in notte */
 .content-area {
   background: var(--color-content-bg);

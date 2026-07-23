@@ -1,8 +1,9 @@
 'use client';
 
-import { useRef, useState } from 'react';
-import { Briefcase, ChevronDown, Trash2 } from 'lucide-react';
+import { useRef, useState, useTransition } from 'react';
+import { Briefcase, ChevronDown, GripVertical, Trash2 } from 'lucide-react';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
+import { savePersonalColumnOrderAction } from '@/lib/actions/projects';
 import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/ProjectTaskList';
 import type { Project, ProjectTask } from '@/lib/types';
 
@@ -20,6 +21,11 @@ export default function PersonalBoard({
   const density = useTaskBoardViewStore((s) => s.density);
   const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
   const listRefs = useRef<Map<string, ProjectTaskListHandle>>(new Map());
+  const [order, setOrder] = useState<string[]>(projects.map((p) => p.id));
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
+
+  const projectsById = new Map(projects.map((p) => [p.id, p]));
 
   function toggleProject(projectId: string) {
     setCollapsedProjects((prev) => {
@@ -28,6 +34,20 @@ export default function PersonalBoard({
       else next.add(projectId);
       return next;
     });
+  }
+
+  function handleDrop(targetId: string) {
+    if (!dragId || dragId === targetId) return;
+    setOrder((prev) => {
+      const next = prev.filter((id) => id !== dragId);
+      const targetIndex = next.indexOf(targetId);
+      next.splice(targetIndex, 0, dragId);
+      startTransition(() => {
+        savePersonalColumnOrderAction(next);
+      });
+      return next;
+    });
+    setDragId(null);
   }
 
   if (projects.length === 0) {
@@ -44,9 +64,11 @@ export default function PersonalBoard({
     : 'flex h-full gap-3 overflow-x-auto px-4 pb-4 pt-3';
   const cardWidthClass = isMasonry ? 'mb-3 w-full break-inside-avoid' : density === 'wide' ? 'w-[23%] min-w-[240px]' : 'w-48';
 
+  const orderedProjects = order.map((id) => projectsById.get(id)).filter((p): p is Project => Boolean(p));
+
   return (
     <div className={containerClass}>
-      {projects.map((project) => {
+      {orderedProjects.map((project) => {
         const colors = project.jobId ? productColorsByJob[project.jobId] : undefined;
         const headerStyle =
           colors && colors.length > 0
@@ -61,12 +83,17 @@ export default function PersonalBoard({
         return (
           <div
             key={project.id}
+            draggable
+            onDragStart={() => setDragId(project.id)}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={() => handleDrop(project.id)}
             className={`group flex shrink-0 flex-col rounded-xl border border-grid-border bg-grid-header-bg ${cardWidthClass} ${isMasonry ? '' : 'self-start'}`}
           >
             <div
-              className="flex w-full items-center justify-between gap-2 rounded-t-xl border-b border-grid-border px-3 py-2"
+              className="flex w-full cursor-grab items-center justify-between gap-2 rounded-t-xl border-b border-grid-border px-3 py-2 active:cursor-grabbing"
               style={headerStyle}
             >
+              <GripVertical size={13} strokeWidth={1.75} className={`shrink-0 ${headerSubTextClass}`} aria-hidden="true" />
               <button type="button" onClick={() => toggleProject(project.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
                 <div className="min-w-0">
                   <p className={`truncate text-sm font-semibold ${headerTextClass}`}>{project.title}</p>

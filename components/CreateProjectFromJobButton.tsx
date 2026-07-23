@@ -25,9 +25,9 @@ export default function CreateProjectFromJobButton({
           onClick={() => setOpen(true)}
           aria-label="Genera progetto da questo lavoro"
           title="Genera progetto da questo lavoro"
-          className="flex h-6 w-6 items-center justify-center rounded-full bg-neutral-500/10 transition hover:bg-neutral-500/20"
+          className="special-action-btn flex h-6 w-6 items-center justify-center rounded-full bg-neutral-500/10 transition hover:bg-neutral-500/20"
         >
-          <FolderPlus size={13} strokeWidth={2} style={{ color: 'var(--accent-to)' }} aria-hidden="true" />
+          <FolderPlus size={13} strokeWidth={2} className="special-action-icon" aria-hidden="true" />
         </button>
       ) : (
         <button
