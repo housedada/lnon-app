@@ -184,15 +184,15 @@ export default function TeamBoard({
               </div>
 
               <div className="relative min-h-0 flex-1">
-                <div className="flex flex-col divide-y divide-grid-border px-3">
-                  {memberProjects.length === 0 && <p className="py-2 text-[13px] text-secondary">Nessun progetto</p>}
+                <div className="flex flex-col">
+                  {memberProjects.length === 0 && <p className="px-3 py-2 text-xs text-secondary">Nessun progetto</p>}
                   {memberProjects.slice(0, 5).map((project) => {
                     const counts = projectTaskCounts(project.id);
                     return (
-                      <div key={project.id} className="relative flex items-center py-1.5 pr-12">
-                        <p className="truncate text-[13px] text-secondary">{project.title}</p>
+                      <div key={project.id} className="relative flex items-center border-b border-grid-border px-3 py-2.5 pr-12">
+                        <p className="truncate text-xs text-secondary">{project.title}</p>
                         <span
-                          className="absolute right-0 top-1/2 -translate-y-1/2 rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
                           style={{ background: 'color-mix(in srgb, var(--accent-to) 12%, transparent)', color: 'var(--accent-to)' }}
                         >
                           {counts.resolved}/{counts.total}
