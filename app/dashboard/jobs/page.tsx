@@ -16,6 +16,7 @@ import NewJobButton from '@/components/NewJobButton';
 import JobRowSelectCheckbox from '@/components/JobRowSelectCheckbox';
 import JobsSelectAllCheckbox from '@/components/JobsSelectAllCheckbox';
 import JobsBulkArchiveButton from '@/components/JobsBulkArchiveButton';
+import JobsSelectionToggle from '@/components/JobsSelectionToggle';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import type { JobStatus } from '@/lib/types';
 
@@ -161,6 +162,7 @@ async function JobsListSection({
       totalCount={total}
       totalLabel="lavori"
       extraTopControls={<JobsBulkArchiveButton />}
+      searchExtra={canUpdate && <JobsSelectionToggle />}
     >
       <div className="mx-6 mt-6 grid grid-cols-[32px_2fr_1.5fr_auto_1fr_1fr_1fr_1fr_40px_40px_40px_40px_40px] gap-x-[2px] border-t border-grid-border text-[12px]">
         <div className="flex items-center justify-center border-b border-grid-border bg-grid-header-bg px-1 py-2">

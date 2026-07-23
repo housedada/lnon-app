@@ -22,6 +22,7 @@ export default function ListNavigator({
   totalCount,
   totalLabel,
   extraTopControls,
+  searchExtra,
   children,
 }: {
   basePath: string;
@@ -34,6 +35,7 @@ export default function ListNavigator({
   totalCount?: number;
   totalLabel?: string;
   extraTopControls?: React.ReactNode;
+  searchExtra?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -108,6 +110,8 @@ export default function ListNavigator({
               />
             </div>
           </form>
+
+          {searchExtra}
 
           {totalCount !== undefined && (
             <span className="text-[11px] text-secondary whitespace-nowrap">

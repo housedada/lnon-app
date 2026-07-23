@@ -11,13 +11,15 @@ export default function JobsSelectionToggle() {
     <button
       type="button"
       onClick={toggleMode}
-      aria-label="Selezione multipla"
+      aria-label="Attiva/disattiva selezione multipla"
       aria-pressed={mode}
-      className={`flex h-8 w-8 items-center justify-center rounded-md transition ${
-        mode ? 'bg-violet-500/15 text-violet-400' : 'text-violet-400/80 hover:bg-neutral-800 hover:text-violet-400'
+      title="Selezione multipla"
+      className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-2 text-[11px] font-medium transition ${
+        mode ? 'border-violet-500/40 bg-violet-500/10 text-violet-700' : 'border-grid-border text-secondary hover:bg-row-hover hover:text-primary'
       }`}
     >
-      <ListChecks size={17} strokeWidth={1.75} aria-hidden="true" />
+      <ListChecks size={15} strokeWidth={1.75} aria-hidden="true" />
+      Seleziona
     </button>
   );
 }
