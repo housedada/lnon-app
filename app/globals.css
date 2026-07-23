@@ -268,12 +268,12 @@ textarea::placeholder {
    laterale delle celle), sempre animato in/out senza scatti. */
 .list-row-cell {
   position: relative;
-  transform-origin: center center;
+  transform-origin: left center;
   transition: transform 160ms cubic-bezier(0.4, 0, 0.2, 1), color 160ms ease, background-color 160ms ease;
 }
 
 .group:hover .list-row-cell {
-  transform: scale(1.2);
+  transform: scale(1.12);
   z-index: 2;
 }
 
@@ -443,7 +443,7 @@ input[type='radio']:not(:disabled),
 select:not(:disabled),
 summary,
 .cursor-pointer {
-  cursor: url('/cursor-hand.svg') 9 2, pointer;
+  cursor: url('/cursor.svg') 3 3, pointer;
 }
 
 button:disabled,
