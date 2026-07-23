@@ -1,9 +1,11 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { Pencil } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { getContracts, getContractsStats, getAllClientNames } from '@/lib/db';
 import { hasPermission } from '@/lib/permissions';
 import ListNavigator from '@/components/ListNavigator';
+import ListPlaceholder from '@/components/ListPlaceholder';
 import ContractsFilterWidget from '@/components/ContractsFilterWidget';
 import ContractsStatsWidget from '@/components/ContractsStatsWidget';
 import SyncContractsClientsButton from '@/components/SyncContractsClientsButton';
@@ -111,26 +113,16 @@ function renderCell(contract: Contract, key: string): React.ReactNode {
   }
 }
 
-export default async function ContractsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string; page?: string; status?: string; categories?: string }>;
-}) {
-  const { q, page, status, categories } = await searchParams;
-  const currentPage = Math.max(1, Number(page) || 1);
-  const offset = (currentPage - 1) * PAGE_SIZE;
-  const categoryList = categories ? categories.split(',').filter(Boolean) : undefined;
+type SearchParams = { q?: string; page?: string; status?: string; categories?: string };
+
+export default async function ContractsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const params = await searchParams;
 
   const session = await auth();
   const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role ?? 'dipendente';
 
-  const [{ data: contracts, total }, stats, clientOptions] = await Promise.all([
-    getContracts({ search: q, status, categories: categoryList, limit: PAGE_SIZE, offset }),
-    getContractsStats(),
-    getAllClientNames(),
-  ]);
+  const [stats, clientOptions] = await Promise.all([getContractsStats(), getAllClientNames()]);
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const canCreate = hasPermission(role, 'contracts', 'create');
   const canUpdate = hasPermission(role, 'contracts', 'update');
 
@@ -140,7 +132,6 @@ export default async function ContractsPage({
       <div className="flex items-center justify-between p-6 pb-0">
         <div>
           <h1 className="text-2xl font-semibold text-primary">Contratti</h1>
-          <p className="mt-1 text-sm text-secondary">{total} contratti totali</p>
         </div>
         <div className="flex items-center gap-3">
           {canCreate && <NewContractButton clientOptions={clientOptions} />}
@@ -151,69 +142,93 @@ export default async function ContractsPage({
       <ContractsStatsWidget stats={stats} />
       <ContractsFilterWidget />
 
-      <ListNavigator
-        basePath="/dashboard/contracts"
-        searchPlaceholder="Cerca per cliente o sito..."
-        q={q}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        showSyncFilter={false}
-      >
-        <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
-          <div className="grid w-fit min-w-full gap-x-[2px] text-[12px]" style={{ gridTemplateColumns: GRID_TEMPLATE }}>
-            {DATA_COLUMNS.map((col) => (
-              <div
-                key={col.key}
-                className="flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary"
-              >
-                {col.label}
-              </div>
-            ))}
-            <div className="sticky right-10 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
-            <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
-
-
-            {contracts.length === 0 && (
-              <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
-                Nessun contratto trovato{q ? ` per “${q}”` : ''}.
-              </div>
-            )}
-
-            {contracts.map((contract) => (
-              <div key={contract.id} className="group contents">
-                {DATA_COLUMNS.map((col) => (
-                  <div
-                    key={col.key}
-                    className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border bg-card-bg px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary [&:first-child]:font-semibold [&:first-child]:tracking-[0.01em] [&:first-child]:text-primary"
-                  >
-                    {renderCell(contract, col.key)}
-                  </div>
-                ))}
-                <div className="sticky right-10 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
-                  {canUpdate && !contract.clientId && (
-                    <ContractLinkButton
-                      contractId={contract.id}
-                      contractClientName={contract.clientNameRaw}
-                      clientOptions={clientOptions}
-                    />
-                  )}
-                </div>
-                <div className="sticky right-0 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
-                  {canUpdate && (
-                    <Link
-                      href={`/dashboard/contracts/${contract.id}/edit`}
-                      aria-label="Modifica contratto"
-                      className="text-secondary transition hover:text-primary"
-                    >
-                      <Pencil size={15} strokeWidth={1.75} />
-                    </Link>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </ListNavigator>
+      <Suspense fallback={<ListPlaceholder />}>
+        <ContractsListSection params={params} clientOptions={clientOptions} canUpdate={canUpdate} />
+      </Suspense>
     </div>
+  );
+}
+
+async function ContractsListSection({
+  params,
+  clientOptions,
+  canUpdate,
+}: {
+  params: SearchParams;
+  clientOptions: { id: string; name: string }[];
+  canUpdate: boolean;
+}) {
+  const { q, page, status, categories } = params;
+  const currentPage = Math.max(1, Number(page) || 1);
+  const offset = (currentPage - 1) * PAGE_SIZE;
+  const categoryList = categories ? categories.split(',').filter(Boolean) : undefined;
+
+  const { data: contracts, total } = await getContracts({ search: q, status, categories: categoryList, limit: PAGE_SIZE, offset });
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  return (
+    <ListNavigator
+      basePath="/dashboard/contracts"
+      searchPlaceholder="Cerca per cliente o sito..."
+      q={q}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      showSyncFilter={false}
+    >
+      <p className="mx-6 mt-6 text-sm text-secondary">{total} contratti totali</p>
+      <div className="mx-6 mt-2 overflow-x-auto border-t border-grid-border">
+        <div className="grid w-fit min-w-full gap-x-[2px] text-[12px]" style={{ gridTemplateColumns: GRID_TEMPLATE }}>
+          {DATA_COLUMNS.map((col) => (
+            <div
+              key={col.key}
+              className="flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary"
+            >
+              {col.label}
+            </div>
+          ))}
+          <div className="sticky right-10 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
+          <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
+
+          {contracts.length === 0 && (
+            <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
+              Nessun contratto trovato{q ? ` per “${q}”` : ''}.
+            </div>
+          )}
+
+          {contracts.map((contract) => (
+            <div key={contract.id} className="group contents">
+              {DATA_COLUMNS.map((col) => (
+                <div
+                  key={col.key}
+                  className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border bg-card-bg px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary [&:first-child]:font-semibold [&:first-child]:tracking-[0.01em] [&:first-child]:text-primary"
+                >
+                  {renderCell(contract, col.key)}
+                </div>
+              ))}
+              <div className="sticky right-10 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
+                {canUpdate && !contract.clientId && (
+                  <ContractLinkButton
+                    contractId={contract.id}
+                    contractClientName={contract.clientNameRaw}
+                    clientOptions={clientOptions}
+                  />
+                )}
+              </div>
+              <div className="sticky right-0 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
+                {canUpdate && (
+                  <Link
+                    href={`/dashboard/contracts/${contract.id}/edit`}
+                    aria-label="Modifica contratto"
+                    className="text-secondary transition hover:text-primary"
+                  >
+                    <Pencil size={15} strokeWidth={1.75} />
+                  </Link>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </ListNavigator>
   );
 }

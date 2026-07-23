@@ -379,6 +379,40 @@ input[type='radio']:focus-visible {
   background: linear-gradient(120deg, #14131a 0%, #26212e 100%);
 }
 
+/* Fade in/out fluido per widget (statistiche, filtri) che appaiono/scompaiono
+   in-place tramite toggle, senza scatti. */
+@keyframes widget-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scaleY(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}
+
+@keyframes widget-fade-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scaleY(0.97);
+  }
+}
+
+.widget-fade-in {
+  animation: widget-fade-in 180ms ease-out;
+  transform-origin: top;
+}
+
+.widget-fade-out {
+  animation: widget-fade-out 180ms ease-in forwards;
+  transform-origin: top;
+}
+
 /* Cursor custom: leggermente più grande del default, colore accento, su
    tutti gli elementi interattivi (bottoni, link, controlli form). Gli
    elementi disabilitati mostrano invece not-allowed. */

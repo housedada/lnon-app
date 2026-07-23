@@ -1,6 +1,7 @@
 'use client';
 
 import { useContractsStatsStore } from '@/lib/store/contractsStatsStore';
+import AnimatedVisibility from '@/components/AnimatedVisibility';
 import type { ContractsStats } from '@/lib/db';
 
 function formatExact(value: number): string {
@@ -48,20 +49,20 @@ const EXPENSE_COLOR = '#c94848';
 export default function ContractsStatsWidget({ stats }: { stats: ContractsStats }) {
   const visible = useContractsStatsStore((s) => s.visible);
 
-  if (!visible) return null;
-
   return (
-    <div className="card-shadow mx-6 mt-6 flex flex-wrap items-center divide-x divide-sky-500/20 rounded-lg border border-sky-500/30 bg-sky-500/5 px-6 py-4">
-      <StatTile label="Totale generale" value={formatCompact(stats.generalTotal)} exact={formatExact(stats.generalTotal)} color={TOTAL_COLOR} emphasize />
-      <StatTile label="Contratti totali" value={String(stats.count)} />
-      <StatTile label="Manutenzione WP" value={formatCompact(stats.maintenanceTotal)} exact={formatExact(stats.maintenanceTotal)} color={ICON_COLOR} />
-      <StatTile label="Hosting" value={formatCompact(stats.hostingTotal)} exact={formatExact(stats.hostingTotal)} color={ICON_COLOR} />
-      <StatTile label="Analytics e GDPR" value={formatCompact(stats.analyticsTotal)} exact={formatExact(stats.analyticsTotal)} color={ICON_COLOR} />
-      <StatTile label="Cookie (Complianz)" value={formatCompact(stats.cookieTotal)} exact={formatExact(stats.cookieTotal)} color={ICON_COLOR} />
+    <AnimatedVisibility visible={visible}>
+      <div className="card-shadow mx-6 mt-6 flex flex-wrap items-center divide-x divide-sky-500/20 rounded-lg border border-sky-500/30 bg-sky-500/5 px-6 py-4">
+        <StatTile label="Totale generale" value={formatCompact(stats.generalTotal)} exact={formatExact(stats.generalTotal)} color={TOTAL_COLOR} emphasize />
+        <StatTile label="Contratti totali" value={String(stats.count)} />
+        <StatTile label="Manutenzione WP" value={formatCompact(stats.maintenanceTotal)} exact={formatExact(stats.maintenanceTotal)} color={ICON_COLOR} />
+        <StatTile label="Hosting" value={formatCompact(stats.hostingTotal)} exact={formatExact(stats.hostingTotal)} color={ICON_COLOR} />
+        <StatTile label="Analytics e GDPR" value={formatCompact(stats.analyticsTotal)} exact={formatExact(stats.analyticsTotal)} color={ICON_COLOR} />
+        <StatTile label="Cookie (Complianz)" value={formatCompact(stats.cookieTotal)} exact={formatExact(stats.cookieTotal)} color={ICON_COLOR} />
 
-      <div className="ml-auto">
-        <StatTile label="Costi fornitori totali" value={formatCompact(stats.providerCostTotal)} exact={formatExact(stats.providerCostTotal)} color={EXPENSE_COLOR} emphasize />
+        <div className="ml-auto">
+          <StatTile label="Costi fornitori totali" value={formatCompact(stats.providerCostTotal)} exact={formatExact(stats.providerCostTotal)} color={EXPENSE_COLOR} emphasize />
+        </div>
       </div>
-    </div>
+    </AnimatedVisibility>
   );
 }

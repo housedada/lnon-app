@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { auth } from '@/lib/auth';
 import { getClients, getFicConnection } from '@/lib/db';
 import { hasPermission, canDeleteResource } from '@/lib/permissions';
@@ -6,32 +7,22 @@ import ClientRow from '@/components/ClientRow';
 import NewClientButton from '@/components/NewClientButton';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import ListNavigator from '@/components/ListNavigator';
+import ListPlaceholder from '@/components/ListPlaceholder';
 
 export const metadata = { title: 'Clienti' };
 
 const PAGE_SIZE = 21;
 
-export default async function ClientsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string; page?: string; sync?: string }>;
-}) {
-  const { q, page, sync } = await searchParams;
-  const currentPage = Math.max(1, Number(page) || 1);
-  const offset = (currentPage - 1) * PAGE_SIZE;
+type SearchParams = { q?: string; page?: string; sync?: string };
+
+export default async function ClientsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const params = await searchParams;
 
   const session = await auth();
   const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role ?? 'dipendente';
 
-  const { data: clients, total } = await getClients({
-    search: q,
-    ficSyncStatus: sync,
-    limit: PAGE_SIZE,
-    offset,
-  });
   const ficConnection = await getFicConnection();
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const canCreate = hasPermission(role, 'clients', 'create');
   const canUpdate = hasPermission(role, 'clients', 'update');
   const canDelete = canDeleteResource(role, '', '', 'clients');
@@ -43,7 +34,6 @@ export default async function ClientsPage({
       <div className="flex items-center justify-between p-6 pb-0">
         <div>
           <h1 className="text-2xl font-semibold text-primary">Clienti</h1>
-          <p className="mt-1 text-sm text-secondary">{total} clienti totali</p>
         </div>
         <div className="flex items-center gap-3">
           {canCreate && <NewClientButton />}
@@ -51,46 +41,85 @@ export default async function ClientsPage({
         </div>
       </div>
 
-      <ListNavigator
-        basePath="/dashboard/clients"
-        searchPlaceholder="Cerca per nome, email..."
-        q={q}
-        sync={sync}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        showSyncFilter={Boolean(ficConnection)}
-      >
-        <div
-          className={`mx-6 mt-6 grid gap-x-[2px] border-t border-grid-border text-[12px] ${
-            ficConnection ? 'grid-cols-[2fr_1fr_1fr_1fr_auto]' : 'grid-cols-[2fr_1fr_1fr_auto]'
-          }`}
-        >
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Nome</div>
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Città</div>
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">P.IVA</div>
-          {ficConnection && (
-            <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">FIC</div>
-          )}
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary" />
-
-          {clients.length === 0 && (
-            <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
-              Nessun cliente trovato{q ? ` per “${q}”` : ''}.
-            </div>
-          )}
-
-          {clients.map((client) => (
-            <ClientRow
-              key={client.id}
-              client={client}
-              canUpdate={canUpdate}
-              canDelete={canDelete}
-              ficConnection={Boolean(ficConnection)}
-              canSyncFic={isSuperadmin}
-            />
-          ))}
-        </div>
-      </ListNavigator>
+      <Suspense fallback={<ListPlaceholder />}>
+        <ClientsListSection
+          params={params}
+          ficConnection={Boolean(ficConnection)}
+          canUpdate={canUpdate}
+          canDelete={canDelete}
+          isSuperadmin={isSuperadmin}
+        />
+      </Suspense>
     </div>
+  );
+}
+
+async function ClientsListSection({
+  params,
+  ficConnection,
+  canUpdate,
+  canDelete,
+  isSuperadmin,
+}: {
+  params: SearchParams;
+  ficConnection: boolean;
+  canUpdate: boolean;
+  canDelete: boolean;
+  isSuperadmin: boolean;
+}) {
+  const { q, page, sync } = params;
+  const currentPage = Math.max(1, Number(page) || 1);
+  const offset = (currentPage - 1) * PAGE_SIZE;
+
+  const { data: clients, total } = await getClients({
+    search: q,
+    ficSyncStatus: sync,
+    limit: PAGE_SIZE,
+    offset,
+  });
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  return (
+    <ListNavigator
+      basePath="/dashboard/clients"
+      searchPlaceholder="Cerca per nome, email..."
+      q={q}
+      sync={sync}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      showSyncFilter={ficConnection}
+    >
+      <p className="mx-6 mt-6 text-sm text-secondary">{total} clienti totali</p>
+      <div
+        className={`mx-6 mt-2 grid gap-x-[2px] border-t border-grid-border text-[12px] ${
+          ficConnection ? 'grid-cols-[2fr_1fr_1fr_1fr_auto]' : 'grid-cols-[2fr_1fr_1fr_auto]'
+        }`}
+      >
+        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Nome</div>
+        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Città</div>
+        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">P.IVA</div>
+        {ficConnection && (
+          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">FIC</div>
+        )}
+        <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary" />
+
+        {clients.length === 0 && (
+          <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
+            Nessun cliente trovato{q ? ` per “${q}”` : ''}.
+          </div>
+        )}
+
+        {clients.map((client) => (
+          <ClientRow
+            key={client.id}
+            client={client}
+            canUpdate={canUpdate}
+            canDelete={canDelete}
+            ficConnection={ficConnection}
+            canSyncFic={isSuperadmin}
+          />
+        ))}
+      </div>
+    </ListNavigator>
   );
 }
