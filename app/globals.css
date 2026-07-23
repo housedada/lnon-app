@@ -48,7 +48,7 @@
     --background: #0a0a0a;
     --foreground: #ededed;
     --color-content-bg: #18181b;
-    --color-grid-border: #262626; /* neutral-800: uniforma i bordi in tema scuro, prima quasi invisibili */
+    --color-grid-border: #3a3a40; /* uniforma i bordi in tema scuro, prima quasi invisibili */
     --color-grid-header-bg: #202023;
     --color-card-bg: #141416;
     --color-row-hover: #1e1e21;
@@ -87,7 +87,7 @@
   --background: #0a0a0a;
   --foreground: #ededed;
   --color-content-bg: #18181b;
-  --color-grid-border: #171717;
+  --color-grid-border: #3a3a40;
   --color-grid-header-bg: #202023;
   --color-card-bg: #141416;
   --color-row-hover: #1e1e21;

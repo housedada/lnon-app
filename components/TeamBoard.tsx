@@ -13,7 +13,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
-import { SortableContext, arrayMove, horizontalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { SortableContext, arrayMove, horizontalListSortingStrategy, rectSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { GripVertical, Briefcase, CheckCircle2, ChevronDown, Trash2, Plus } from 'lucide-react';
 import { saveTeamColumnOrderAction } from '@/lib/actions/projects';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
@@ -157,92 +157,120 @@ export default function TeamBoard({
 
   if (isGrid) {
     return (
-      <div className={containerClass}>
-        {order.map((userId) => {
-          const member = membersById.get(userId);
-          if (!member) return null;
-          const memberProjects = projectsByUser[userId] ?? [];
-          const headerStyle = member.color ? { background: member.color } : undefined;
-          const headerTextClass = member.color ? 'text-neutral-800' : 'text-primary';
-          const stats = memberStats(userId);
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div className={containerClass}>
+          <SortableContext items={order} strategy={rectSortingStrategy}>
+            {order.map((userId) => {
+              const member = membersById.get(userId);
+              if (!member) return null;
+              const memberProjects = projectsByUser[userId] ?? [];
+              const headerStyle = member.color ? { background: member.color } : undefined;
+              const headerTextClass = member.color ? 'text-neutral-800' : 'text-primary';
+              const stats = memberStats(userId);
 
-          return (
-            <button
-              type="button"
-              key={userId}
-              onClick={() => setDetailMemberId(userId)}
-              className="group relative flex flex-col overflow-hidden rounded-xl border border-grid-border bg-card-bg text-left transition hover:border-secondary"
-            >
-              <span
-                className="pointer-events-none absolute right-4 top-4 z-10 opacity-0 -translate-x-1.5 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:translate-x-0"
-                aria-hidden="true"
-              >
-                <Plus size={14} strokeWidth={2} className={headerTextClass} />
-              </span>
-              <div className="shrink-0 p-3" style={headerStyle}>
-                <p className={`truncate pr-6 text-sm font-semibold ${headerTextClass}`}>{member.name}</p>
-              </div>
-
-              <div className="relative min-h-0 flex-1">
-                <div className="flex flex-col">
-                  {memberProjects.length === 0 && <p className="px-3 py-2 text-xs text-secondary">Nessun progetto</p>}
-                  {memberProjects.slice(0, 5).map((project) => {
-                    const counts = projectTaskCounts(project.id);
-                    return (
-                      <div key={project.id} className="relative flex items-center border-b border-grid-border px-3 py-2.5 pr-12">
-                        <p className="truncate text-xs text-secondary">{project.title}</p>
-                        <span className="task-count-badge absolute right-3 top-1/2 -translate-y-1/2 rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
-                          {counts.resolved}/{counts.total}
-                        </span>
+              return (
+                <SortableColumn key={userId} id={userId}>
+                  {({ setNodeRef, setActivatorNodeRef, style, attributes, listeners, isDragging }) => (
+                    <div
+                      ref={setNodeRef}
+                      style={style}
+                      onClick={() => setDetailMemberId(userId)}
+                      className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border border-grid-border bg-card-bg text-left transition-[opacity,border-color] duration-150 hover:border-secondary ${isDragging ? 'opacity-40' : 'opacity-100'}`}
+                    >
+                      <span
+                        ref={setActivatorNodeRef}
+                        {...attributes}
+                        {...listeners}
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label="Trascina per riordinare"
+                        className="absolute left-4 top-4 z-10 flex h-5 w-5 shrink-0 cursor-grab touch-none items-center justify-center opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100 active:cursor-grabbing"
+                      >
+                        <GripVertical size={14} strokeWidth={1.75} className={headerTextClass} aria-hidden="true" />
+                      </span>
+                      <span
+                        className="pointer-events-none absolute right-4 top-4 z-10 opacity-0 -translate-x-1.5 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:translate-x-0"
+                        aria-hidden="true"
+                      >
+                        <Plus size={14} strokeWidth={2} className={headerTextClass} />
+                      </span>
+                      <div className="shrink-0 p-3" style={headerStyle}>
+                        <p className={`truncate px-6 text-center text-sm font-semibold ${headerTextClass}`}>{member.name}</p>
                       </div>
-                    );
-                  })}
-                </div>
 
-                <div
-                  className="absolute inset-x-0 bottom-0 flex h-14 items-end"
-                  style={{ background: 'linear-gradient(to bottom, color-mix(in srgb, var(--color-card-bg) 0%, transparent), var(--color-card-bg) 55%)' }}
-                >
-                  <div className="grid w-full grid-cols-3 divide-x divide-grid-border border-t border-grid-border">
-                    <div className="px-1 py-1.5 text-center">
-                      <p className="text-base font-bold text-primary">{stats.projectCount}</p>
-                      <p className="detail-label">Progetti</p>
+                      <div className="relative min-h-0 flex-1">
+                        <div className="flex flex-col">
+                          {memberProjects.length === 0 && <p className="px-3 py-2 text-xs text-secondary">Nessun progetto</p>}
+                          {memberProjects.slice(0, 5).map((project) => {
+                            const counts = projectTaskCounts(project.id);
+                            return (
+                              <div key={project.id} className="relative flex items-center border-b border-grid-border px-3 py-2.5 pr-12">
+                                <p className="truncate text-xs text-secondary">{project.title}</p>
+                                <span className="task-count-badge absolute right-3 top-1/2 -translate-y-1/2 rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
+                                  {counts.resolved}/{counts.total}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        <div
+                          className="absolute inset-x-0 bottom-0 flex h-14 items-end"
+                          style={{ background: 'linear-gradient(to bottom, color-mix(in srgb, var(--color-card-bg) 0%, transparent), var(--color-card-bg) 55%)' }}
+                        >
+                          <div className="grid w-full grid-cols-3 divide-x divide-grid-border border-t border-grid-border">
+                            <div className="px-1 py-1.5 text-center">
+                              <p className="text-base font-bold text-primary">{stats.projectCount}</p>
+                              <p className="detail-label">Progetti</p>
+                            </div>
+                            <div className="px-1 py-1.5 text-center">
+                              <p className="text-base font-bold text-primary">{stats.total}</p>
+                              <p className="detail-label">Task</p>
+                            </div>
+                            <div className="px-1 py-1.5 text-center">
+                              <p className="text-base font-bold text-primary">{stats.toResolve}</p>
+                              <p className="detail-label">Da fare</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="px-1 py-1.5 text-center">
-                      <p className="text-base font-bold text-primary">{stats.total}</p>
-                      <p className="detail-label">Task</p>
-                    </div>
-                    <div className="px-1 py-1.5 text-center">
-                      <p className="text-base font-bold text-primary">{stats.toResolve}</p>
-                      <p className="detail-label">Da fare</p>
-                    </div>
-                  </div>
-                </div>
+                  )}
+                </SortableColumn>
+              );
+            })}
+          </SortableContext>
+
+          {order.length === 0 && (
+            <p className="col-span-full px-6 py-12 text-sm text-secondary">
+              Nessun membro del team attivo.{' '}
+              <Link href="/dashboard/users" className="underline">
+                Gestisci utenti
+              </Link>
+            </p>
+          )}
+
+          {detailMember && (
+            <TeamMemberDetailModal
+              member={detailMember}
+              projects={projectsByUser[detailMember.id] ?? []}
+              tasksByProject={tasksByProject}
+              userOptions={userOptions}
+              canManageInvoices={canManageInvoices}
+              onClose={() => setDetailMemberId(null)}
+            />
+          )}
+        </div>
+
+        <DragOverlay>
+          {activeMember && (
+            <div className="rounded-xl border border-grid-border bg-card-bg shadow-lg" style={{ width: 200, height: 300 }}>
+              <div className="rounded-t-xl p-3" style={activeMember.color ? { background: activeMember.color } : undefined}>
+                <p className={`truncate text-center text-sm font-semibold ${activeMember.color ? 'text-neutral-800' : 'text-primary'}`}>{activeMember.name}</p>
               </div>
-            </button>
-          );
-        })}
-
-        {order.length === 0 && (
-          <p className="col-span-full px-6 py-12 text-sm text-secondary">
-            Nessun membro del team attivo.{' '}
-            <Link href="/dashboard/users" className="underline">
-              Gestisci utenti
-            </Link>
-          </p>
-        )}
-
-        {detailMember && (
-          <TeamMemberDetailModal
-            member={detailMember}
-            projects={projectsByUser[detailMember.id] ?? []}
-            tasksByProject={tasksByProject}
-            userOptions={userOptions}
-            canManageInvoices={canManageInvoices}
-            onClose={() => setDetailMemberId(null)}
-          />
-        )}
-      </div>
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
     );
   }
 
