@@ -43,10 +43,10 @@ export default function CreateProjectFromJobModal({
         onClick={(e) => e.stopPropagation()}
         className="modal-panel card-shadow w-full max-w-lg overflow-hidden rounded-xl border border-grid-border bg-card-bg"
       >
-        <div className="relative flex items-center justify-between gap-3 overflow-hidden border-b border-grid-border bg-grid-header-bg px-8 py-5">
+        <div className="relative flex items-center justify-between gap-3 overflow-hidden border-b border-grid-border bg-neutral-900 px-8 py-5">
           <ParticleCanvasHeader />
-          <h2 className="relative z-10 flex items-center gap-2 text-sm font-semibold text-primary">
-            <FolderPlus size={16} strokeWidth={1.75} className="text-secondary" aria-hidden="true" />
+          <h2 className="relative z-10 flex items-center gap-2 text-sm font-semibold text-white">
+            <FolderPlus size={16} strokeWidth={1.75} className="text-white/70" aria-hidden="true" />
             Genera progetto
           </h2>
           <button
@@ -54,7 +54,7 @@ export default function CreateProjectFromJobModal({
             onClick={onClose}
             disabled={isPending}
             aria-label="Chiudi"
-            className="relative z-10 text-secondary transition hover:text-primary"
+            className="relative z-10 text-white/70 transition hover:text-white"
           >
             <X size={18} strokeWidth={1.75} />
           </button>

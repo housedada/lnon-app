@@ -27,9 +27,9 @@ export default function FormPageModal({
         onClick={(e) => e.stopPropagation()}
         className="modal-panel card-shadow flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-grid-border bg-card-bg"
       >
-        <div className="relative flex shrink-0 items-center justify-between gap-3 overflow-hidden border-b border-grid-border bg-grid-header-bg px-8 py-5">
+        <div className="relative flex shrink-0 items-center justify-between gap-3 overflow-hidden border-b border-grid-border bg-neutral-900 px-8 py-5">
           <ParticleCanvasHeader />
-          <h2 className="relative z-10 flex items-center gap-2 text-sm font-semibold text-primary">
+          <h2 className="relative z-10 flex items-center gap-2 text-sm font-semibold text-white">
             {icon}
             {title}
           </h2>
@@ -37,7 +37,7 @@ export default function FormPageModal({
             type="button"
             onClick={handleClose}
             aria-label="Chiudi"
-            className="relative z-10 text-secondary transition hover:text-primary"
+            className="relative z-10 text-white/70 transition hover:text-white"
           >
             <X size={18} strokeWidth={1.75} />
           </button>

@@ -18,7 +18,7 @@ export default async function NewJobPage() {
   return (
     <FormPageModal
       title="Nuovo Lavoro"
-      icon={<Briefcase size={16} strokeWidth={1.75} className="text-secondary" aria-hidden="true" />}
+      icon={<Briefcase size={16} strokeWidth={1.75} className="text-white/70" aria-hidden="true" />}
       closeHref="/dashboard/jobs"
     >
       <JobForm

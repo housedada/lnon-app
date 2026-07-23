@@ -9,7 +9,7 @@ export default function NewClientPage() {
   return (
     <FormPageModal
       title="Nuovo Cliente"
-      icon={<Building2 size={16} strokeWidth={1.75} className="text-secondary" aria-hidden="true" />}
+      icon={<Building2 size={16} strokeWidth={1.75} className="text-white/70" aria-hidden="true" />}
       closeHref="/dashboard/clients"
     >
       <ClientForm action={createClientAction} />

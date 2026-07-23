@@ -3,13 +3,12 @@
 import { useEffect, useRef } from 'react';
 
 interface ParticleState {
-  type: 'bubble' | 'line';
+  type: 'hexagon' | 'line';
   x: number;
   y: number;
   vx: number;
   vy: number;
   alpha: number;
-  hex: string;
   strokeWidth: number;
   diameter?: number;
   angle?: number;
@@ -18,47 +17,59 @@ interface ParticleState {
   rotateClockwise?: boolean;
 }
 
-const COLORS = ['#8f88a8', '#5c5570', '#5c5570', '#5c5570', '#5c5570', '#5c5570'];
+const MAX_ALPHA = 0.36;
 const MAX_PARTICLES = 45;
 
 function randomFrom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function hexToRgba(hex: string, alpha: number): string {
-  const clean = hex.replace('#', '');
-  const r = parseInt(clean.substring(0, 2), 16);
-  const g = parseInt(clean.substring(2, 4), 16);
-  const b = parseInt(clean.substring(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
 function createParticle(width: number, height: number): ParticleState {
-  const type: 'bubble' | 'line' = Math.random() < 0.8 ? 'bubble' : 'line';
+  const type: 'hexagon' | 'line' = Math.random() < 0.8 ? 'hexagon' : 'line';
   const x = Math.random() * width;
   const y = Math.random() * height;
   const base: ParticleState = {
     type,
     x,
     y,
-    vx: (Math.random() < 0.5 ? -1 : 1) * Math.random() * 0.5,
-    vy: (Math.random() < 0.5 ? -1 : 1) * Math.random() * 0.5,
+    vx: (Math.random() < 0.5 ? -1 : 1) * Math.random() * 0.15,
+    vy: (Math.random() < 0.5 ? -1 : 1) * Math.random() * 0.15,
     alpha: 0,
-    hex: randomFrom(COLORS),
     strokeWidth: Math.random() * (Math.random() > 0.5 ? 1.2 : 2),
   };
-  if (type === 'bubble') {
-    base.diameter = 2 + Math.random() * 7;
+  if (type === 'hexagon') {
+    base.diameter = 3 + Math.random() * 7;
   } else {
     base.angle = Math.atan2(y, x);
     base.length = randomFrom([5, 7, 3, 10]);
-    base.rotateSpeed = randomFrom([10, 30, 60, 120]);
+    base.rotateSpeed = randomFrom([80, 140, 220, 320]);
     base.rotateClockwise = Math.random() < 0.5;
   }
   return base;
 }
 
-/** Sfondo animato a particelle (bolle + linee rotanti) per header di card/modali. */
+function drawRoundedHexagon(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number) {
+  const sides = 6;
+  const corner = radius * 0.35;
+  const step = (Math.PI * 2) / sides;
+  const points: [number, number][] = [];
+  for (let i = 0; i < sides; i++) {
+    const angle = i * step - Math.PI / 2;
+    points.push([cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)]);
+  }
+  ctx.beginPath();
+  const [firstX, firstY] = points[0];
+  const [lastX, lastY] = points[sides - 1];
+  ctx.moveTo((firstX + lastX) / 2, (firstY + lastY) / 2);
+  for (let i = 0; i < sides; i++) {
+    const [px, py] = points[i];
+    const [nx, ny] = points[(i + 1) % sides];
+    ctx.arcTo(px, py, nx, ny, corner);
+  }
+  ctx.closePath();
+}
+
+/** Sfondo animato a particelle (esagoni + linee rotanti) per header di card/modali. */
 export default function ParticleCanvasHeader() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -93,11 +104,11 @@ export default function ParticleCanvasHeader() {
 
     function update() {
       particles.forEach((p) => {
-        if (p.alpha < 1) p.alpha += 0.01;
+        if (p.alpha < MAX_ALPHA) p.alpha = Math.min(MAX_ALPHA, p.alpha + 0.004);
         p.x += p.vx;
         p.y += p.vy;
         if (p.type === 'line') {
-          const step = Math.PI / (p.rotateSpeed ?? 60);
+          const step = Math.PI / (p.rotateSpeed ?? 200);
           p.angle = (p.angle ?? 0) + (p.rotateClockwise ? -step : step);
         }
       });
@@ -106,7 +117,7 @@ export default function ParticleCanvasHeader() {
       ctx!.clearRect(0, 0, width, height);
       particles.forEach((p) => {
         ctx!.lineWidth = p.strokeWidth;
-        ctx!.strokeStyle = hexToRgba(p.hex, p.alpha);
+        ctx!.strokeStyle = `rgba(255, 255, 255, ${p.alpha})`;
         ctx!.save();
         if (p.type === 'line') {
           ctx!.translate(p.x, p.y);
@@ -114,11 +125,11 @@ export default function ParticleCanvasHeader() {
           ctx!.beginPath();
           ctx!.moveTo(-(p.length ?? 5) / 2, 0);
           ctx!.lineTo((p.length ?? 5) / 2, 0);
+          ctx!.stroke();
         } else {
-          ctx!.beginPath();
-          ctx!.arc(p.x, p.y, p.diameter ?? 3, 0, Math.PI * 2);
+          drawRoundedHexagon(ctx!, p.x, p.y, p.diameter ?? 5);
+          ctx!.stroke();
         }
-        ctx!.stroke();
         ctx!.restore();
       });
 
