@@ -127,24 +127,28 @@ export default function TeamBoard({
     });
   }
 
+  function projectTaskCounts(projectId: string) {
+    const projectTasks = tasksByProject[projectId] ?? [];
+    const total = projectTasks.length;
+    const resolved = projectTasks.filter((t) => t.status === 'completed').length;
+    return { total, resolved };
+  }
+
   function memberStats(userId: string) {
     const memberProjects = projectsByUser[userId] ?? [];
-    let assigned = 0;
+    let total = 0;
     let toResolve = 0;
     for (const project of memberProjects) {
-      for (const task of tasksByProject[project.id] ?? []) {
-        if (task.assignedToIds.includes(userId)) {
-          assigned += 1;
-          if (task.status !== 'completed') toResolve += 1;
-        }
-      }
+      const counts = projectTaskCounts(project.id);
+      total += counts.total;
+      toResolve += counts.total - counts.resolved;
     }
-    return { projectCount: memberProjects.length, assigned, toResolve };
+    return { projectCount: memberProjects.length, total, toResolve };
   }
 
   const isGrid = density === 'masonry';
   const containerClass = isGrid
-    ? 'grid h-full auto-rows-[236px] grid-cols-2 content-start gap-3 overflow-y-auto px-4 pb-4 pt-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
+    ? 'grid h-full auto-rows-[300px] grid-cols-2 content-start gap-3 overflow-y-auto px-4 pb-4 pt-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
     : 'flex h-full gap-3 overflow-x-auto px-4 pb-4 pt-3';
   const cardWidthClass = density === 'wide' ? 'w-[30%] min-w-[400px]' : 'w-[20%] min-w-[400px]';
 
@@ -167,7 +171,7 @@ export default function TeamBoard({
               type="button"
               key={userId}
               onClick={() => setDetailMemberId(userId)}
-              className="group relative flex flex-col overflow-hidden rounded-xl border border-grid-border bg-grid-header-bg text-left transition hover:border-secondary"
+              className="group relative flex flex-col overflow-hidden rounded-xl border border-grid-border bg-card-bg text-left transition hover:border-secondary"
             >
               <span
                 className="pointer-events-none absolute right-4 top-4 z-10 opacity-0 -translate-x-1.5 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:translate-x-0"
@@ -180,18 +184,27 @@ export default function TeamBoard({
               </div>
 
               <div className="relative min-h-0 flex-1">
-                <div className="flex flex-col gap-1 px-3 pt-2">
-                  {memberProjects.length === 0 && <p className="text-[11px] text-secondary">Nessun progetto</p>}
-                  {memberProjects.slice(0, 3).map((project) => (
-                    <p key={project.id} className="truncate text-[11px] text-secondary">
-                      {project.title}
-                    </p>
-                  ))}
+                <div className="flex flex-col divide-y divide-grid-border px-3">
+                  {memberProjects.length === 0 && <p className="py-2 text-[13px] text-secondary">Nessun progetto</p>}
+                  {memberProjects.slice(0, 5).map((project) => {
+                    const counts = projectTaskCounts(project.id);
+                    return (
+                      <div key={project.id} className="relative flex items-center py-1.5 pr-12">
+                        <p className="truncate text-[13px] text-secondary">{project.title}</p>
+                        <span
+                          className="absolute right-0 top-1/2 -translate-y-1/2 rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
+                          style={{ background: 'color-mix(in srgb, var(--accent-to) 12%, transparent)', color: 'var(--accent-to)' }}
+                        >
+                          {counts.resolved}/{counts.total}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
 
                 <div
                   className="absolute inset-x-0 bottom-0 flex h-14 items-end"
-                  style={{ background: 'linear-gradient(to bottom, color-mix(in srgb, var(--color-grid-header-bg) 0%, transparent), var(--color-grid-header-bg) 55%)' }}
+                  style={{ background: 'linear-gradient(to bottom, color-mix(in srgb, var(--color-card-bg) 0%, transparent), var(--color-card-bg) 55%)' }}
                 >
                   <div className="grid w-full grid-cols-3 divide-x divide-grid-border border-t border-grid-border">
                     <div className="px-1 py-1.5 text-center">
@@ -199,7 +212,7 @@ export default function TeamBoard({
                       <p className="detail-label">Progetti</p>
                     </div>
                     <div className="px-1 py-1.5 text-center">
-                      <p className="text-base font-bold text-primary">{stats.assigned}</p>
+                      <p className="text-base font-bold text-primary">{stats.total}</p>
                       <p className="detail-label">Task</p>
                     </div>
                     <div className="px-1 py-1.5 text-center">
