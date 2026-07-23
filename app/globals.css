@@ -378,3 +378,23 @@ input[type='radio']:focus-visible {
 .modal-header-gradient {
   background: linear-gradient(120deg, #14131a 0%, #26212e 100%);
 }
+
+/* Cursor custom: leggermente più grande del default, colore accento, su
+   tutti gli elementi interattivi (bottoni, link, controlli form). Gli
+   elementi disabilitati mostrano invece not-allowed. */
+button:not(:disabled),
+a[href],
+[role='button'],
+input[type='checkbox']:not(:disabled),
+input[type='radio']:not(:disabled),
+select:not(:disabled),
+summary,
+.cursor-pointer {
+  cursor: url('/cursor-pointer.svg') 4 3, pointer;
+}
+
+button:disabled,
+input:disabled,
+select:disabled {
+  cursor: not-allowed;
+}
