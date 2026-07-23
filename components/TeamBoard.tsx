@@ -41,7 +41,8 @@ export default function TeamBoard({
       return next;
     });
   }
-  const [order, setOrder] = useState<string[]>(members.map((m) => m.id));
+  const [order, setOrder] = useState<string[]>(() => members.map((m) => m.id));
+  const [prevMemberIds, setPrevMemberIds] = useState<string[]>(() => members.map((m) => m.id));
   const [dragId, setDragId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const density = useTaskBoardViewStore((s) => s.density);
@@ -54,6 +55,21 @@ export default function TeamBoard({
   useEffect(() => {
     setColumns(members.map((m) => ({ id: m.id, label: m.name })));
   }, [members, setColumns]);
+
+  // L'ordine locale è seedato una volta da `members`, ma il prop può cambiare dopo
+  // il mount (es. toggle dati demo che aggiunge/rimuove colonne): risincronizza
+  // aggiungendo i nuovi id in coda e togliendo quelli non più presenti. Pattern
+  // "adjust state during render" (niente useEffect/ref) per restare compatibili
+  // col linter di questo progetto.
+  const currentMemberIds = members.map((m) => m.id);
+  const memberIdsChanged =
+    currentMemberIds.length !== prevMemberIds.length || currentMemberIds.some((id, i) => id !== prevMemberIds[i]);
+  if (memberIdsChanged) {
+    setPrevMemberIds(currentMemberIds);
+    const kept = order.filter((id) => currentMemberIds.includes(id));
+    const added = currentMemberIds.filter((id) => !order.includes(id));
+    setOrder([...kept, ...added]);
+  }
 
   function handleDrop(targetId: string) {
     if (!dragId || dragId === targetId) return;

@@ -26,7 +26,8 @@ export default function PersonalBoard({
   const density = useTaskBoardViewStore((s) => s.density);
   const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
   const listRefs = useRef<Map<string, ProjectTaskListHandle>>(new Map());
-  const [order, setOrder] = useState<string[]>(projects.map((p) => p.id));
+  const [order, setOrder] = useState<string[]>(() => projects.map((p) => p.id));
+  const [prevProjectIds, setPrevProjectIds] = useState<string[]>(() => projects.map((p) => p.id));
   const [dragId, setDragId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const setScrollContainer = useTaskBoardScrollStore((s) => s.setScrollContainer);
@@ -38,6 +39,21 @@ export default function PersonalBoard({
   useEffect(() => {
     setColumns(projects.map((p) => ({ id: p.id, label: p.title })));
   }, [projects, setColumns]);
+
+  // L'ordine locale è seedato una volta da `projects`, ma il prop può cambiare dopo
+  // il mount (es. toggle dati demo che aggiunge/rimuove colonne): risincronizza
+  // aggiungendo i nuovi id in coda e togliendo quelli non più presenti. Pattern
+  // "adjust state during render" (niente useEffect/ref) per restare compatibili
+  // col linter di questo progetto.
+  const currentProjectIds = projects.map((p) => p.id);
+  const projectIdsChanged =
+    currentProjectIds.length !== prevProjectIds.length || currentProjectIds.some((id, i) => id !== prevProjectIds[i]);
+  if (projectIdsChanged) {
+    setPrevProjectIds(currentProjectIds);
+    const kept = order.filter((id) => currentProjectIds.includes(id));
+    const added = currentProjectIds.filter((id) => !order.includes(id));
+    setOrder([...kept, ...added]);
+  }
 
   function toggleProject(projectId: string) {
     setCollapsedProjects((prev) => {
