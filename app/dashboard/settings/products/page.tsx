@@ -80,8 +80,8 @@ async function ProductsListSection({
   const colorMap = buildProductColorMap(allProductNames);
 
   const gridCols = ficConnection
-    ? '40px repeat(4, minmax(max-content, 1fr)) max-content'
-    : '40px repeat(3, minmax(max-content, 1fr)) max-content';
+    ? '40px repeat(5, minmax(max-content, 1fr)) max-content'
+    : '40px repeat(4, minmax(max-content, 1fr)) max-content';
 
   return (
     <ListNavigator
