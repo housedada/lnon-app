@@ -24,7 +24,7 @@ export default async function EditJobPage({ params }: { params: Promise<{ id: st
     notFound();
   }
 
-  const userOptions = users.filter((u) => u.isActive).map((u) => ({ id: u.id, name: u.name }));
+  const userOptions = users.filter((u) => u.isActive).map((u) => ({ id: u.id, name: u.name, color: u.color }));
   const boundAction = updateJobAction.bind(null, id);
   const canDelete = canDeleteResource(role, '', '', 'jobs');
 

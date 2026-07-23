@@ -1,14 +1,15 @@
 'use client';
 
-import { Save, Briefcase, Calendar, Euro, User } from 'lucide-react';
+import { Save, Briefcase, Calendar, Euro } from 'lucide-react';
 import type { Job, JobStatus } from '@/lib/types';
+import AssignedToPicker from '@/components/AssignedToPicker';
 
 interface JobFormProps {
   job?: Job;
   clientOptions: { id: string; name: string }[];
   contractOptions: { id: string; label: string }[];
   productOptions: { id: string; name: string }[];
-  userOptions: { id: string; name: string }[];
+  userOptions: { id: string; name: string; color?: string }[];
   action: (formData: FormData) => void;
   secondaryAction?: React.ReactNode;
 }
@@ -131,25 +132,9 @@ export default function JobForm({ job, clientOptions, contractOptions, productOp
               Stato
             </label>
           </div>
-          <div className="field-wrap">
-            <select
-              name="assignedTo"
-              id="assignedTo"
-              defaultValue={job?.assignedTo ?? ''}
-              className="field-input w-full border border-grid-border bg-transparent px-3 pb-2 pt-4 text-sm text-primary"
-            >
-              <option value="">— Non assegnato —</option>
-              {userOptions.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name}
-                </option>
-              ))}
-            </select>
-            <label htmlFor="assignedTo" className="field-floating-label">
-              <User size={12} strokeWidth={1.75} className="mr-1 inline" aria-hidden="true" />
-              Assegnato a
-            </label>
-          </div>
+        </div>
+        <div className="mt-4">
+          <AssignedToPicker userOptions={userOptions} defaultValue={job?.assignedTo ?? ''} />
         </div>
         <div className="field-wrap">
           <textarea
@@ -191,11 +176,11 @@ export default function JobForm({ job, clientOptions, contractOptions, productOp
       </section>
 
       <div className="flex items-center justify-between gap-3">
+        <div>{secondaryAction}</div>
         <button type="submit" className="btn-accent flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium">
           <Save size={16} strokeWidth={2} aria-hidden="true" />
           Salva
         </button>
-        {secondaryAction}
       </div>
     </form>
   );

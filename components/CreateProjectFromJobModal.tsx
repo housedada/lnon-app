@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useTransition } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { X, FolderPlus, Loader2 } from 'lucide-react';
 import { createProjectFromJobAction } from '@/lib/actions/projects';
 import { notify } from '@/lib/notify';
+import AssignedToPicker from '@/components/AssignedToPicker';
 
 export default function CreateProjectFromJobModal({
   jobId,
@@ -19,7 +20,6 @@ export default function CreateProjectFromJobModal({
   onClose: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
-  const [assignedTo, setAssignedTo] = useState('');
   const router = useRouter();
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -68,40 +68,7 @@ export default function CreateProjectFromJobModal({
           </div>
 
           <div className="mt-6">
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-secondary">Assegna a</p>
-            <input type="hidden" name="assignedTo" value={assignedTo} />
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setAssignedTo('')}
-                aria-pressed={assignedTo === ''}
-                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                  assignedTo === '' ? 'border-transparent bg-grid-header-bg text-primary' : 'border-grid-border text-secondary hover:text-primary'
-                }`}
-              >
-                Non assegnato
-              </button>
-              {userOptions.map((u) => {
-                const selected = assignedTo === u.id;
-                const color = u.color ?? '#e5e5e5';
-                return (
-                  <button
-                    key={u.id}
-                    type="button"
-                    onClick={() => setAssignedTo(u.id)}
-                    aria-pressed={selected}
-                    className="rounded-full px-3 py-1.5 text-xs font-medium text-neutral-800 transition"
-                    style={{
-                      background: color,
-                      outline: selected ? '2px solid var(--accent-to)' : 'none',
-                      outlineOffset: '1px',
-                    }}
-                  >
-                    {u.name}
-                  </button>
-                );
-              })}
-            </div>
+            <AssignedToPicker userOptions={userOptions} />
           </div>
         </div>
 

@@ -1,4 +1,6 @@
+import { Briefcase } from 'lucide-react';
 import JobForm from '@/components/JobForm';
+import FormPageModal from '@/components/FormPageModal';
 import { createJobAction } from '@/lib/actions/jobs';
 import { getAllClientNames, getAllContractOptions, getAllProductNames, getUsers } from '@/lib/db';
 
@@ -11,11 +13,14 @@ export default async function NewJobPage() {
     getAllProductNames(),
     getUsers(),
   ]);
-  const userOptions = users.filter((u) => u.isActive).map((u) => ({ id: u.id, name: u.name }));
+  const userOptions = users.filter((u) => u.isActive).map((u) => ({ id: u.id, name: u.name, color: u.color }));
 
   return (
-    <div>
-      <h1 className="p-6 pb-0 text-2xl font-semibold text-primary">Nuovo Lavoro</h1>
+    <FormPageModal
+      title="Nuovo Lavoro"
+      icon={<Briefcase size={16} strokeWidth={1.75} className="text-secondary" aria-hidden="true" />}
+      closeHref="/dashboard/jobs"
+    >
       <JobForm
         clientOptions={clientOptions}
         contractOptions={contractOptions}
@@ -23,6 +28,6 @@ export default async function NewJobPage() {
         userOptions={userOptions}
         action={createJobAction}
       />
-    </div>
+    </FormPageModal>
   );
 }

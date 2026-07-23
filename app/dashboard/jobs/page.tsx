@@ -116,10 +116,10 @@ export default async function JobsPage({
           <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Assegnato a</div>
           <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Budget stimato</div>
           <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Scadenza</div>
-          <div className="border-b border-grid-border bg-grid-header-bg" />
-          <div className="border-b border-grid-border bg-grid-header-bg" />
-          <div className="border-b border-grid-border bg-grid-header-bg" />
-          <div className="border-b border-grid-border bg-grid-header-bg" />
+          <div className="sticky right-30 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
+          <div className="sticky right-20 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
+          <div className="sticky right-10 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
+          <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
 
           {jobs.length === 0 && (
             <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
@@ -146,20 +146,20 @@ export default async function JobsPage({
               <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{job.assignedToName ?? '—'}</div>
               <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatAmount(job.estimatedBudget)}</div>
               <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(job.endDate)}</div>
-              <div className="flex aspect-square items-center justify-center border-b border-grid-border group-hover:bg-row-hover">
+              <div className="sticky right-30 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
                 {canCreateProjects && (
                   <CreateProjectFromJobButton jobId={job.id} jobTitle={job.title} userOptions={userOptions} />
                 )}
               </div>
-              <div className="flex aspect-square items-center justify-center border-b border-grid-border group-hover:bg-row-hover">
+              <div className="sticky right-20 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
                 {canUpdate && !job.clientId && job.clientNameRaw && (
                   <JobLinkButton jobId={job.id} jobClientName={job.clientNameRaw} clientOptions={clientOptions} />
                 )}
               </div>
-              <div className="flex aspect-square items-center justify-center border-b border-grid-border group-hover:bg-row-hover">
+              <div className="sticky right-10 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
                 {canApprove && job.status === 'pending_approval' && <ApproveJobButton jobId={job.id} />}
               </div>
-              <div className="flex aspect-square items-center justify-center border-b border-grid-border group-hover:bg-row-hover">
+              <div className="sticky right-0 z-[5] flex aspect-square items-center justify-center border-b border-l border-grid-border bg-card-bg group-hover:bg-row-hover">
                 {canUpdate && (
                   <Link href={`/dashboard/jobs/${job.id}/edit`} aria-label="Modifica lavoro" className="text-secondary transition hover:text-primary">
                     <Pencil size={15} strokeWidth={1.75} />

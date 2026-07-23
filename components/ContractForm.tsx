@@ -140,11 +140,11 @@ export default function ContractForm({ contract, clientOptions, action, secondar
       </section>
 
       <div className="flex items-center justify-between gap-3">
+        <div>{secondaryAction}</div>
         <button type="submit" className="btn-accent flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium">
           <Save size={16} strokeWidth={2} aria-hidden="true" />
           Salva
         </button>
-        {secondaryAction}
       </div>
     </form>
   );

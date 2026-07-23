@@ -1,13 +1,18 @@
+import { Building2 } from 'lucide-react';
 import ClientForm from '@/components/ClientForm';
+import FormPageModal from '@/components/FormPageModal';
 import { createClientAction } from '@/lib/actions/clients';
 
 export const metadata = { title: 'Nuovo Cliente' };
 
 export default function NewClientPage() {
   return (
-    <div>
-      <h1 className="p-6 pb-0 text-2xl font-semibold text-primary">Nuovo Cliente</h1>
+    <FormPageModal
+      title="Nuovo Cliente"
+      icon={<Building2 size={16} strokeWidth={1.75} className="text-secondary" aria-hidden="true" />}
+      closeHref="/dashboard/clients"
+    >
       <ClientForm action={createClientAction} />
-    </div>
+    </FormPageModal>
   );
 }
