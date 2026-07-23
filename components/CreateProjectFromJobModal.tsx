@@ -7,6 +7,7 @@ import { X, FolderPlus, Loader2 } from 'lucide-react';
 import { createProjectFromJobAction } from '@/lib/actions/projects';
 import { notify } from '@/lib/notify';
 import AssignedToPicker from '@/components/AssignedToPicker';
+import ParticleCanvasHeader from '@/components/ParticleCanvasHeader';
 
 export default function CreateProjectFromJobModal({
   jobId,
@@ -42,12 +43,19 @@ export default function CreateProjectFromJobModal({
         onClick={(e) => e.stopPropagation()}
         className="modal-panel card-shadow w-full max-w-lg overflow-hidden rounded-xl border border-grid-border bg-card-bg"
       >
-        <div className="card-header-gradient flex items-center justify-between gap-3 border-b border-grid-border px-8 py-5">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-primary">
+        <div className="relative flex items-center justify-between gap-3 overflow-hidden border-b border-grid-border bg-grid-header-bg px-8 py-5">
+          <ParticleCanvasHeader />
+          <h2 className="relative z-10 flex items-center gap-2 text-sm font-semibold text-primary">
             <FolderPlus size={16} strokeWidth={1.75} className="text-secondary" aria-hidden="true" />
             Genera progetto
           </h2>
-          <button type="button" onClick={onClose} disabled={isPending} aria-label="Chiudi" className="text-secondary transition hover:text-primary">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isPending}
+            aria-label="Chiudi"
+            className="relative z-10 text-secondary transition hover:text-primary"
+          >
             <X size={18} strokeWidth={1.75} />
           </button>
         </div>

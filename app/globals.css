@@ -367,24 +367,6 @@ input[type='radio']:focus-visible {
   }
 }
 
-@keyframes header-gradient-shift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-.card-header-gradient {
-  background: linear-gradient(120deg, var(--color-grid-header-bg), var(--color-row-hover), var(--color-grid-header-bg));
-  background-size: 200% 200%;
-  animation: header-gradient-shift 6s ease infinite;
-}
-
 .modal-backdrop {
   animation: modal-backdrop-in 150ms ease-out;
 }
