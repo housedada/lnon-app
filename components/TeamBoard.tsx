@@ -14,7 +14,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, horizontalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { GripVertical, Briefcase, CheckCircle2, ChevronDown, Trash2, Maximize2 } from 'lucide-react';
+import { GripVertical, Briefcase, CheckCircle2, ChevronDown, Trash2, Plus, FolderKanban, ListChecks, AlertCircle } from 'lucide-react';
 import { saveTeamColumnOrderAction } from '@/lib/actions/projects';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
 import { useTaskBoardScrollStore } from '@/lib/store/taskBoardScrollStore';
@@ -127,9 +127,24 @@ export default function TeamBoard({
     });
   }
 
+  function memberStats(userId: string) {
+    const memberProjects = projectsByUser[userId] ?? [];
+    let assigned = 0;
+    let toResolve = 0;
+    for (const project of memberProjects) {
+      for (const task of tasksByProject[project.id] ?? []) {
+        if (task.assignedToIds.includes(userId)) {
+          assigned += 1;
+          if (task.status !== 'completed') toResolve += 1;
+        }
+      }
+    }
+    return { projectCount: memberProjects.length, assigned, toResolve };
+  }
+
   const isGrid = density === 'masonry';
   const containerClass = isGrid
-    ? 'grid h-full auto-rows-[176px] grid-cols-2 content-start gap-3 overflow-y-auto px-4 pb-4 pt-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
+    ? 'grid h-full auto-rows-[212px] grid-cols-2 content-start gap-3 overflow-y-auto px-4 pb-4 pt-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
     : 'flex h-full gap-3 overflow-x-auto px-4 pb-4 pt-3';
   const cardWidthClass = density === 'wide' ? 'w-[30%] min-w-[400px]' : 'w-[20%] min-w-[400px]';
 
@@ -142,26 +157,41 @@ export default function TeamBoard({
         {order.map((userId) => {
           const member = membersById.get(userId);
           if (!member) return null;
-          const projects = projectsByUser[userId] ?? [];
           const headerStyle = member.color ? { background: member.color } : undefined;
           const headerTextClass = member.color ? 'text-neutral-800' : 'text-primary';
-          const headerSubTextClass = member.color ? 'text-neutral-700/70' : 'text-secondary';
+          const stats = memberStats(userId);
 
           return (
-            <div key={userId} className="relative flex flex-col overflow-hidden rounded-xl border border-grid-border bg-grid-header-bg">
-              <div className="flex-1 p-3 pb-9" style={headerStyle}>
-                <p className={`truncate text-sm font-semibold ${headerTextClass}`}>{member.name}</p>
-                <p className={`mt-1 text-[11px] ${headerSubTextClass}`}>{projects.length} progett{projects.length === 1 ? 'o' : 'i'}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setDetailMemberId(userId)}
-                className="absolute inset-x-0 bottom-0 flex h-9 items-center justify-center gap-1.5 border-t border-grid-border bg-card-bg text-xs font-medium text-secondary transition hover:bg-row-hover hover:text-primary"
+            <button
+              type="button"
+              key={userId}
+              onClick={() => setDetailMemberId(userId)}
+              className="group relative flex flex-col overflow-hidden rounded-xl border border-grid-border bg-grid-header-bg text-left transition hover:border-secondary"
+            >
+              <span
+                className="pointer-events-none absolute right-4 top-4 opacity-0 -translate-x-1.5 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:translate-x-0"
+                aria-hidden="true"
               >
-                <Maximize2 size={12} strokeWidth={1.75} aria-hidden="true" />
-                Dettagli
-              </button>
-            </div>
+                <Plus size={14} strokeWidth={2} className={headerTextClass} />
+              </span>
+              <div className="p-3" style={headerStyle}>
+                <p className={`truncate pr-6 text-sm font-semibold ${headerTextClass}`}>{member.name}</p>
+              </div>
+              <div className="flex flex-1 flex-col justify-center gap-1.5 px-3 py-2">
+                <div className="flex items-center gap-1.5 text-[11px] text-secondary">
+                  <FolderKanban size={12} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
+                  <span>{stats.projectCount} progett{stats.projectCount === 1 ? 'o' : 'i'}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-[11px] text-secondary">
+                  <ListChecks size={12} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
+                  <span>{stats.assigned} task assegnat{stats.assigned === 1 ? 'o' : 'i'}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-[11px] text-secondary">
+                  <AlertCircle size={12} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
+                  <span>{stats.toResolve} da risolvere</span>
+                </div>
+              </div>
+            </button>
           );
         })}
 
