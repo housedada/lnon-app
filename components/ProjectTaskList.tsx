@@ -3,6 +3,7 @@
 import { forwardRef, useImperativeHandle, useMemo, useState, useTransition } from 'react';
 import { Plus } from 'lucide-react';
 import TaskChip from '@/components/TaskChip';
+import DropPlaceholder from '@/components/DropPlaceholder';
 import ProjectTaskTrashModal from '@/components/ProjectTaskTrashModal';
 import {
   createProjectTaskAction,
@@ -23,6 +24,7 @@ const NEXT_STATUS: Record<ProjectTaskStatus, ProjectTaskStatus> = {
 
 export interface ProjectTaskListHandle {
   openTrash: () => void;
+  setAllCollapsed: (collapse: boolean) => void;
 }
 
 const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
@@ -34,13 +36,11 @@ const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
   const [creatingFor, setCreatingFor] = useState<string | null | undefined>(undefined);
   const [title, setTitle] = useState('');
   const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [dragOverSide, setDragOverSide] = useState<'before' | 'after' | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [showTrash, setShowTrash] = useState(false);
   const [, startTransition] = useTransition();
-
-  useImperativeHandle(ref, () => ({
-    openTrash: () => setShowTrash(true),
-  }));
 
   const childrenByParent = useMemo(() => {
     const map = new Map<string, ProjectTask[]>();
@@ -53,6 +53,24 @@ const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
     for (const list of map.values()) list.sort((a, b) => a.position - b.position);
     return map;
   }, [tasks]);
+
+  useImperativeHandle(ref, () => ({
+    openTrash: () => setShowTrash(true),
+    setAllCollapsed: (collapse: boolean) => {
+      if (!collapse) {
+        setCollapsed(new Set());
+        return;
+      }
+      const parentIds = tasks.filter((t) => (childrenByParent.get(t.id)?.length ?? 0) > 0).map((t) => t.id);
+      setCollapsed(new Set(parentIds));
+    },
+  }));
+
+  function clearDragState() {
+    setDragId(null);
+    setDragOverId(null);
+    setDragOverSide(null);
+  }
 
   function toggleCollapse(taskId: string) {
     setCollapsed((prev) => {
@@ -68,14 +86,22 @@ const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
   }
 
   function handleDrop(task: ProjectTask, targetId: string) {
-    if (!dragId || dragId === targetId) return;
+    if (!dragId || dragId === targetId) {
+      clearDragState();
+      return;
+    }
     const dragged = tasks.find((t) => t.id === dragId);
-    if (!dragged || dragged.parentTaskId !== task.parentTaskId) return;
+    if (!dragged || dragged.parentTaskId !== task.parentTaskId) {
+      clearDragState();
+      return;
+    }
+    const side = dragOverSide ?? 'before';
     setTasks((prev) => {
       const siblings = siblingIds(task.parentTaskId);
       const filtered = siblings.filter((id) => id !== dragId);
       const targetIndex = filtered.indexOf(targetId);
-      filtered.splice(targetIndex, 0, dragId);
+      const insertIndex = side === 'before' ? targetIndex : targetIndex + 1;
+      filtered.splice(insertIndex, 0, dragId);
       const order = new Map(filtered.map((id, idx) => [id, idx]));
       const next = prev.map((t) => (order.has(t.id) ? { ...t, position: order.get(t.id)! } : t));
       startTransition(() => {
@@ -83,7 +109,7 @@ const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
       });
       return next;
     });
-    setDragId(null);
+    clearDragState();
   }
 
   function handleStatusClick(task: ProjectTask) {
@@ -185,17 +211,29 @@ const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
   function renderNode(task: ProjectTask, level: number): React.ReactNode {
     const children = childrenByParent.get(task.id) ?? [];
     const isCollapsed = collapsed.has(task.id);
+    const isDragTarget = dragOverId === task.id && dragId !== task.id;
     return (
       <div key={task.id} className="flex flex-col gap-1.5">
+        {isDragTarget && dragOverSide === 'before' && <DropPlaceholder orientation="vertical" size="34px" />}
         <TaskChip
           task={task}
           level={level}
           hasChildren={children.length > 0}
           collapsed={isCollapsed}
           userOptions={userOptions}
+          isDragging={dragId === task.id}
           onToggleCollapse={() => toggleCollapse(task.id)}
           onDragStart={() => setDragId(task.id)}
-          onDragOver={(e) => e.preventDefault()}
+          onDragEnd={clearDragState}
+          onDragOver={(e) => {
+            e.preventDefault();
+            const rect = e.currentTarget.getBoundingClientRect();
+            const side: 'before' | 'after' = e.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
+            if (dragOverId !== task.id || dragOverSide !== side) {
+              setDragOverId(task.id);
+              setDragOverSide(side);
+            }
+          }}
           onDrop={() => handleDrop(task, task.id)}
           onStatusClick={() => handleStatusClick(task)}
           onToggleAssignee={(userId) => handleToggleAssignee(task, userId)}
@@ -207,6 +245,7 @@ const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
             setCollapsed((prev) => { const next = new Set(prev); next.delete(task.id); return next; });
           }}
         />
+        {isDragTarget && dragOverSide === 'after' && <DropPlaceholder orientation="vertical" size="34px" />}
         {!isCollapsed && creatingFor === task.id && renderCreateInput(task.id, level + 1)}
         {!isCollapsed && children.map((child) => renderNode(child, level + 1))}
       </div>

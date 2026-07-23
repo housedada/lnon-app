@@ -28,6 +28,7 @@ export default function TaskChip({
   userOptions,
   onToggleCollapse,
   onDragStart,
+  onDragEnd,
   onDragOver,
   onDrop,
   onStatusClick,
@@ -35,6 +36,7 @@ export default function TaskChip({
   onRename,
   onAddSubtask,
   onDelete,
+  isDragging,
 }: {
   task: ProjectTask;
   level: number;
@@ -43,6 +45,7 @@ export default function TaskChip({
   userOptions: { id: string; name: string; color?: string }[];
   onToggleCollapse: () => void;
   onDragStart: () => void;
+  onDragEnd: () => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: () => void;
   onStatusClick: () => void;
@@ -50,6 +53,7 @@ export default function TaskChip({
   onRename: (title: string) => void;
   onAddSubtask: () => void;
   onDelete: () => void;
+  isDragging?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(task.title);
@@ -80,12 +84,13 @@ export default function TaskChip({
     <div
       onDragOver={onDragOver}
       onDrop={onDrop}
-      className={`group/task relative flex items-center gap-1.5 rounded border px-2 py-1.5 text-xs transition-colors ${STATUS_STYLE[task.status]} ${level > 0 ? 'border-l-2 border-l-secondary/30' : ''}`}
+      className={`group/task relative flex items-center gap-1.5 rounded border px-2 py-1.5 text-xs transition-[opacity,background-color,border-color] duration-150 ${STATUS_STYLE[task.status]} ${level > 0 ? 'border-l-2 border-l-secondary/30' : ''} ${isDragging ? 'opacity-40' : 'opacity-100'}`}
       style={{ marginLeft: level * 16, width: `calc(100% - ${level * 16}px)`, paddingRight: hasChildren ? 168 : 148 }}
     >
       <span
         draggable
         onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
         className="flex h-4 w-4 shrink-0 cursor-grab items-center justify-center active:cursor-grabbing"
         aria-label="Trascina per riordinare"
       >

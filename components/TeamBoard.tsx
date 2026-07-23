@@ -6,9 +6,11 @@ import { GripVertical, Briefcase, CheckCircle2, ChevronDown, Trash2 } from 'luci
 import { saveTeamColumnOrderAction } from '@/lib/actions/projects';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
 import { useTaskBoardScrollStore } from '@/lib/store/taskBoardScrollStore';
+import { useTaskBoardExpandStore } from '@/lib/store/taskBoardExpandStore';
 import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/ProjectTaskList';
 import ProjectShareBadge from '@/components/ProjectShareBadge';
 import MarkProjectCompletedButton from '@/components/MarkProjectCompletedButton';
+import DropPlaceholder from '@/components/DropPlaceholder';
 import type { Project, ProjectTask } from '@/lib/types';
 
 interface TeamMember {
@@ -41,20 +43,37 @@ export default function TeamBoard({
       return next;
     });
   }
+
   const [order, setOrder] = useState<string[]>(() => members.map((m) => m.id));
   const [prevMemberIds, setPrevMemberIds] = useState<string[]>(() => members.map((m) => m.id));
   const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [dragOverSide, setDragOverSide] = useState<'before' | 'after' | null>(null);
   const [, startTransition] = useTransition();
   const density = useTaskBoardViewStore((s) => s.density);
   const setScrollContainer = useTaskBoardScrollStore((s) => s.setScrollContainer);
   const setColumns = useTaskBoardScrollStore((s) => s.setColumns);
   const registerColumnRef = useTaskBoardScrollStore((s) => s.registerColumnRef);
+  const expandSignal = useTaskBoardExpandStore((s) => s.signal);
+  const expandTarget = useTaskBoardExpandStore((s) => s.expanded);
 
   const membersById = new Map(members.map((m) => [m.id, m]));
 
   useEffect(() => {
     setColumns(members.map((m) => ({ id: m.id, label: m.name })));
   }, [members, setColumns]);
+
+  useEffect(() => {
+    listRefs.current.forEach((handle) => handle.setAllCollapsed(!expandTarget));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expandSignal]);
+
+  const [prevExpandSignal, setPrevExpandSignal] = useState(expandSignal);
+  if (expandSignal !== prevExpandSignal) {
+    setPrevExpandSignal(expandSignal);
+    const allProjectIds = Object.values(projectsByUser).flat().map((p) => p.id);
+    setCollapsedProjects(expandTarget ? new Set() : new Set(allProjectIds));
+  }
 
   // L'ordine locale è seedato una volta da `members`, ma il prop può cambiare dopo
   // il mount (es. toggle dati demo che aggiunge/rimuove colonne): risincronizza
@@ -71,18 +90,29 @@ export default function TeamBoard({
     setOrder([...kept, ...added]);
   }
 
+  function clearDragState() {
+    setDragId(null);
+    setDragOverId(null);
+    setDragOverSide(null);
+  }
+
   function handleDrop(targetId: string) {
-    if (!dragId || dragId === targetId) return;
+    if (!dragId || dragId === targetId) {
+      clearDragState();
+      return;
+    }
+    const side = dragOverSide ?? 'before';
     setOrder((prev) => {
       const next = prev.filter((id) => id !== dragId);
       const targetIndex = next.indexOf(targetId);
-      next.splice(targetIndex, 0, dragId);
+      const insertIndex = side === 'before' ? targetIndex : targetIndex + 1;
+      next.splice(insertIndex, 0, dragId);
       startTransition(() => {
         saveTeamColumnOrderAction(next);
       });
       return next;
     });
-    setDragId(null);
+    clearDragState();
   }
 
   const isMasonry = density === 'masonry';
@@ -100,17 +130,29 @@ export default function TeamBoard({
         const headerStyle = member.color ? { background: member.color } : undefined;
         const headerTextClass = member.color ? 'text-neutral-800' : 'text-primary';
         const headerSubTextClass = member.color ? 'text-neutral-700/70' : 'text-secondary';
+        const isDragTarget = !isMasonry && dragOverId === userId && dragId !== userId;
 
         return (
-          <div
-            key={userId}
-            ref={(el) => registerColumnRef(userId, el)}
-            draggable
-            onDragStart={() => setDragId(userId)}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={() => handleDrop(userId)}
-            className={`flex shrink-0 flex-col rounded-xl border border-grid-border bg-grid-header-bg ${cardWidthClass} ${isMasonry ? '' : 'self-start'}`}
-          >
+          <div key={userId} className="contents">
+            {isDragTarget && dragOverSide === 'before' && <DropPlaceholder orientation="horizontal" size="28px" />}
+            <div
+              ref={(el) => registerColumnRef(userId, el)}
+              draggable
+              onDragStart={() => setDragId(userId)}
+              onDragEnd={clearDragState}
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (isMasonry) return;
+                const rect = e.currentTarget.getBoundingClientRect();
+                const side: 'before' | 'after' = e.clientX < rect.left + rect.width / 2 ? 'before' : 'after';
+                if (dragOverId !== userId || dragOverSide !== side) {
+                  setDragOverId(userId);
+                  setDragOverSide(side);
+                }
+              }}
+              onDrop={() => handleDrop(userId)}
+              className={`flex shrink-0 flex-col rounded-xl border border-grid-border bg-grid-header-bg transition-opacity duration-150 ${cardWidthClass} ${isMasonry ? '' : 'self-start'} ${dragId === userId ? 'opacity-40' : 'opacity-100'}`}
+            >
             <div
               className="flex cursor-grab items-center gap-1.5 rounded-t-xl border-b border-grid-border px-3 py-2 active:cursor-grabbing"
               style={headerStyle}
@@ -183,6 +225,8 @@ export default function TeamBoard({
                 );
               })}
             </div>
+            </div>
+            {isDragTarget && dragOverSide === 'after' && <DropPlaceholder orientation="horizontal" size="28px" />}
           </div>
         );
       })}

@@ -447,7 +447,7 @@ input[type='radio']:focus-visible {
 /* Toolbar pagina Task (Team/Personale/densità/demo): il bordo grid-border standard
    è troppo poco visibile in notte contro lo sfondo quasi nero. */
 .task-toolbar-border {
-  border-bottom: 1px solid var(--color-grid-border);
+  border-bottom: 1px solid #e1e1e1;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -458,6 +458,10 @@ input[type='radio']:focus-visible {
 
 :root[data-theme='dark'] .task-toolbar-border {
   border-bottom-color: #38383d;
+}
+
+:root[data-theme='light'] .task-toolbar-border {
+  border-bottom-color: #e1e1e1;
 }
 
 /* Label per griglie di dettaglio (modali): piccola, opaca, spaziata */

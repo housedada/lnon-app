@@ -2,12 +2,15 @@ import Link from 'next/link';
 import { Users2, User } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { getUsers, getAllAssignedProjects, getProjectsByAssignee, getTeamColumnOrder, getPersonalColumnOrder, getProductColorsForJobs, getProjectTasks } from '@/lib/db';
+import { hasPermission } from '@/lib/permissions';
 import { DEMO_USERS, DEMO_PROJECTS, DEMO_TASKS_BY_PROJECT } from '@/lib/demoData';
 import TeamBoard from '@/components/TeamBoard';
 import PersonalBoard from '@/components/PersonalBoard';
 import TaskBoardViewToggle from '@/components/TaskBoardViewToggle';
+import TaskBoardExpandToggle from '@/components/TaskBoardExpandToggle';
 import TaskBoardBottomNav from '@/components/TaskBoardBottomNav';
 import DemoDataControls from '@/components/DemoDataControls';
+import NewProjectButton from '@/components/NewProjectButton';
 import type { Project, ProjectTask } from '@/lib/types';
 
 export const metadata = { title: 'Task' };
@@ -22,9 +25,13 @@ export default async function TasksPage({
 
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id ?? '';
-  const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role;
+  const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role ?? 'dipendente';
   const canManageInvoices = role === 'superadmin' || role === 'admin';
+  const canCreateProjects = hasPermission(role, 'projects', 'create');
   const includeDemo = canManageInvoices && demo === '1';
+
+  const allUsers = await getUsers();
+  const userOptions = allUsers.filter((u) => u.isActive).map((u) => ({ id: u.id, name: u.name, color: u.color }));
 
   return (
     <div className="flex h-[calc(100vh-50px)] flex-col">
@@ -47,8 +54,12 @@ export default async function TasksPage({
           <User size={14} strokeWidth={1.75} aria-hidden="true" />
           Personale
         </Link>
+        <TaskBoardExpandToggle />
         <TaskBoardViewToggle />
-        {canManageInvoices && <DemoDataControls />}
+        <div className="ml-auto flex items-center gap-1">
+          {canCreateProjects && <NewProjectButton userOptions={userOptions} />}
+          {canManageInvoices && <DemoDataControls />}
+        </div>
       </div>
 
       <div className="min-h-0 flex-1">

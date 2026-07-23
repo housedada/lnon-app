@@ -19,7 +19,7 @@ export default function DemoDataControls() {
     <Link
       href={toggleHref}
       title="Mostra/nascondi utenti e progetti demo (solo per test UI)"
-      className={`ml-auto flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition ${
+      className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition ${
         demoOn ? 'bg-row-hover text-primary' : 'text-secondary hover:text-primary'
       }`}
     >

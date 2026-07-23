@@ -4,10 +4,12 @@ import { useEffect, useRef, useState, useTransition } from 'react';
 import { Briefcase, CheckCircle2, ChevronDown, GripVertical, Trash2 } from 'lucide-react';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
 import { useTaskBoardScrollStore } from '@/lib/store/taskBoardScrollStore';
+import { useTaskBoardExpandStore } from '@/lib/store/taskBoardExpandStore';
 import { savePersonalColumnOrderAction } from '@/lib/actions/projects';
 import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/ProjectTaskList';
 import ProjectShareBadge from '@/components/ProjectShareBadge';
 import MarkProjectCompletedButton from '@/components/MarkProjectCompletedButton';
+import DropPlaceholder from '@/components/DropPlaceholder';
 import type { Project, ProjectTask } from '@/lib/types';
 
 export default function PersonalBoard({
@@ -29,16 +31,31 @@ export default function PersonalBoard({
   const [order, setOrder] = useState<string[]>(() => projects.map((p) => p.id));
   const [prevProjectIds, setPrevProjectIds] = useState<string[]>(() => projects.map((p) => p.id));
   const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [dragOverSide, setDragOverSide] = useState<'before' | 'after' | null>(null);
   const [, startTransition] = useTransition();
   const setScrollContainer = useTaskBoardScrollStore((s) => s.setScrollContainer);
   const setColumns = useTaskBoardScrollStore((s) => s.setColumns);
   const registerColumnRef = useTaskBoardScrollStore((s) => s.registerColumnRef);
+  const expandSignal = useTaskBoardExpandStore((s) => s.signal);
+  const expandTarget = useTaskBoardExpandStore((s) => s.expanded);
 
   const projectsById = new Map(projects.map((p) => [p.id, p]));
 
   useEffect(() => {
     setColumns(projects.map((p) => ({ id: p.id, label: p.title })));
   }, [projects, setColumns]);
+
+  useEffect(() => {
+    listRefs.current.forEach((handle) => handle.setAllCollapsed(!expandTarget));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expandSignal]);
+
+  const [prevExpandSignal, setPrevExpandSignal] = useState(expandSignal);
+  if (expandSignal !== prevExpandSignal) {
+    setPrevExpandSignal(expandSignal);
+    setCollapsedProjects(expandTarget ? new Set() : new Set(projects.map((p) => p.id)));
+  }
 
   // L'ordine locale è seedato una volta da `projects`, ma il prop può cambiare dopo
   // il mount (es. toggle dati demo che aggiunge/rimuove colonne): risincronizza
@@ -64,18 +81,29 @@ export default function PersonalBoard({
     });
   }
 
+  function clearDragState() {
+    setDragId(null);
+    setDragOverId(null);
+    setDragOverSide(null);
+  }
+
   function handleDrop(targetId: string) {
-    if (!dragId || dragId === targetId) return;
+    if (!dragId || dragId === targetId) {
+      clearDragState();
+      return;
+    }
+    const side = dragOverSide ?? 'before';
     setOrder((prev) => {
       const next = prev.filter((id) => id !== dragId);
       const targetIndex = next.indexOf(targetId);
-      next.splice(targetIndex, 0, dragId);
+      const insertIndex = side === 'before' ? targetIndex : targetIndex + 1;
+      next.splice(insertIndex, 0, dragId);
       startTransition(() => {
         savePersonalColumnOrderAction(next);
       });
       return next;
     });
-    setDragId(null);
+    clearDragState();
   }
 
   if (projects.length === 0) {
@@ -107,16 +135,28 @@ export default function PersonalBoard({
         const headerTextClass = headerStyle ? 'text-neutral-800' : 'text-primary';
         const headerSubTextClass = headerStyle ? 'text-neutral-700/70' : 'text-secondary';
         const isCollapsed = collapsedProjects.has(project.id);
+        const isDragTarget = !isMasonry && dragOverId === project.id && dragId !== project.id;
 
         return (
+          <div key={project.id} className="contents">
+          {isDragTarget && dragOverSide === 'before' && <DropPlaceholder orientation="horizontal" size="28px" />}
           <div
-            key={project.id}
             ref={(el) => registerColumnRef(project.id, el)}
             draggable
             onDragStart={() => setDragId(project.id)}
-            onDragOver={(e) => e.preventDefault()}
+            onDragEnd={clearDragState}
+            onDragOver={(e) => {
+              e.preventDefault();
+              if (isMasonry) return;
+              const rect = e.currentTarget.getBoundingClientRect();
+              const side: 'before' | 'after' = e.clientX < rect.left + rect.width / 2 ? 'before' : 'after';
+              if (dragOverId !== project.id || dragOverSide !== side) {
+                setDragOverId(project.id);
+                setDragOverSide(side);
+              }
+            }}
             onDrop={() => handleDrop(project.id)}
-            className={`group flex shrink-0 flex-col rounded-xl border border-grid-border bg-grid-header-bg ${cardWidthClass} ${isMasonry ? '' : 'self-start'}`}
+            className={`group flex shrink-0 flex-col rounded-xl border border-grid-border bg-grid-header-bg transition-opacity duration-150 ${cardWidthClass} ${isMasonry ? '' : 'self-start'} ${dragId === project.id ? 'opacity-40' : 'opacity-100'}`}
           >
             <div
               className="flex w-full cursor-grab items-center justify-between gap-2 rounded-t-xl border-b border-grid-border px-3 py-2 active:cursor-grabbing"
@@ -175,6 +215,8 @@ export default function PersonalBoard({
                 userOptions={userOptions}
               />
             </div>
+          </div>
+          {isDragTarget && dragOverSide === 'after' && <DropPlaceholder orientation="horizontal" size="28px" />}
           </div>
         );
       })}
