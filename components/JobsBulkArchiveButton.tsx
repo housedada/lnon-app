@@ -8,13 +8,12 @@ import { archiveJobsAction } from '@/lib/actions/jobs';
 import { notify } from '@/lib/notify';
 
 export default function JobsBulkArchiveButton() {
-  const mode = useJobsSelectionStore((s) => s.mode);
   const selected = useJobsSelectionStore((s) => s.selected);
   const clear = useJobsSelectionStore((s) => s.clear);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  if (!mode || selected.length === 0) return null;
+  if (selected.length === 0) return null;
 
   function handleClick() {
     startTransition(async () => {

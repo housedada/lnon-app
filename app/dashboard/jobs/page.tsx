@@ -16,7 +16,6 @@ import NewJobButton from '@/components/NewJobButton';
 import JobRowSelectCheckbox from '@/components/JobRowSelectCheckbox';
 import JobsSelectAllCheckbox from '@/components/JobsSelectAllCheckbox';
 import JobsBulkArchiveButton from '@/components/JobsBulkArchiveButton';
-import JobsSelectionToggle from '@/components/JobsSelectionToggle';
 import RowContextMenu from '@/components/RowContextMenu';
 import DeleteJobMenuItem from '@/components/DeleteJobMenuItem';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
@@ -94,19 +93,17 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
             href="/dashboard/jobs/archive"
             aria-label="Archivio lavori"
             title="Archivio lavori"
-            className="flex items-center gap-1.5 rounded-lg border border-grid-border px-3 py-2 text-sm font-medium text-secondary transition hover:bg-row-hover hover:text-primary"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-grid-border text-secondary transition hover:bg-row-hover hover:text-primary"
           >
             <Archive size={16} strokeWidth={1.75} aria-hidden="true" />
-            Archivio
           </Link>
           <Link
             href="/dashboard/jobs/trash"
             aria-label="Cestino lavori"
             title="Cestino lavori"
-            className="flex items-center gap-1.5 rounded-lg border border-grid-border px-3 py-2 text-sm font-medium text-secondary transition hover:bg-row-hover hover:text-primary"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-grid-border text-secondary transition hover:bg-row-hover hover:text-primary"
           >
             <Trash2 size={16} strokeWidth={1.75} aria-hidden="true" />
-            Cestino
           </Link>
         </div>
       </div>
@@ -177,7 +174,6 @@ async function JobsListSection({
       totalCount={total}
       totalLabel="lavori"
       extraTopControls={<JobsBulkArchiveButton />}
-      searchExtra={canUpdate && <JobsSelectionToggle />}
     >
       <div className="mx-6 mt-6 grid grid-cols-[32px_2fr_1.5fr_auto_1fr_1fr_1fr_1fr_40px] gap-x-[2px] border-t border-grid-border text-[12px]">
         <div className="flex items-center justify-center border-b border-grid-border bg-grid-header-bg px-1 py-2">
