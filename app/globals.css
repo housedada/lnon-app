@@ -430,13 +430,8 @@ input[type='radio']:focus-visible {
   animation: list-fade-in 220ms ease-out;
 }
 
-/* Cursor: manina nativa (nero/bianco, nessun colore custom), solo il
-   set fornito dall'utente), dimensione standard, su tutti gli elementi
-   interattivi (bottoni, toggle, azioni, link, controlli form). In
-   :active (durante il click) passa alla variante con il burst,
-   simulando l'animazione hover→click del set. Fallback nativo
-   "pointer" se il browser non carica l'immagine. Gli elementi
-   disabilitati mostrano invece not-allowed. */
+/* Cursor: manina nativa del browser (cursor: pointer), dimensione
+   default, nessuna immagine custom. */
 button:not(:disabled),
 a[href],
 [role='button'],
@@ -445,14 +440,7 @@ input[type='radio']:not(:disabled),
 select:not(:disabled),
 summary,
 .cursor-pointer {
-  cursor: url('/cursor-hand.svg') 12 6, pointer;
-}
-
-button:not(:disabled):active,
-a[href]:active,
-[role='button']:active,
-.cursor-pointer:active {
-  cursor: url('/cursor-hand-click.svg') 12 6, pointer;
+  cursor: pointer;
 }
 
 button:disabled,
