@@ -1,6 +1,7 @@
 'use client';
 
-import { GripVertical } from 'lucide-react';
+import { useState } from 'react';
+import { GripVertical, ChevronRight, Plus } from 'lucide-react';
 import AssigneeFloatingMenu from '@/components/AssigneeFloatingMenu';
 import type { ProjectTask, ProjectTaskStatus } from '@/lib/types';
 
@@ -18,42 +19,119 @@ const STATUS_DOT: Record<ProjectTaskStatus, string> = {
 
 export default function TaskChip({
   task,
+  level,
+  hasChildren,
+  collapsed,
   userOptions,
+  onToggleCollapse,
   onDragStart,
   onDragOver,
   onDrop,
   onStatusClick,
   onAssigneeSelect,
+  onRename,
+  onAddSubtask,
 }: {
   task: ProjectTask;
+  level: number;
+  hasChildren: boolean;
+  collapsed: boolean;
   userOptions: { id: string; name: string; color?: string }[];
+  onToggleCollapse: () => void;
   onDragStart: () => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: () => void;
   onStatusClick: () => void;
   onAssigneeSelect: (userId: string | null) => void;
+  onRename: (title: string) => void;
+  onAddSubtask: () => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(task.title);
+
+  function commitRename() {
+    const trimmed = draft.trim();
+    setEditing(false);
+    if (trimmed && trimmed !== task.title) {
+      onRename(trimmed);
+    } else {
+      setDraft(task.title);
+    }
+  }
+
   return (
     <div
       onDragOver={onDragOver}
       onDrop={onDrop}
-      className={`group/task relative flex items-center gap-1.5 rounded border px-2 py-1.5 pr-14 text-xs transition-colors ${STATUS_STYLE[task.status]}`}
+      style={{ marginLeft: level * 16 }}
+      className={`group/task relative flex items-center gap-1.5 rounded border px-2 py-1.5 pr-20 text-xs transition-colors ${STATUS_STYLE[task.status]} ${level > 0 ? 'border-l-2 border-l-secondary/30' : ''}`}
     >
+      {hasChildren ? (
+        <button
+          type="button"
+          onClick={onToggleCollapse}
+          aria-label={collapsed ? 'Espandi sotto task' : 'Comprimi sotto task'}
+          className="flex h-4 w-4 shrink-0 items-center justify-center text-secondary"
+        >
+          <ChevronRight size={12} strokeWidth={2} className={`transition-transform ${collapsed ? '' : 'rotate-90'}`} aria-hidden="true" />
+        </button>
+      ) : (
+        <span className="w-4 shrink-0" />
+      )}
+
       <span
         draggable
         onDragStart={onDragStart}
-        className="flex cursor-grab items-center gap-1.5 truncate active:cursor-grabbing"
+        className="flex shrink-0 cursor-grab items-center active:cursor-grabbing"
+        aria-label="Trascina per riordinare"
       >
         <GripVertical
           size={12}
           strokeWidth={1.75}
-          className="shrink-0 text-secondary opacity-0 transition-opacity group-hover/task:opacity-60"
+          className="text-secondary opacity-0 transition-opacity group-hover/task:opacity-60"
           aria-hidden="true"
         />
-        <span className="truncate text-primary">{task.title}</span>
       </span>
 
+      {editing ? (
+        <input
+          autoFocus
+          type="text"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commitRename}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              commitRename();
+            }
+            if (e.key === 'Escape') {
+              setDraft(task.title);
+              setEditing(false);
+            }
+          }}
+          className="w-full truncate border-none bg-transparent p-0 text-xs text-primary outline-none"
+        />
+      ) : (
+        <span
+          onClick={() => setEditing(true)}
+          className="min-w-0 flex-1 cursor-text truncate text-primary"
+          title="Clicca per rinominare"
+        >
+          {task.title}
+        </span>
+      )}
+
       <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
+        <button
+          type="button"
+          onClick={onAddSubtask}
+          aria-label="Aggiungi sotto task"
+          title="Aggiungi sotto task"
+          className="flex h-4 w-4 shrink-0 items-center justify-center text-secondary opacity-0 transition-opacity group-hover/task:opacity-70 hover:!opacity-100"
+        >
+          <Plus size={12} strokeWidth={2} aria-hidden="true" />
+        </button>
         <button
           type="button"
           onClick={onStatusClick}

@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
-import { createProjectTask, updateProjectTaskStatus, updateProjectTaskAssignee, reorderProjectTasks } from '@/lib/db';
+import { createProjectTask, updateProjectTaskStatus, updateProjectTaskAssignee, updateProjectTaskTitle, reorderProjectTasks } from '@/lib/db';
 import type { ProjectTask, ProjectTaskStatus } from '@/lib/types';
 
 async function requireCanManage() {
@@ -18,18 +18,36 @@ async function requireCanManage() {
 
 export async function createProjectTaskAction(
   projectId: string,
-  title: string
+  title: string,
+  parentTaskId?: string | null
 ): Promise<{ success: boolean; message: string; task?: ProjectTask }> {
   try {
     const userId = await requireCanManage();
     if (!title.trim()) {
       return { success: false, message: 'Il titolo del task è obbligatorio.' };
     }
-    const task = await createProjectTask({ projectId, title: title.trim(), createdBy: userId });
+    const task = await createProjectTask({ projectId, title: title.trim(), createdBy: userId, parentTaskId: parentTaskId ?? null });
     revalidatePath('/dashboard/tasks');
     return { success: true, message: 'Task creato.', task };
   } catch (err) {
     return { success: false, message: err instanceof Error ? err.message : 'Errore nella creazione del task.' };
+  }
+}
+
+export async function updateProjectTaskTitleAction(
+  taskId: string,
+  title: string
+): Promise<{ success: boolean; message: string; task?: ProjectTask }> {
+  try {
+    await requireCanManage();
+    if (!title.trim()) {
+      return { success: false, message: 'Il titolo del task è obbligatorio.' };
+    }
+    const task = await updateProjectTaskTitle(taskId, title.trim());
+    revalidatePath('/dashboard/tasks');
+    return { success: true, message: 'Titolo aggiornato.', task };
+  } catch (err) {
+    return { success: false, message: err instanceof Error ? err.message : 'Errore nell\'aggiornamento del titolo.' };
   }
 }
 

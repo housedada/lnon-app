@@ -1640,6 +1640,7 @@ function projectTaskRowToProjectTask(row: Record<string, any>): ProjectTask {
   return {
     id: row.id,
     projectId: row.project_id,
+    parentTaskId: row.parent_task_id ?? undefined,
     title: row.title,
     status: row.status,
     assignedTo: row.assigned_to ?? undefined,
@@ -1669,27 +1670,44 @@ export async function getProjectTasks(projectId: string): Promise<ProjectTask[]>
 }
 
 /**
- * Crea un nuovo sotto task per un progetto, in coda all'elenco esistente
+ * Crea un nuovo sotto task (o sotto-sotto task) per un progetto, in coda al gruppo di pari livello
  */
-export async function createProjectTask(data: { projectId: string; title: string; createdBy: string }): Promise<ProjectTask> {
-  const { data: existing, error: countError } = await supabaseServer
+export async function createProjectTask(data: { projectId: string; title: string; createdBy: string; parentTaskId?: string | null }): Promise<ProjectTask> {
+  let positionQuery = supabaseServer
     .from('project_tasks')
     .select('position')
     .eq('project_id', data.projectId)
     .is('deleted_at', null)
     .order('position', { ascending: false })
     .limit(1);
+  positionQuery = data.parentTaskId ? positionQuery.eq('parent_task_id', data.parentTaskId) : positionQuery.is('parent_task_id', null);
+  const { data: existing, error: countError } = await positionQuery;
   if (countError) throw countError;
   const nextPosition = (existing?.[0]?.position ?? -1) + 1;
 
   const { data: row, error } = await supabaseServer
     .from('project_tasks')
-    .insert([{ project_id: data.projectId, title: data.title, created_by: data.createdBy, position: nextPosition }])
+    .insert([{ project_id: data.projectId, title: data.title, created_by: data.createdBy, position: nextPosition, parent_task_id: data.parentTaskId ?? null }])
     .select('*, assigned_user:users!project_tasks_assigned_to_fkey(name, color)')
     .single();
 
   if (error) throw error;
   return projectTaskRowToProjectTask(row);
+}
+
+/**
+ * Aggiorna il titolo di un sotto task
+ */
+export async function updateProjectTaskTitle(taskId: string, title: string): Promise<ProjectTask> {
+  const { data, error } = await supabaseServer
+    .from('project_tasks')
+    .update({ title })
+    .eq('id', taskId)
+    .select('*, assigned_user:users!project_tasks_assigned_to_fkey(name, color)')
+    .single();
+
+  if (error) throw error;
+  return projectTaskRowToProjectTask(data);
 }
 
 /**

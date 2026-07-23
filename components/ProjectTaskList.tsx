@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import { Plus } from 'lucide-react';
 import TaskChip from '@/components/TaskChip';
 import {
   createProjectTaskAction,
   updateProjectTaskStatusAction,
   updateProjectTaskAssigneeAction,
+  updateProjectTaskTitleAction,
   reorderProjectTasksAction,
 } from '@/lib/actions/projectTasks';
 import { notify } from '@/lib/notify';
@@ -28,21 +29,50 @@ export default function ProjectTaskList({
   userOptions: { id: string; name: string; color?: string }[];
 }) {
   const [tasks, setTasks] = useState<ProjectTask[]>(initialTasks);
-  const [creating, setCreating] = useState(false);
+  const [creatingFor, setCreatingFor] = useState<string | null | undefined>(undefined);
   const [title, setTitle] = useState('');
   const [dragId, setDragId] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [, startTransition] = useTransition();
 
-  function handleDrop(targetId: string) {
+  const childrenByParent = useMemo(() => {
+    const map = new Map<string, ProjectTask[]>();
+    for (const task of tasks) {
+      const key = task.parentTaskId ?? '__root__';
+      const list = map.get(key) ?? [];
+      list.push(task);
+      map.set(key, list);
+    }
+    for (const list of map.values()) list.sort((a, b) => a.position - b.position);
+    return map;
+  }, [tasks]);
+
+  function toggleCollapse(taskId: string) {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(taskId)) next.delete(taskId);
+      else next.add(taskId);
+      return next;
+    });
+  }
+
+  function siblingIds(parentId: string | undefined) {
+    return (childrenByParent.get(parentId ?? '__root__') ?? []).map((t) => t.id);
+  }
+
+  function handleDrop(task: ProjectTask, targetId: string) {
     if (!dragId || dragId === targetId) return;
+    const dragged = tasks.find((t) => t.id === dragId);
+    if (!dragged || dragged.parentTaskId !== task.parentTaskId) return;
     setTasks((prev) => {
-      const next = prev.filter((t) => t.id !== dragId);
-      const dragged = prev.find((t) => t.id === dragId);
-      if (!dragged) return prev;
-      const targetIndex = next.findIndex((t) => t.id === targetId);
-      next.splice(targetIndex, 0, dragged);
+      const siblings = siblingIds(task.parentTaskId);
+      const filtered = siblings.filter((id) => id !== dragId);
+      const targetIndex = filtered.indexOf(targetId);
+      filtered.splice(targetIndex, 0, dragId);
+      const order = new Map(filtered.map((id, idx) => [id, idx]));
+      const next = prev.map((t) => (order.has(t.id) ? { ...t, position: order.get(t.id)! } : t));
       startTransition(() => {
-        reorderProjectTasksAction(next.map((t) => t.id));
+        reorderProjectTasksAction(filtered);
       });
       return next;
     });
@@ -67,66 +97,102 @@ export default function ProjectTaskList({
     });
   }
 
-  async function handleCreateSubmit() {
+  function handleRename(task: ProjectTask, newTitle: string) {
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, title: newTitle } : t)));
+    startTransition(async () => {
+      const res = await updateProjectTaskTitleAction(task.id, newTitle);
+      if (!res.success) notify(res.message);
+    });
+  }
+
+  async function handleCreateSubmit(parentId: string | null) {
     const trimmed = title.trim();
-    if (!trimmed) {
-      setCreating(false);
-      setTitle('');
-      return;
-    }
     setTitle('');
-    setCreating(false);
-    const res = await createProjectTaskAction(projectId, trimmed);
+    setCreatingFor(undefined);
+    if (!trimmed) return;
+    const res = await createProjectTaskAction(projectId, trimmed, parentId);
     if (res.success && res.task) {
       setTasks((prev) => [...prev, res.task!]);
+      if (parentId) setCollapsed((prev) => { const next = new Set(prev); next.delete(parentId); return next; });
     } else {
       notify(res.message);
     }
   }
 
-  return (
-    <div className="flex flex-col gap-1.5">
-      {tasks.map((task) => (
+  function renderCreateInput(parentId: string | null, level: number) {
+    return (
+      <input
+        autoFocus
+        type="text"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        onBlur={() => handleCreateSubmit(parentId)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            handleCreateSubmit(parentId);
+          }
+          if (e.key === 'Escape') {
+            setCreatingFor(undefined);
+            setTitle('');
+          }
+        }}
+        style={{ marginLeft: level * 16 }}
+        placeholder="Titolo task..."
+        className="field-input w-full rounded border border-grid-border bg-transparent px-2 py-1.5 text-xs text-primary"
+      />
+    );
+  }
+
+  function renderNode(task: ProjectTask, level: number): React.ReactNode {
+    const children = childrenByParent.get(task.id) ?? [];
+    const isCollapsed = collapsed.has(task.id);
+    return (
+      <div key={task.id} className="flex flex-col gap-1.5">
         <TaskChip
-          key={task.id}
           task={task}
+          level={level}
+          hasChildren={children.length > 0}
+          collapsed={isCollapsed}
           userOptions={userOptions}
+          onToggleCollapse={() => toggleCollapse(task.id)}
           onDragStart={() => setDragId(task.id)}
           onDragOver={(e) => e.preventDefault()}
-          onDrop={() => handleDrop(task.id)}
+          onDrop={() => handleDrop(task, task.id)}
           onStatusClick={() => handleStatusClick(task)}
           onAssigneeSelect={(userId) => handleAssigneeSelect(task, userId)}
-        />
-      ))}
-
-      {creating ? (
-        <input
-          autoFocus
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          onBlur={handleCreateSubmit}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              handleCreateSubmit();
-            }
-            if (e.key === 'Escape') {
-              setCreating(false);
-              setTitle('');
-            }
+          onRename={(newTitle) => handleRename(task, newTitle)}
+          onAddSubtask={() => {
+            setCreatingFor(task.id);
+            setTitle('');
+            setCollapsed((prev) => { const next = new Set(prev); next.delete(task.id); return next; });
           }}
-          placeholder="Titolo task..."
-          className="field-input w-full rounded border border-grid-border bg-transparent px-2 py-1.5 text-xs text-primary"
         />
+        {!isCollapsed && creatingFor === task.id && renderCreateInput(task.id, level + 1)}
+        {!isCollapsed && children.map((child) => renderNode(child, level + 1))}
+      </div>
+    );
+  }
+
+  const rootTasks = childrenByParent.get('__root__') ?? [];
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      {rootTasks.map((task) => renderNode(task, 0))}
+
+      {creatingFor === null ? (
+        renderCreateInput(null, 0)
       ) : (
         <button
           type="button"
-          onClick={() => setCreating(true)}
-          className="task-create-cta flex items-center justify-center gap-1 rounded border border-dashed border-grid-border py-1.5 text-[11px] text-secondary transition hover:border-solid hover:text-primary"
+          onClick={() => {
+            setCreatingFor(null);
+            setTitle('');
+          }}
+          className="flex items-center justify-center gap-1 rounded border border-dashed border-grid-border py-1.5 text-[11px] text-secondary transition hover:border-solid hover:text-primary"
         >
           <Plus size={12} strokeWidth={2} aria-hidden="true" />
-          Crea Task
+          Aggiungi Task
         </button>
       )}
     </div>

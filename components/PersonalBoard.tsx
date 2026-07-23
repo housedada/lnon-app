@@ -1,6 +1,7 @@
 'use client';
 
-import { Briefcase } from 'lucide-react';
+import { useState } from 'react';
+import { Briefcase, ChevronDown } from 'lucide-react';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
 import ProjectTaskList from '@/components/ProjectTaskList';
 import type { Project, ProjectTask } from '@/lib/types';
@@ -17,6 +18,16 @@ export default function PersonalBoard({
   userOptions: { id: string; name: string; color?: string }[];
 }) {
   const density = useTaskBoardViewStore((s) => s.density);
+  const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
+
+  function toggleProject(projectId: string) {
+    setCollapsedProjects((prev) => {
+      const next = new Set(prev);
+      if (next.has(projectId)) next.delete(projectId);
+      else next.add(projectId);
+      return next;
+    });
+  }
 
   if (projects.length === 0) {
     return (
@@ -44,24 +55,40 @@ export default function PersonalBoard({
             : undefined;
         const headerTextClass = headerStyle ? 'text-neutral-800' : 'text-primary';
         const headerSubTextClass = headerStyle ? 'text-neutral-700/70' : 'text-secondary';
+        const isCollapsed = collapsedProjects.has(project.id);
 
         return (
           <div
             key={project.id}
             className={`group flex shrink-0 flex-col rounded-xl border border-grid-border bg-grid-header-bg ${cardWidthClass} ${isMasonry ? '' : 'self-start'}`}
           >
-            <div className="rounded-t-xl border-b border-grid-border px-3 py-2" style={headerStyle}>
-              <p className={`text-sm font-semibold ${headerTextClass}`}>{project.title}</p>
-              {project.jobTitle && (
-                <p className={`mt-1 flex items-center gap-1 text-[11px] ${headerSubTextClass}`}>
-                  <Briefcase size={11} strokeWidth={1.75} aria-hidden="true" />
-                  {project.jobTitle}
-                </p>
-              )}
-            </div>
-            <div className="flex-1 p-2">
-              <ProjectTaskList projectId={project.id} initialTasks={tasksByProject[project.id] ?? []} userOptions={userOptions} />
-            </div>
+            <button
+              type="button"
+              onClick={() => toggleProject(project.id)}
+              className="flex w-full items-center justify-between gap-2 rounded-t-xl border-b border-grid-border px-3 py-2 text-left"
+              style={headerStyle}
+            >
+              <div className="min-w-0">
+                <p className={`truncate text-sm font-semibold ${headerTextClass}`}>{project.title}</p>
+                {project.jobTitle && (
+                  <p className={`mt-1 flex items-center gap-1 truncate text-[11px] ${headerSubTextClass}`}>
+                    <Briefcase size={11} strokeWidth={1.75} aria-hidden="true" />
+                    {project.jobTitle}
+                  </p>
+                )}
+              </div>
+              <ChevronDown
+                size={14}
+                strokeWidth={2}
+                className={`shrink-0 transition-transform ${headerTextClass} ${isCollapsed ? '-rotate-90' : ''}`}
+                aria-hidden="true"
+              />
+            </button>
+            {!isCollapsed && (
+              <div className="flex-1 p-2">
+                <ProjectTaskList projectId={project.id} initialTasks={tasksByProject[project.id] ?? []} userOptions={userOptions} />
+              </div>
+            )}
           </div>
         );
       })}

@@ -197,6 +197,7 @@ export type ProjectTaskStatus = 'todo' | 'in_progress' | 'completed';
 export interface ProjectTask {
   id: string;
   projectId: string;
+  parentTaskId?: string;
   title: string;
   status: ProjectTaskStatus;
   assignedTo?: string;
