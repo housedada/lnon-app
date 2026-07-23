@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { USER_TAG_COLORS } from '@/lib/types';
+import { buildProductColorMap } from '@/lib/productColors';
 
 export default function ProductTagPicker({
   productOptions,
@@ -11,6 +11,7 @@ export default function ProductTagPicker({
   defaultSelected?: string[];
 }) {
   const [selected, setSelected] = useState<string[]>(defaultSelected);
+  const colorMap = buildProductColorMap(productOptions);
 
   function toggle(id: string) {
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
@@ -22,9 +23,9 @@ export default function ProductTagPicker({
         <input key={id} type="hidden" name="productIds" value={id} />
       ))}
       <div className="flex flex-wrap gap-2">
-        {productOptions.map((p, i) => {
+        {productOptions.map((p) => {
           const active = selected.includes(p.id);
-          const color = USER_TAG_COLORS[i % USER_TAG_COLORS.length];
+          const color = colorMap.get(p.id) ?? '#e5e5e5';
           return (
             <button
               key={p.id}

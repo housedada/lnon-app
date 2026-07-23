@@ -14,6 +14,7 @@ import type {
   Contract,
   Project,
 } from './types';
+import { buildProductColorMap } from './productColors';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -1421,6 +1422,32 @@ export async function getAllProductNames(): Promise<{ id: string; name: string }
 
   if (error) throw error;
   return data ?? [];
+}
+
+/**
+ * Colori prodotto (stessa palette/logica di ProductTagPicker) raggruppati
+ * per lavoro, per colorare l'header dei progetti nella board Task in base
+ * ai prodotti coinvolti nel lavoro collegato.
+ */
+export async function getProductColorsForJobs(jobIds: string[]): Promise<Map<string, string[]>> {
+  const result = new Map<string, string[]>();
+  if (jobIds.length === 0) return result;
+
+  const [{ data: jobProducts, error: jpError }, allProducts] = await Promise.all([
+    supabaseServer.from('job_products').select('job_id, product_id').in('job_id', jobIds),
+    getAllProductNames(),
+  ]);
+  if (jpError) throw jpError;
+
+  const colorMap = buildProductColorMap(allProducts);
+  for (const row of jobProducts ?? []) {
+    const color = colorMap.get(row.product_id);
+    if (!color) continue;
+    const arr = result.get(row.job_id) ?? [];
+    arr.push(color);
+    result.set(row.job_id, arr);
+  }
+  return result;
 }
 
 /**

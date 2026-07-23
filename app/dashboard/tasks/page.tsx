@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import { Users2, User } from 'lucide-react';
 import { auth } from '@/lib/auth';
-import { getUsers, getAllAssignedProjects, getProjectsByAssignee, getTeamColumnOrder } from '@/lib/db';
+import { getUsers, getAllAssignedProjects, getProjectsByAssignee, getTeamColumnOrder, getProductColorsForJobs } from '@/lib/db';
 import TeamBoard from '@/components/TeamBoard';
 import PersonalBoard from '@/components/PersonalBoard';
+import TaskBoardViewToggle from '@/components/TaskBoardViewToggle';
 import type { Project } from '@/lib/types';
 
 export const metadata = { title: 'Task' };
@@ -40,6 +41,7 @@ export default async function TasksPage({
           <User size={14} strokeWidth={1.75} aria-hidden="true" />
           Personale
         </Link>
+        <TaskBoardViewToggle />
       </div>
 
       <div className="min-h-0 flex-1">
@@ -69,12 +71,16 @@ async function TeamView({ currentUserId }: { currentUserId: string }) {
     ...savedOrder.filter((id) => byId.has(id)),
     ...activeUsers.filter((u) => !savedOrder.includes(u.id)).sort((a, b) => a.name.localeCompare(b.name)).map((u) => u.id),
   ];
-  const members = ordered.map((id) => ({ id, name: byId.get(id)!.name }));
+  const members = ordered.map((id) => ({ id, name: byId.get(id)!.name, color: byId.get(id)!.color }));
 
   return <TeamBoard members={members} projectsByUser={projectsByUser} />;
 }
 
 async function PersonalView({ userId }: { userId: string }) {
   const projects = userId ? await getProjectsByAssignee(userId) : [];
-  return <PersonalBoard projects={projects} />;
+  const jobIds = Array.from(new Set(projects.map((p) => p.jobId).filter((id): id is string => Boolean(id))));
+  const productColorsMap = await getProductColorsForJobs(jobIds);
+  const productColorsByJob = Object.fromEntries(productColorsMap);
+
+  return <PersonalBoard projects={projects} productColorsByJob={productColorsByJob} />;
 }

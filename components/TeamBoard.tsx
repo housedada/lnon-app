@@ -4,11 +4,13 @@ import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { GripVertical, Briefcase } from 'lucide-react';
 import { saveTeamColumnOrderAction } from '@/lib/actions/projects';
+import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
 import type { Project } from '@/lib/types';
 
 interface TeamMember {
   id: string;
   name: string;
+  color?: string;
 }
 
 export default function TeamBoard({
@@ -21,6 +23,7 @@ export default function TeamBoard({
   const [order, setOrder] = useState<string[]>(members.map((m) => m.id));
   const [dragId, setDragId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const density = useTaskBoardViewStore((s) => s.density);
 
   const membersById = new Map(members.map((m) => [m.id, m]));
 
@@ -38,12 +41,21 @@ export default function TeamBoard({
     setDragId(null);
   }
 
+  const isMasonry = density === 'masonry';
+  const containerClass = isMasonry
+    ? 'h-full columns-1 gap-3 overflow-y-auto px-4 pb-4 pt-3 sm:columns-2 lg:columns-3 xl:columns-4'
+    : 'flex h-full gap-3 overflow-x-auto px-4 pb-4 pt-3';
+  const cardWidthClass = isMasonry ? 'mb-3 w-full break-inside-avoid' : density === 'wide' ? 'w-[23%] min-w-[240px]' : 'w-48';
+
   return (
-    <div className="flex h-full gap-3 overflow-x-auto px-4 pb-4 pt-3">
+    <div className={containerClass}>
       {order.map((userId) => {
         const member = membersById.get(userId);
         if (!member) return null;
         const projects = projectsByUser[userId] ?? [];
+        const headerStyle = member.color ? { background: member.color } : undefined;
+        const headerTextClass = member.color ? 'text-neutral-800' : 'text-primary';
+        const headerSubTextClass = member.color ? 'text-neutral-700/70' : 'text-secondary';
 
         return (
           <div
@@ -52,12 +64,15 @@ export default function TeamBoard({
             onDragStart={() => setDragId(userId)}
             onDragOver={(e) => e.preventDefault()}
             onDrop={() => handleDrop(userId)}
-            className="flex w-64 shrink-0 flex-col rounded-xl border border-grid-border bg-grid-header-bg"
+            className={`flex shrink-0 flex-col rounded-xl border border-grid-border bg-grid-header-bg ${cardWidthClass} ${isMasonry ? '' : 'self-start'}`}
           >
-            <div className="flex cursor-grab items-center gap-1.5 border-b border-grid-border px-3 py-2 active:cursor-grabbing">
-              <GripVertical size={14} strokeWidth={1.75} className="text-muted" aria-hidden="true" />
-              <span className="text-sm font-semibold text-primary">{member.name}</span>
-              <span className="ml-auto text-[10px] text-secondary">{projects.length}</span>
+            <div
+              className="flex cursor-grab items-center gap-1.5 rounded-t-xl border-b border-grid-border px-3 py-2 active:cursor-grabbing"
+              style={headerStyle}
+            >
+              <GripVertical size={14} strokeWidth={1.75} className={headerSubTextClass} aria-hidden="true" />
+              <span className={`text-sm font-semibold ${headerTextClass}`}>{member.name}</span>
+              <span className={`ml-auto text-[10px] ${headerSubTextClass}`}>{projects.length}</span>
             </div>
 
             <div className="flex flex-1 flex-col gap-2 p-2">
