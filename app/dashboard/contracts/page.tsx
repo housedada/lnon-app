@@ -10,6 +10,7 @@ import SyncContractsClientsButton from '@/components/SyncContractsClientsButton'
 import NewContractButton from '@/components/NewContractButton';
 import ContractRow from '@/components/ContractRow';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
+import SectionTabs from '@/components/SectionTabs';
 
 export const metadata = { title: 'Contratti' };
 
@@ -74,6 +75,13 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
       </div>
 
       {stats && <ContractsStatsWidget stats={stats} />}
+      <SectionTabs
+        tabs={[
+          { key: 'manutenzioni', label: 'Manutenzioni', href: '/dashboard/contracts' },
+          { key: 'orario', label: 'Conteggio Orario Web', href: '/dashboard/contracts/hourly' },
+        ]}
+        activeKey="manutenzioni"
+      />
       <ContractsFilterWidget />
 
       <Suspense fallback={<ListPlaceholder />}>
