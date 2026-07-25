@@ -1,8 +1,20 @@
 'use client';
 
-export default function HourlyWorkEntryForm({ action }: { action: (formData: FormData) => void }) {
+export default function HourlyWorkEntryForm({
+  onSubmit,
+  isPending,
+}: {
+  onSubmit: (formData: FormData) => void;
+  isPending?: boolean;
+}) {
   return (
-    <form action={action} className="space-y-4 p-8">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit(new FormData(e.currentTarget));
+      }}
+      className="space-y-4 p-8"
+    >
       <div className="field-wrap">
         <input
           type="text"
@@ -43,7 +55,7 @@ export default function HourlyWorkEntryForm({ action }: { action: (formData: For
           Ore *
         </label>
       </div>
-      <button type="submit" className="btn-accent rounded-lg px-4 py-2 text-sm font-medium">
+      <button type="submit" disabled={isPending} className="btn-accent rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-60">
         Aggiungi lavorazione
       </button>
     </form>

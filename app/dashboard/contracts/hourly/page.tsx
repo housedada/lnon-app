@@ -2,11 +2,10 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { getHourlyContracts, getAllClientNames, getUsers } from '@/lib/db';
-import SectionTabs from '@/components/SectionTabs';
 import HourlyContractRow from '@/components/HourlyContractRow';
 import NewHourlyContractButton from '@/components/NewHourlyContractButton';
 
-export const metadata = { title: 'Conteggio Orario Web' };
+export const metadata = { title: 'Conteggio Orario' };
 
 export default async function HourlyContractsPage() {
   const session = await auth();
@@ -21,18 +20,9 @@ export default async function HourlyContractsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between p-6 pb-0">
-        <h1 className="text-2xl font-semibold text-primary">Contratti</h1>
+      <div className="flex items-center justify-end p-6 pb-0">
         {canCreate && <NewHourlyContractButton clientOptions={clientOptions} userOptions={userOptions} />}
       </div>
-
-      <SectionTabs
-        tabs={[
-          { key: 'manutenzioni', label: 'Manutenzioni', href: '/dashboard/contracts' },
-          { key: 'orario', label: 'Conteggio Orario Web', href: '/dashboard/contracts/hourly' },
-        ]}
-        activeKey="orario"
-      />
 
       <div className="p-6">
         <div className="grid grid-cols-6 gap-3 border-b border-grid-border px-4 py-2 text-xs font-medium text-secondary">

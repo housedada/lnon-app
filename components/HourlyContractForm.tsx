@@ -15,17 +15,25 @@ export default function HourlyContractForm({
   contract,
   clientOptions,
   userOptions,
-  action,
+  onSubmit,
+  isPending,
 }: {
   contract?: HourlyContract;
   clientOptions: { id: string; name: string }[];
   userOptions: { id: string; name: string; color?: string }[];
-  action: (formData: FormData) => void;
+  onSubmit: (formData: FormData) => void;
+  isPending?: boolean;
 }) {
   const [rateType, setRateType] = useState<HourlyRateType>(contract?.rateType ?? 'standard');
 
   return (
-    <form action={action} className="space-y-4 p-8">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit(new FormData(e.currentTarget));
+      }}
+      className="space-y-4 p-8"
+    >
       {!contract && (
         <div className="field-wrap">
           <select
@@ -111,7 +119,7 @@ export default function HourlyContractForm({
         </div>
       )}
 
-      <button type="submit" className="btn-accent rounded-lg px-4 py-2 text-sm font-medium">
+      <button type="submit" disabled={isPending} className="btn-accent rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-60">
         Salva
       </button>
     </form>

@@ -28,8 +28,8 @@ export default function HourlyContractRow({ contract }: { contract: HourlyContra
       className="grid grid-cols-6 items-center gap-3 border-b border-grid-border px-4 py-3 text-sm text-primary transition hover:bg-row-hover"
     >
       <span>
-        {contract.clientName ?? '—'}
-        {contract.referenceName && <span className="text-secondary"> ({contract.referenceName})</span>}
+        <span className="font-bold text-primary">{contract.referenceName || contract.clientName || '—'}</span>
+        {contract.referenceName && <span className="ml-1 text-xs text-secondary">- {contract.clientName}</span>}
       </span>
       <span className="capitalize">
         {contract.rateType} — € {contract.effectiveHourlyRate?.toFixed(2)}/h

@@ -10,7 +10,6 @@ import SyncContractsClientsButton from '@/components/SyncContractsClientsButton'
 import NewContractButton from '@/components/NewContractButton';
 import ContractRow from '@/components/ContractRow';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
-import SectionTabs from '@/components/SectionTabs';
 
 export const metadata = { title: 'Contratti' };
 
@@ -64,24 +63,12 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
   return (
     <div>
       <NotifyFromQuery param="saved" message="Contratto salvato." />
-      <div className="flex items-center justify-between p-6 pb-0">
-        <div>
-          <h1 className="text-2xl font-semibold text-primary">Contratti</h1>
-        </div>
-        <div className="flex items-center gap-3">
-          {canCreate && <NewContractButton clientOptions={clientOptions} />}
-          {canUpdate && <SyncContractsClientsButton />}
-        </div>
+      <div className="flex items-center justify-end gap-3 p-6 pb-0">
+        {canCreate && <NewContractButton clientOptions={clientOptions} />}
+        {canUpdate && <SyncContractsClientsButton />}
       </div>
 
       {stats && <ContractsStatsWidget stats={stats} />}
-      <SectionTabs
-        tabs={[
-          { key: 'manutenzioni', label: 'Manutenzioni', href: '/dashboard/contracts' },
-          { key: 'orario', label: 'Conteggio Orario Web', href: '/dashboard/contracts/hourly' },
-        ]}
-        activeKey="manutenzioni"
-      />
       <ContractsFilterWidget />
 
       <Suspense fallback={<ListPlaceholder />}>
