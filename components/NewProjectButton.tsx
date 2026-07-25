@@ -34,7 +34,7 @@ export default function NewProjectButton({ userOptions }: { userOptions: { id: s
         onClick={() => setOpen(true)}
         aria-label="Nuovo progetto"
         title="Nuovo progetto"
-        className="flex h-7 w-7 items-center justify-center rounded-md text-secondary transition hover:bg-row-hover hover:text-primary"
+        className="outline-accent-btn flex h-7 w-7 items-center justify-center rounded-md"
       >
         <Plus size={15} strokeWidth={2} aria-hidden="true" />
       </button>

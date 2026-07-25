@@ -146,6 +146,21 @@ textarea::placeholder {
   color: #ffffff;
 }
 
+/* Bottone "speciale" outline: bordo neutro a riposo, gradiente d'accento
+   pieno (come .btn-accent) solo in hover/focus. */
+.outline-accent-btn {
+  border: 1px solid var(--color-grid-border);
+  color: var(--color-secondary);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.outline-accent-btn:hover,
+.outline-accent-btn:focus-visible {
+  background: linear-gradient(180deg, var(--accent-from), var(--accent-to));
+  border-color: transparent;
+  color: var(--accent-text);
+}
+
 @media (prefers-color-scheme: dark) {
   .special-action-icon {
     color: #cfc8e6;

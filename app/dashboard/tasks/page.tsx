@@ -65,19 +65,26 @@ export default async function TasksPage({
           Personale
         </Link>
         <TaskBoardExpandToggle />
-        <TaskBoardViewToggle />
-        <SpecialProjectsToggle openCount={openHourlyCount} />
-        <div className="ml-auto flex items-center gap-1">
+        <div className="ml-auto flex items-center gap-2">
+          <SpecialProjectsToggle openCount={openHourlyCount} />
+          <div className="h-6 w-px bg-grid-border" />
+          <div className="[&>div]:!ml-0">
+            <TaskBoardViewToggle />
+          </div>
           {canCreateProjects && <NewProjectButton userOptions={userOptions} />}
-          {canManageInvoices && <DemoDataControls />}
         </div>
       </div>
 
-      <div className="min-h-0 flex-1">
+      <div className="relative min-h-0 flex-1">
         {mode === 'team' ? (
           <TeamView currentUserId={userId} canManageInvoices={canManageInvoices} includeDemo={includeDemo} />
         ) : (
           <PersonalView userId={userId} canManageInvoices={canManageInvoices} includeDemo={includeDemo} />
+        )}
+        {canManageInvoices && (
+          <div className="absolute bottom-3 right-3 z-10 rounded-md border border-grid-border bg-card-bg/90 shadow-lg backdrop-blur">
+            <DemoDataControls />
+          </div>
         )}
       </div>
       <TaskBoardBottomNav />
