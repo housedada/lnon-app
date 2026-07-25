@@ -65,22 +65,25 @@ export default function ContractsStatsWidget({
         <StatTile
           label="Contratti (web / orario)"
           value={
-            <>
+            <span className="inline-flex items-center gap-2">
               <span style={{ color: ICON_COLOR }}>{stats.count}</span>
               {hourlyContractsCount !== undefined && (
-                <span style={{ color: HOURLY_COLOR }}> / {hourlyContractsCount}</span>
+                <>
+                  <span className="inline-block h-4 w-px bg-secondary/40" />
+                  <span style={{ color: HOURLY_COLOR }}>{hourlyContractsCount}</span>
+                </>
               )}
-            </>
+            </span>
           }
         />
         <StatTile label="Manutenzione WP" value={formatCompact(stats.maintenanceTotal)} exact={formatExact(stats.maintenanceTotal)} color={ICON_COLOR} />
         <StatTile label="Hosting" value={formatCompact(stats.hostingTotal)} exact={formatExact(stats.hostingTotal)} color={ICON_COLOR} />
         <StatTile label="Analytics e GDPR" value={formatCompact(stats.analyticsTotal)} exact={formatExact(stats.analyticsTotal)} color={ICON_COLOR} />
         <StatTile label="Cookie (Complianz)" value={formatCompact(stats.cookieTotal)} exact={formatExact(stats.cookieTotal)} color={ICON_COLOR} />
-        <StatTile label="Costi fornitori totali" value={formatCompact(stats.providerCostTotal)} exact={formatExact(stats.providerCostTotal)} color={EXPENSE_COLOR} emphasize />
         {hourlyContractsTotal !== undefined && (
           <StatTile label="Guadagnato conteggio orario" value={formatCompact(hourlyContractsTotal)} exact={formatExact(hourlyContractsTotal)} color={HOURLY_COLOR} />
         )}
+        <StatTile label="Costi fornitori totali" value={formatCompact(stats.providerCostTotal)} exact={formatExact(stats.providerCostTotal)} color={EXPENSE_COLOR} emphasize />
       </div>
     </AnimatedVisibility>
   );

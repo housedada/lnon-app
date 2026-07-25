@@ -400,6 +400,9 @@ export async function getJobs(filters?: {
   archived?: boolean;
   archivedYear?: number;
   trashed?: boolean;
+  // true = solo lavori generati automaticamente (es. conteggio orario);
+  // default/false = solo lavori normali, per tenere la lista pulita
+  systemGenerated?: boolean;
   limit?: number;
   offset?: number;
 }): Promise<{ data: Job[]; total: number }> {
@@ -408,6 +411,7 @@ export async function getJobs(filters?: {
     .select('*, clients(name), contracts(client_name_raw, clients(name))');
 
   query = filters?.trashed ? query.not('deleted_at', 'is', null) : query.is('deleted_at', null);
+  query = query.eq('is_system_generated', filters?.systemGenerated ? true : false);
 
   if (filters?.archived) {
     query = query.not('archived_at', 'is', null);

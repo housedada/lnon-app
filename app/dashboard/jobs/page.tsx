@@ -13,12 +13,13 @@ import JobsSelectAllCheckbox from '@/components/JobsSelectAllCheckbox';
 import JobsBulkArchiveButton from '@/components/JobsBulkArchiveButton';
 import JobRow from '@/components/JobRow';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
+import JobsSystemGeneratedToggle from '@/components/JobsSystemGeneratedToggle';
 
 export const metadata = { title: 'Lavori' };
 
 const PAGE_SIZE = 21;
 
-type SearchParams = { q?: string; page?: string; clientId?: string; sync?: string; status?: string };
+type SearchParams = { q?: string; page?: string; clientId?: string; sync?: string; status?: string; system?: string };
 
 export default async function JobsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
@@ -123,15 +124,17 @@ async function JobsListSection({
   isSuperadmin: boolean;
   showAmounts: boolean;
 }) {
-  const { q, page, clientId, sync, status } = params;
+  const { q, page, clientId, sync, status, system } = params;
   const currentPage = Math.max(1, Number(page) || 1);
   const offset = (currentPage - 1) * PAGE_SIZE;
+  const systemGenerated = system === '1';
 
   const { data: jobs, total } = await getJobs({
     search: q,
     clientId,
     sync,
     status,
+    systemGenerated,
     assignedTo: role === 'dipendente' ? userId : undefined,
     limit: PAGE_SIZE,
     offset,
@@ -148,6 +151,7 @@ async function JobsListSection({
       showSyncFilter={false}
       totalCount={total}
       totalLabel="lavori"
+      searchExtra={<JobsSystemGeneratedToggle active={systemGenerated} />}
       extraTopControls={<JobsBulkArchiveButton />}
     >
       <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
