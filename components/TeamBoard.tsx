@@ -19,6 +19,7 @@ import { saveTeamColumnOrderAction } from '@/lib/actions/projects';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
 import { useTaskBoardScrollStore } from '@/lib/store/taskBoardScrollStore';
 import { useTaskBoardExpandStore } from '@/lib/store/taskBoardExpandStore';
+import { useSpecialProjectsVisibilityStore } from '@/lib/store/specialProjectsVisibilityStore';
 import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/ProjectTaskList';
 import MarkProjectCompletedButton from '@/components/MarkProjectCompletedButton';
 import SortableColumn from '@/components/SortableColumn';
@@ -33,7 +34,7 @@ interface TeamMember {
 
 export default function TeamBoard({
   members,
-  projectsByUser,
+  projectsByUser: rawProjectsByUser,
   tasksByProject,
   userOptions,
   canManageInvoices,
@@ -44,6 +45,11 @@ export default function TeamBoard({
   userOptions: { id: string; name: string; color?: string }[];
   canManageInvoices: boolean;
 }) {
+  const specialProjectsVisible = useSpecialProjectsVisibilityStore((s) => s.visible);
+  const projectsByUser: Record<string, Project[]> = specialProjectsVisible
+    ? rawProjectsByUser
+    : Object.fromEntries(Object.entries(rawProjectsByUser).map(([uid, ps]) => [uid, ps.filter((p) => !p.isSystemGenerated)]));
+
   const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
   const listRefs = useRef<Map<string, ProjectTaskListHandle>>(new Map());
   const [detailMemberId, setDetailMemberId] = useState<string | null>(null);

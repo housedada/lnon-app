@@ -1,13 +1,23 @@
 import Link from 'next/link';
 import { Users2, User } from 'lucide-react';
 import { auth } from '@/lib/auth';
-import { getUsers, getAllAssignedProjects, getProjectsByAssignee, getTeamColumnOrder, getPersonalColumnOrder, getProductColorsForJobs, getProjectTasks } from '@/lib/db';
+import {
+  getUsers,
+  getAllAssignedProjects,
+  getProjectsByAssignee,
+  getTeamColumnOrder,
+  getPersonalColumnOrder,
+  getProductColorsForJobs,
+  getProjectTasks,
+  getOpenHourlyWorkEntriesCount,
+} from '@/lib/db';
 import { hasPermission } from '@/lib/permissions';
 import { DEMO_USERS, DEMO_PROJECTS, DEMO_TASKS_BY_PROJECT } from '@/lib/demoData';
 import TeamBoard from '@/components/TeamBoard';
 import PersonalBoard from '@/components/PersonalBoard';
 import TaskBoardViewToggle from '@/components/TaskBoardViewToggle';
 import TaskBoardExpandToggle from '@/components/TaskBoardExpandToggle';
+import SpecialProjectsToggle from '@/components/SpecialProjectsToggle';
 import TaskBoardBottomNav from '@/components/TaskBoardBottomNav';
 import DemoDataControls from '@/components/DemoDataControls';
 import NewProjectButton from '@/components/NewProjectButton';
@@ -30,7 +40,7 @@ export default async function TasksPage({
   const canCreateProjects = hasPermission(role, 'projects', 'create');
   const includeDemo = canManageInvoices && demo === '1';
 
-  const allUsers = await getUsers();
+  const [allUsers, openHourlyCount] = await Promise.all([getUsers(), getOpenHourlyWorkEntriesCount()]);
   const userOptions = allUsers.filter((u) => u.isActive).map((u) => ({ id: u.id, name: u.name, color: u.color }));
 
   return (
@@ -56,6 +66,7 @@ export default async function TasksPage({
         </Link>
         <TaskBoardExpandToggle />
         <TaskBoardViewToggle />
+        <SpecialProjectsToggle openCount={openHourlyCount} />
         <div className="ml-auto flex items-center gap-1">
           {canCreateProjects && <NewProjectButton userOptions={userOptions} />}
           {canManageInvoices && <DemoDataControls />}

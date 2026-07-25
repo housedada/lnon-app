@@ -1708,6 +1708,21 @@ export async function getProjectsByAssignee(userId: string): Promise<Project[]> 
 }
 
 /**
+ * Conteggio delle lavorazioni assegnate (non completate) su tutti i
+ * contratti a conteggio orario, per il badge del toggle "mostra progetti
+ * speciali" nella toolbar di Task.
+ */
+export async function getOpenHourlyWorkEntriesCount(): Promise<number> {
+  const { count, error } = await supabaseServer
+    .from('hourly_work_entries')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'assegnata')
+    .is('deleted_at', null);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/**
  * Ottieni un progetto per id
  */
 export async function getProjectById(id: string): Promise<Project | null> {

@@ -17,6 +17,7 @@ import { Briefcase, CheckCircle2, ChevronDown, GripVertical, Plus, Trash2 } from
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
 import { useTaskBoardScrollStore } from '@/lib/store/taskBoardScrollStore';
 import { useTaskBoardExpandStore } from '@/lib/store/taskBoardExpandStore';
+import { useSpecialProjectsVisibilityStore } from '@/lib/store/specialProjectsVisibilityStore';
 import { savePersonalColumnOrderAction } from '@/lib/actions/projects';
 import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/ProjectTaskList';
 import MarkProjectCompletedButton from '@/components/MarkProjectCompletedButton';
@@ -37,7 +38,7 @@ function projectHeaderBackground(project: Project, productColorsByJob: Record<st
 }
 
 export default function PersonalBoard({
-  projects,
+  projects: rawProjects,
   productColorsByJob,
   tasksByProject,
   userOptions,
@@ -49,6 +50,9 @@ export default function PersonalBoard({
   userOptions: { id: string; name: string; color?: string }[];
   canManageInvoices: boolean;
 }) {
+  const specialProjectsVisible = useSpecialProjectsVisibilityStore((s) => s.visible);
+  const projects = specialProjectsVisible ? rawProjects : rawProjects.filter((p) => !p.isSystemGenerated);
+
   const density = useTaskBoardViewStore((s) => s.density);
   const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
   const listRefs = useRef<Map<string, ProjectTaskListHandle>>(new Map());
