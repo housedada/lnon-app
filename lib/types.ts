@@ -172,6 +172,15 @@ export interface Job {
   approvedBy?: string;
   archivedAt?: Date;
   productIds?: string[];
+  // Campi economico/fiscali di riga, popolati dall'import storico da export
+  // Fatture in Cloud (1 job = 1 voce di fattura)
+  invoiceNumber?: string;
+  invoiceDate?: Date;
+  invoiceNetAmount?: number;
+  invoiceVatAmount?: number;
+  invoiceGrossAmount?: number;
+  invoicePaymentStatus?: string;
+  invoicePaidAt?: Date;
   // Popolati solo dalla lista/dettaglio, se collegati
   clientName?: string;
   contractLabel?: string;
@@ -221,6 +230,10 @@ export interface ProjectInvoice {
   status: ProjectInvoiceStatus;
   mergedIntoId?: string;
   ficInvoiceId?: number;
+  invoiceNumber?: string;
+  invoiceDate?: Date;
+  paymentStatus?: string;
+  paidAt?: Date;
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;

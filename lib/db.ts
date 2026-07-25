@@ -323,6 +323,13 @@ function jobRowToJob(row: Record<string, any>): Job {
     approvedAt: row.approved_at ? new Date(row.approved_at) : undefined,
     approvedBy: row.approved_by ?? undefined,
     archivedAt: row.archived_at ? new Date(row.archived_at) : undefined,
+    invoiceNumber: row.invoice_number ?? undefined,
+    invoiceDate: row.invoice_date ? new Date(row.invoice_date) : undefined,
+    invoiceNetAmount: row.invoice_net_amount ?? undefined,
+    invoiceVatAmount: row.invoice_vat_amount ?? undefined,
+    invoiceGrossAmount: row.invoice_gross_amount ?? undefined,
+    invoicePaymentStatus: row.invoice_payment_status ?? undefined,
+    invoicePaidAt: row.invoice_paid_at ? new Date(row.invoice_paid_at) : undefined,
     clientName: row.clients?.name ?? undefined,
     contractLabel: row.contracts ? (row.contracts.clients?.name ?? row.contracts.client_name_raw) : undefined,
     assignedToName: row.assigned_user?.name ?? undefined,
@@ -1687,6 +1694,10 @@ function projectInvoiceRowToProjectInvoice(row: Record<string, any>): ProjectInv
     status: row.status,
     mergedIntoId: row.merged_into_id ?? undefined,
     ficInvoiceId: row.fic_invoice_id ?? undefined,
+    invoiceNumber: row.invoice_number ?? undefined,
+    invoiceDate: row.invoice_date ? new Date(row.invoice_date) : undefined,
+    paymentStatus: row.payment_status ?? undefined,
+    paidAt: row.paid_at ? new Date(row.paid_at) : undefined,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
@@ -1863,6 +1874,33 @@ export async function mergeProjectInvoices(ids: string[], createdBy: string): Pr
   if (updateError) throw updateError;
 
   return projectInvoiceRowToProjectInvoice(merged);
+}
+
+/**
+ * Fatture progetto con numero fattura noto ma non ancora collegate a una
+ * fattura reale su Fatture in Cloud, per il match bulk (bulkMatchInvoicesAction)
+ */
+export async function getProjectInvoicesWithNumber(): Promise<{ id: string; invoiceNumber: string; totalAmount: number }[]> {
+  const { data, error } = await supabaseServer
+    .from('project_invoices')
+    .select('id, invoice_number, total_amount')
+    .not('invoice_number', 'is', null)
+    .is('fic_invoice_id', null)
+    .is('deleted_at', null);
+  if (error) throw error;
+  return (data ?? []).map((row: { id: string; invoice_number: string; total_amount: number }) => ({
+    id: row.id,
+    invoiceNumber: row.invoice_number,
+    totalAmount: Number(row.total_amount),
+  }));
+}
+
+/**
+ * Collega una fattura progetto locale alla fattura corrispondente su Fatture in Cloud
+ */
+export async function linkProjectInvoiceToFic(id: string, ficInvoiceId: number): Promise<void> {
+  const { error } = await supabaseServer.from('project_invoices').update({ fic_invoice_id: ficInvoiceId }).eq('id', id);
+  if (error) throw error;
 }
 
 /**

@@ -6,6 +6,8 @@ import {
   ProductsApi,
   UserApi,
   WebhooksApi,
+  IssuedDocumentsApi,
+  ListIssuedDocumentsTypeEnum,
   Scope,
   OAuth2AuthorizationCodeManager,
   Condition,
@@ -13,7 +15,7 @@ import {
   Operator,
   EventType,
 } from '@fattureincloud/fattureincloud-ts-sdk';
-import type { Client as FicClientModel, Product as FicProductModel } from '@fattureincloud/fattureincloud-ts-sdk';
+import type { Client as FicClientModel, Product as FicProductModel, IssuedDocument as FicIssuedDocumentModel } from '@fattureincloud/fattureincloud-ts-sdk';
 import {
   getFicConnection,
   updateFicConnectionTokens,
@@ -248,6 +250,41 @@ export async function listAllFicClients(): Promise<FicClientModel[]> {
 
   while (true) {
     const response = await api.listClients(companyId, undefined, undefined, undefined, page, 100);
+    const items = response.data.data ?? [];
+    all.push(...items);
+    const lastPage = response.data.last_page ?? page;
+    if (page >= lastPage || items.length === 0) break;
+    page += 1;
+  }
+
+  return all;
+}
+
+async function getIssuedDocumentsApi(): Promise<{ api: IssuedDocumentsApi; companyId: number }> {
+  const { accessToken, companyId } = await getValidAccessToken();
+  const api = new IssuedDocumentsApi(new Configuration({ accessToken }));
+  return { api, companyId };
+}
+
+/**
+ * Scarica tutte le fatture di vendita emesse su Fatture in Cloud (per il match
+ * automatico bulk con le fatture progetto storiche, vedi bulkMatchInvoicesAction).
+ */
+export async function listAllFicInvoices(): Promise<FicIssuedDocumentModel[]> {
+  const { api, companyId } = await getIssuedDocumentsApi();
+  let page = 1;
+  const all: FicIssuedDocumentModel[] = [];
+
+  while (true) {
+    const response = await api.listIssuedDocuments(
+      companyId,
+      ListIssuedDocumentsTypeEnum.Invoice,
+      undefined,
+      undefined,
+      undefined,
+      page,
+      100
+    );
     const items = response.data.data ?? [];
     all.push(...items);
     const lastPage = response.data.last_page ?? page;

@@ -10,6 +10,8 @@ import {
   linkClientToFic as dbLinkClientToFic,
   linkProductToFic as dbLinkProductToFic,
   getAllClientsWithTaxIds,
+  getProjectInvoicesWithNumber,
+  linkProjectInvoiceToFic,
 } from '@/lib/db';
 import {
   createFicClientFromLnonClient,
@@ -19,6 +21,7 @@ import {
   searchFicProducts,
   importAllFicProducts,
   listAllFicClients,
+  listAllFicInvoices,
 } from '@/lib/fattureincloud';
 import type { FicClientSummary, FicProductSummary } from '@/lib/types';
 
@@ -149,6 +152,49 @@ export async function bulkMatchClientsAction(): Promise<{ matched: number; unmat
 
   revalidatePath('/dashboard/clients');
   return { matched, unmatched: lnonClients.length - matched };
+}
+
+const INVOICE_AMOUNT_TOLERANCE = 0.02;
+
+/**
+ * Collega in blocco le fatture progetto storiche (con numero fattura noto,
+ * non ancora collegate) alle fatture reali corrispondenti su Fatture in Cloud,
+ * confrontando il numero fattura. Se il numero coincide ma l'importo totale
+ * differisce oltre la tolleranza di arrotondamento, la riga viene segnalata
+ * come "da verificare" invece di essere collegata automaticamente.
+ */
+export async function bulkMatchInvoicesAction(): Promise<{ matched: number; unmatched: number; uncertain: number }> {
+  await requireSuperadmin();
+
+  const [localInvoices, ficInvoices] = await Promise.all([getProjectInvoicesWithNumber(), listAllFicInvoices()]);
+
+  const byNumber = new Map<string, { id: number; amountGross: number | null }>();
+  for (const doc of ficInvoices) {
+    if (doc.id == null || doc.number == null) continue;
+    const key = String(doc.number);
+    if (!byNumber.has(key)) byNumber.set(key, { id: doc.id, amountGross: doc.amount_gross ?? null });
+  }
+
+  let matched = 0;
+  let uncertain = 0;
+  for (const invoice of localInvoices) {
+    const ficMatch = byNumber.get(invoice.invoiceNumber);
+    if (!ficMatch) continue;
+
+    if (ficMatch.amountGross != null && Math.abs(ficMatch.amountGross - invoice.totalAmount) > INVOICE_AMOUNT_TOLERANCE) {
+      uncertain += 1;
+      console.warn(
+        `[bulkMatchInvoicesAction] fattura ${invoice.invoiceNumber}: importo locale ${invoice.totalAmount} != FiC ${ficMatch.amountGross}, non collegata automaticamente`
+      );
+      continue;
+    }
+
+    await linkProjectInvoiceToFic(invoice.id, ficMatch.id);
+    matched += 1;
+  }
+
+  revalidatePath('/dashboard/invoices');
+  return { matched, unmatched: localInvoices.length - matched - uncertain, uncertain };
 }
 
 /**
