@@ -242,6 +242,27 @@ export interface ProjectInvoice {
   deletedAt?: Date;
 }
 
+export interface FixedExpenseCategory {
+  id: string;
+  label: string;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt?: Date;
+}
+
+export interface FixedExpenseEntry {
+  id: string;
+  categoryId: string;
+  fiscalYear: number;
+  amount: number;
+  isActive: boolean;
+  updatedBy: string;
+  updatedAt: Date;
+  // Popolato solo in lettura, se collegato
+  categoryLabel?: string;
+}
+
 export type ProjectTaskStatus = 'todo' | 'in_progress' | 'completed';
 
 export interface ProjectTask {
