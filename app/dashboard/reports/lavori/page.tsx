@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { getJobsForecast, type JobForecastCategory } from '@/lib/db';
 import JobsForecastStatsWidget from '@/components/JobsForecastStatsWidget';
-import JobsForecastYearSelect from '@/components/JobsForecastYearSelect';
+import ReportsYearSelect from '@/components/ReportsYearSelect';
 
 export const metadata = { title: 'Overview Lavori' };
 
@@ -38,7 +38,7 @@ export default async function OverviewLavoriPage({ searchParams }: { searchParam
     <div>
       <div className="flex items-center justify-between p-6 pb-0">
         <h1 className="text-2xl font-semibold text-primary">Overview Lavori</h1>
-        <JobsForecastYearSelect fiscalYear={fiscalYear} yearOptions={yearOptions} />
+        <ReportsYearSelect basePath="/dashboard/reports/lavori" fiscalYear={fiscalYear} yearOptions={yearOptions} />
       </div>
 
       <JobsForecastStatsWidget totals={totals} />
