@@ -272,7 +272,10 @@ export interface FixedExpenseEntry {
 }
 
 export type HourlyRateType = 'standard' | 'cheap' | 'custom';
-export type HourlyContractStatus = 'in_corso' | 'non_in_corso';
+// Automatico: 'in_corso' quando c'è almeno un task assegnato/non completato,
+// 'riposo' quando il contratto viene messo a riposo (ultimo task completato
+// via pulsante dedicato). Non impostabile manualmente da form.
+export type HourlyContractStatus = 'in_corso' | 'riposo';
 export type HourlyWorkEntryStatus = 'assegnata' | 'completata';
 
 export interface HourlyContract {
@@ -309,6 +312,9 @@ export interface HourlyWorkEntry {
   hours: number;
   status: HourlyWorkEntryStatus;
   amount: number;
+  // true = lavorazione storica che ha portato il contratto in riposo: resta
+  // visibile ma non più cliccabile/modificabile
+  locked: boolean;
   invoiceId?: string;
   invoicedAt?: Date;
   createdBy: string;

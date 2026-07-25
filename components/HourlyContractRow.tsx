@@ -5,12 +5,12 @@ import type { HourlyContract, HourlyContractStatus } from '@/lib/types';
 
 const STATUS_LABEL: Record<HourlyContractStatus, string> = {
   in_corso: 'In corso',
-  non_in_corso: 'Non in corso',
+  riposo: 'Riposo',
 };
 
 const STATUS_BADGE: Record<HourlyContractStatus, string> = {
   in_corso: 'bg-green-600/10 text-green-700',
-  non_in_corso: 'bg-grid-header-bg text-secondary',
+  riposo: 'bg-sky-500/10 text-sky-700',
 };
 
 function formatEuro(value?: number): string {

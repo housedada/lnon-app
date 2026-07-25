@@ -10,6 +10,7 @@ import {
   createHourlyWorkEntry,
   updateHourlyWorkEntry,
   softDeleteHourlyWorkEntry,
+  restHourlyContract,
 } from '@/lib/db';
 import type { HourlyRateType } from '@/lib/types';
 
@@ -53,14 +54,13 @@ export async function updateHourlyContractAction(id: string, formData: FormData)
     const rateType = String(formData.get('rateType') || '') as HourlyRateType;
     const customHourlyRateRaw = formData.get('customHourlyRate');
     const customHourlyRate = customHourlyRateRaw ? Number(customHourlyRateRaw) : undefined;
-    const status = String(formData.get('status') || 'in_corso') as 'in_corso' | 'non_in_corso';
 
     if (!['standard', 'cheap', 'custom'].includes(rateType)) return { success: false, message: 'Tipo tariffa non valido.' };
     if (rateType === 'custom' && (!customHourlyRate || customHourlyRate <= 0)) {
       return { success: false, message: 'Inserisci una tariffa oraria valida.' };
     }
 
-    await updateHourlyContract(id, { rateType, customHourlyRate, status });
+    await updateHourlyContract(id, { rateType, customHourlyRate });
     revalidatePath('/dashboard/contracts/hourly');
     return { success: true, message: 'Contratto aggiornato.' };
   } catch (err) {
@@ -79,6 +79,18 @@ export async function deleteHourlyContractAction(id: string): Promise<{ success:
   await softDeleteHourlyContract(id);
   revalidatePath('/dashboard/contracts/hourly');
   return { success: true, message: 'Contratto eliminato.' };
+}
+
+export async function restHourlyContractAction(id: string): Promise<{ success: boolean; message: string }> {
+  try {
+    await requireRole('hourly_billing', 'update');
+    await restHourlyContract(id);
+    revalidatePath(`/dashboard/contracts/hourly/${id}`);
+    revalidatePath('/dashboard/contracts/hourly');
+    return { success: true, message: 'Contratto messo in riposo.' };
+  } catch (err) {
+    return { success: false, message: err instanceof Error ? err.message : 'Errore nel mettere in riposo il contratto.' };
+  }
 }
 
 export async function createHourlyWorkEntryAction(hourlyContractId: string, formData: FormData): Promise<{ success: boolean; message: string }> {

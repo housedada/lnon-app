@@ -102,23 +102,6 @@ export default function HourlyContractForm({
         </div>
       )}
 
-      {contract && (
-        <div className="field-wrap">
-          <select
-            name="status"
-            id="status"
-            defaultValue={contract.status}
-            className="field-input w-full border border-grid-border bg-transparent px-3 pb-2 pt-4 text-sm text-primary"
-          >
-            <option value="in_corso">In corso</option>
-            <option value="non_in_corso">Non in corso</option>
-          </select>
-          <label htmlFor="status" className="field-floating-label">
-            Stato
-          </label>
-        </div>
-      )}
-
       <button type="submit" disabled={isPending} className="btn-accent rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-60">
         Salva
       </button>

@@ -2447,6 +2447,7 @@ function hourlyWorkEntryRowToHourlyWorkEntry(row: Record<string, any>): HourlyWo
     hours: Number(row.hours),
     status: row.status,
     amount: Number(row.amount ?? 0),
+    locked: row.locked ?? false,
     invoiceId: row.invoice_id ?? undefined,
     invoicedAt: row.invoiced_at ? new Date(row.invoiced_at) : undefined,
     createdBy: row.created_by,
@@ -2467,6 +2468,7 @@ function hourlyWorkEntryToRow(data: Partial<Omit<HourlyWorkEntry, 'id' | 'create
   if (data.hours !== undefined) row.hours = data.hours;
   if (data.status !== undefined) row.status = data.status;
   if (data.amount !== undefined) row.amount = data.amount;
+  if (data.locked !== undefined) row.locked = data.locked;
   if (data.invoiceId !== undefined) row.invoice_id = data.invoiceId;
   if (data.invoicedAt !== undefined) row.invoiced_at = data.invoicedAt ? data.invoicedAt.toISOString() : null;
   if (data.createdBy !== undefined) row.created_by = data.createdBy;
@@ -2601,7 +2603,7 @@ export async function createHourlyContract(
 
 export async function updateHourlyContract(
   id: string,
-  patch: Partial<Pick<HourlyContract, 'rateType' | 'customHourlyRate' | 'status'>>
+  patch: Partial<Pick<HourlyContract, 'rateType' | 'customHourlyRate'>>
 ): Promise<HourlyContract> {
   const { data, error } = await supabaseServer
     .from('hourly_contracts')
@@ -2644,6 +2646,24 @@ export async function createHourlyWorkEntry(
   if (!contract) throw new Error('Contratto a conteggio orario non trovato.');
   if (!contract.projectId) throw new Error('Il contratto non ha un progetto collegato.');
 
+  // Risveglio automatico: una nuova lavorazione su un contratto in riposo
+  // riapre lo stesso Project (l'ultima lavorazione che lo aveva messo in
+  // riposo resta "locked", congelata come promemoria storico) e riporta il
+  // contratto in corso.
+  if (contract.status === 'riposo') {
+    const { error: reopenProjectError } = await supabaseServer
+      .from('projects')
+      .update({ completed_at: null })
+      .eq('id', contract.projectId);
+    if (reopenProjectError) throw reopenProjectError;
+
+    const { error: reactivateContractError } = await supabaseServer
+      .from('hourly_contracts')
+      .update({ status: 'in_corso' })
+      .eq('id', contract.id);
+    if (reactivateContractError) throw reactivateContractError;
+  }
+
   const rate = resolveHourlyRate(contract);
   const amount = Math.round(input.hours * rate * 100) / 100;
 
@@ -2677,6 +2697,59 @@ export async function createHourlyWorkEntry(
   return hourlyWorkEntryRowToHourlyWorkEntry(updatedRow);
 }
 
+/**
+ * Mette a riposo un contratto a conteggio orario: completa e blocca
+ * (locked) l'ultima lavorazione ancora assegnata, se presente, completa il
+ * Project speciale e imposta il contratto come 'riposo'. Il risveglio
+ * avviene automaticamente alla prossima lavorazione (vedi createHourlyWorkEntry).
+ */
+export async function restHourlyContract(contractId: string): Promise<HourlyContract> {
+  const contract = await getHourlyContractById(contractId);
+  if (!contract) throw new Error('Contratto a conteggio orario non trovato.');
+  if (!contract.projectId) throw new Error('Il contratto non ha un progetto collegato.');
+
+  const { data: lastEntryRow, error: lastEntryError } = await supabaseServer
+    .from('hourly_work_entries')
+    .select('id, project_task_id')
+    .eq('hourly_contract_id', contractId)
+    .eq('status', 'assegnata')
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (lastEntryError) throw lastEntryError;
+
+  if (lastEntryRow) {
+    if (lastEntryRow.project_task_id) {
+      const { error: completeTaskError } = await supabaseServer
+        .from('project_tasks')
+        .update({ status: 'completed', completed_at: new Date().toISOString() })
+        .eq('id', lastEntryRow.project_task_id);
+      if (completeTaskError) throw completeTaskError;
+    }
+    const { error: lockEntryError } = await supabaseServer
+      .from('hourly_work_entries')
+      .update({ status: 'completata', locked: true })
+      .eq('id', lastEntryRow.id);
+    if (lockEntryError) throw lockEntryError;
+  }
+
+  const { error: completeProjectError } = await supabaseServer
+    .from('projects')
+    .update({ completed_at: new Date().toISOString() })
+    .eq('id', contract.projectId);
+  if (completeProjectError) throw completeProjectError;
+
+  const { data, error } = await supabaseServer
+    .from('hourly_contracts')
+    .update({ status: 'riposo' })
+    .eq('id', contractId)
+    .select('*, clients(name)')
+    .single();
+  if (error) throw error;
+  return hourlyContractRowToHourlyContract(data);
+}
+
 export async function updateHourlyWorkEntry(
   id: string,
   patch: Partial<Pick<HourlyWorkEntry, 'platformReference' | 'description' | 'hours'>>
@@ -2686,6 +2759,7 @@ export async function updateHourlyWorkEntry(
   if (fetchError) throw fetchError;
   const existing = hourlyWorkEntryRowToHourlyWorkEntry(existingRow);
   if (existing.invoiceId) throw new Error('Questa lavorazione è già stata fatturata e non può essere modificata.');
+  if (existing.locked) throw new Error('Questa lavorazione è congelata (ha messo il contratto in riposo) e non può essere modificata.');
 
   const row = hourlyWorkEntryToRow(patch);
   if (patch.hours !== undefined) {

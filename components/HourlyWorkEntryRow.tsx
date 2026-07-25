@@ -27,7 +27,7 @@ export default function HourlyWorkEntryRow({ entry }: { entry: HourlyWorkEntry }
 
   return (
     <div
-      className="grid min-w-fit items-center gap-4 border-b border-grid-border px-4 py-3 text-sm text-primary"
+      className={`grid min-w-fit items-center gap-4 border-b border-grid-border px-4 py-3 text-sm text-primary ${entry.locked ? 'opacity-50' : ''}`}
       style={{ gridTemplateColumns: HOURLY_ENTRY_GRID_TEMPLATE }}
     >
       <span>{entry.description}</span>
@@ -36,8 +36,17 @@ export default function HourlyWorkEntryRow({ entry }: { entry: HourlyWorkEntry }
       <span className="whitespace-nowrap">{formatDate(entry.taskCompletedAt)}</span>
       <span className="whitespace-nowrap">{entry.hours}</span>
       <span className="whitespace-nowrap font-medium">€ {entry.amount.toFixed(2)}</span>
-      <label className="flex items-center gap-1.5 whitespace-nowrap text-xs text-secondary">
-        <input type="checkbox" checked={completed} disabled={isPending || !entry.projectTaskId} onChange={toggle} className="cursor-pointer" />
+      <label
+        className={`flex items-center gap-1.5 whitespace-nowrap text-xs text-secondary ${entry.locked ? 'cursor-not-allowed' : ''}`}
+        title={entry.locked ? 'Lavorazione congelata: ha messo il contratto in riposo' : undefined}
+      >
+        <input
+          type="checkbox"
+          checked={completed}
+          disabled={isPending || !entry.projectTaskId || entry.locked}
+          onChange={toggle}
+          className={entry.locked ? 'cursor-not-allowed' : 'cursor-pointer'}
+        />
         {completed ? 'Completata' : 'Assegnata'}
       </label>
     </div>

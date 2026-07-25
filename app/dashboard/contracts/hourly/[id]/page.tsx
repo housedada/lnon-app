@@ -5,8 +5,20 @@ import { getHourlyContractById, getHourlyWorkEntries } from '@/lib/db';
 import { HOURLY_ENTRY_GRID_TEMPLATE } from '@/lib/hourlyBilling';
 import HourlyWorkEntryRow from '@/components/HourlyWorkEntryRow';
 import NewHourlyWorkEntryButton from '@/components/NewHourlyWorkEntryButton';
+import RestHourlyContractButton from '@/components/RestHourlyContractButton';
+import type { HourlyContractStatus } from '@/lib/types';
 
 export const metadata = { title: 'Contratto a conteggio orario' };
+
+const STATUS_LABEL: Record<HourlyContractStatus, string> = {
+  in_corso: 'In corso',
+  riposo: 'Riposo',
+};
+
+const STATUS_BADGE: Record<HourlyContractStatus, string> = {
+  in_corso: 'bg-green-600/10 text-green-700',
+  riposo: 'bg-sky-500/10 text-sky-700',
+};
 
 export default async function HourlyContractDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -21,6 +33,7 @@ export default async function HourlyContractDetailPage({ params }: { params: Pro
 
   const entries = await getHourlyWorkEntries(id);
   const canCreate = hasPermission(role, 'hourly_billing', 'create');
+  const canUpdate = hasPermission(role, 'hourly_billing', 'update');
 
   return (
     <div>
@@ -30,11 +43,19 @@ export default async function HourlyContractDetailPage({ params }: { params: Pro
             {contract.referenceName || contract.clientName}
             {contract.referenceName && <span className="ml-2 text-sm font-normal text-secondary">- {contract.clientName}</span>}
           </h1>
-          <p className="text-sm text-secondary">
-            {contract.rateType} — € {contract.effectiveHourlyRate?.toFixed(2)}/h
-          </p>
+          <div className="mt-1 flex items-center gap-2 text-sm text-secondary">
+            <span>
+              {contract.rateType} — € {contract.effectiveHourlyRate?.toFixed(2)}/h
+            </span>
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE[contract.status]}`}>
+              {STATUS_LABEL[contract.status]}
+            </span>
+          </div>
         </div>
-        {canCreate && <NewHourlyWorkEntryButton hourlyContractId={contract.id} />}
+        <div className="flex items-center gap-2">
+          {canUpdate && contract.status === 'in_corso' && <RestHourlyContractButton hourlyContractId={contract.id} />}
+          {canCreate && <NewHourlyWorkEntryButton hourlyContractId={contract.id} />}
+        </div>
       </div>
 
       <div className="overflow-x-auto p-6">
