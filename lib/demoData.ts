@@ -63,7 +63,6 @@ DEMO_USERS.forEach((user, userIndex) => {
       id: projectId,
       title: `${pick(PROJECT_WORDS)} — ${user.name.split(' ')[0]}`,
       assignedTo: user.id,
-      budgetShare: 100,
       isDemo: true,
       createdBy: user.id,
       createdAt: new Date('2026-01-01'),

@@ -10,11 +10,9 @@ import { notify } from '@/lib/notify';
 export default function MarkProjectCompletedButton({
   projectId,
   projectTitle,
-  budgetShare,
 }: {
   projectId: string;
   projectTitle: string;
-  budgetShare: number;
 }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -47,7 +45,7 @@ export default function MarkProjectCompletedButton({
       {open && (
         <DoubleConfirmModal
           firstMessage={`Segnare il progetto "${projectTitle}" come completato?`}
-          secondMessage={`Verrà generata una fattura per la quota ${budgetShare}% del budget del lavoro collegato, visibile agli admin nella pagina Fatture. Confermi?`}
+          secondMessage="Il completamento non genera più fatture automatiche: potrai creare la fattura manualmente dalla pagina Fatture, se necessario. Confermi?"
           onConfirm={handleConfirm}
           onClose={() => setOpen(false)}
         />

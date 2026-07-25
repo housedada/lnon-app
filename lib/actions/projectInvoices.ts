@@ -4,8 +4,6 @@ import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import {
   getProjectById,
-  getJobById,
-  getClientById,
   markProjectCompleted,
   archiveProjectInvoices,
   unarchiveProjectInvoice,
@@ -26,38 +24,19 @@ async function requireAdmin(): Promise<{ userId: string }> {
 }
 
 /**
- * Segna un progetto come completato: genera la relativa fattura interna (bozza),
- * visibile solo agli admin nella pagina Fatture. Importo = quota % del budget del
- * lavoro collegato (budget effettivo se presente, altrimenti stimato).
+ * Segna un progetto come completato. La fatturazione resta sempre manuale.
  */
-export async function markProjectCompletedAction(projectId: string): Promise<{ success: boolean; message: string; invoice?: ProjectInvoice }> {
+export async function markProjectCompletedAction(projectId: string): Promise<{ success: boolean; message: string }> {
   try {
-    const { userId } = await requireAdmin();
+    await requireAdmin();
     const project = await getProjectById(projectId);
     if (!project) return { success: false, message: 'Progetto non trovato.' };
     if (project.completedAt) return { success: false, message: 'Questo progetto è già segnato come completato.' };
 
-    const job = project.jobId ? await getJobById(project.jobId) : null;
-    const jobBudget = job ? job.actualBudget ?? job.estimatedBudget ?? 0 : 0;
-    const client = job?.clientId ? await getClientById(job.clientId) : null;
-    const vatRate = client?.defaultVatRate ?? 22;
-    const netAmount = Math.round(jobBudget * (project.budgetShare / 100) * 100) / 100;
-    const clientName = job?.clientName ?? job?.clientNameRaw ?? 'Cliente non specificato';
-
-    const invoice = await markProjectCompleted(projectId, {
-      netAmount,
-      vatRate,
-      projectTitle: project.title,
-      jobId: job?.id,
-      jobTitle: job?.title,
-      clientId: job?.clientId,
-      clientName,
-      createdBy: userId,
-    });
+    await markProjectCompleted(projectId);
 
     revalidatePath('/dashboard/tasks');
-    revalidatePath('/dashboard/invoices');
-    return { success: true, message: `Progetto completato: generata fattura da € ${invoice.totalAmount.toFixed(2)}.`, invoice };
+    return { success: true, message: 'Progetto segnato come completato.' };
   } catch (err) {
     return { success: false, message: err instanceof Error ? err.message : 'Errore nel completamento del progetto.' };
   }

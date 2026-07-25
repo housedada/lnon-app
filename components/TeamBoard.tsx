@@ -20,7 +20,6 @@ import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
 import { useTaskBoardScrollStore } from '@/lib/store/taskBoardScrollStore';
 import { useTaskBoardExpandStore } from '@/lib/store/taskBoardExpandStore';
 import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/ProjectTaskList';
-import ProjectShareBadge from '@/components/ProjectShareBadge';
 import MarkProjectCompletedButton from '@/components/MarkProjectCompletedButton';
 import SortableColumn from '@/components/SortableColumn';
 import TeamMemberDetailModal from '@/components/TeamMemberDetailModal';
@@ -331,16 +330,13 @@ export default function TeamBoard({
                                   )}
                                 </div>
                               </button>
-                              {project.jobId && (
-                                <ProjectShareBadge projectId={project.id} share={project.budgetShare} textClass="text-secondary" />
-                              )}
                               {project.jobId && canManageInvoices && (
                                 project.completedAt ? (
                                   <span title="Progetto completato" className="shrink-0">
                                     <CheckCircle2 size={13} strokeWidth={1.75} className="text-secondary" aria-label="Progetto completato" />
                                   </span>
                                 ) : (
-                                  <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} budgetShare={project.budgetShare} />
+                                  <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} />
                                 )
                               )}
                               <button

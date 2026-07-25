@@ -5,7 +5,6 @@ import { createPortal } from 'react-dom';
 import { X, Trash2, Briefcase } from 'lucide-react';
 import ParticleCanvasHeader from '@/components/ParticleCanvasHeader';
 import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/ProjectTaskList';
-import ProjectShareBadge from '@/components/ProjectShareBadge';
 import MarkProjectCompletedButton from '@/components/MarkProjectCompletedButton';
 import type { Project, ProjectTask } from '@/lib/types';
 
@@ -54,9 +53,8 @@ export default function ProjectDetailModal({
             )}
           </div>
           <div className="relative z-10 flex shrink-0 items-center gap-2.5">
-            {project.jobId && <ProjectShareBadge projectId={project.id} share={project.budgetShare} textClass={headerSubTextClass} />}
             {project.jobId && canManageInvoices && !project.completedAt && (
-              <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} budgetShare={project.budgetShare} />
+              <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} />
             )}
             <button
               type="button"

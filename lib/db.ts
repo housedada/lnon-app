@@ -323,6 +323,8 @@ function jobRowToJob(row: Record<string, any>): Job {
     approvedAt: row.approved_at ? new Date(row.approved_at) : undefined,
     approvedBy: row.approved_by ?? undefined,
     archivedAt: row.archived_at ? new Date(row.archived_at) : undefined,
+    fiscalYear: row.fiscal_year,
+    supplierCost: row.supplier_cost != null ? Number(row.supplier_cost) : undefined,
     invoiceNumber: row.invoice_number ?? undefined,
     invoiceDate: row.invoice_date ? new Date(row.invoice_date) : undefined,
     invoiceNetAmount: row.invoice_net_amount ?? undefined,
@@ -351,6 +353,8 @@ function jobToRow(data: Partial<Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'cl
   if (data.endDate !== undefined) row.end_date = data.endDate ? data.endDate.toISOString().slice(0, 10) : null;
   if (data.assignedTo !== undefined) row.assigned_to = data.assignedTo || null;
   if (data.createdBy !== undefined) row.created_by = data.createdBy;
+  if (data.fiscalYear !== undefined) row.fiscal_year = data.fiscalYear;
+  if (data.supplierCost !== undefined) row.supplier_cost = data.supplierCost;
   return row;
 }
 
@@ -1524,7 +1528,6 @@ function projectRowToProject(row: Record<string, any>): Project {
     title: row.title,
     description: row.description ?? undefined,
     assignedTo: row.assigned_to ?? undefined,
-    budgetShare: row.budget_share != null ? Number(row.budget_share) : 100,
     completedAt: row.completed_at ? new Date(row.completed_at) : undefined,
     isDemo: row.is_demo ?? false,
     createdBy: row.created_by,
@@ -1542,7 +1545,6 @@ function projectToRow(data: Partial<Omit<Project, 'id' | 'createdAt' | 'updatedA
   if (data.title !== undefined) row.title = data.title;
   if (data.description !== undefined) row.description = data.description;
   if (data.assignedTo !== undefined) row.assigned_to = data.assignedTo || null;
-  if (data.budgetShare !== undefined) row.budget_share = data.budgetShare;
   if (data.completedAt !== undefined) row.completed_at = data.completedAt ? data.completedAt.toISOString() : null;
   if (data.isDemo !== undefined) row.is_demo = data.isDemo;
   if (data.createdBy !== undefined) row.created_by = data.createdBy;
@@ -1644,39 +1646,6 @@ export async function getProjectsByJobId(jobId: string): Promise<Project[]> {
   return (data ?? []).map(projectRowToProject);
 }
 
-/**
- * Assegna una nuova quota % budget a un progetto e ridistribuisce automaticamente
- * il resto tra gli altri progetti collegati allo stesso lavoro, in proporzione alle
- * loro quote attuali (o in parti uguali se gli altri sono tutti a zero), così che la
- * somma delle quote di tutti i progetti attivi di un lavoro resti sempre 100.
- */
-export async function rebalanceProjectShares(jobId: string, changedProjectId: string, newShare: number): Promise<void> {
-  const siblings = await getProjectsByJobId(jobId);
-  const others = siblings.filter((p) => p.id !== changedProjectId);
-  const clamped = Math.max(0, Math.min(100, newShare));
-  const remainder = 100 - clamped;
-
-  const updates: { id: string; share: number }[] = [{ id: changedProjectId, share: clamped }];
-
-  if (others.length > 0) {
-    const othersTotal = others.reduce((sum, p) => sum + p.budgetShare, 0);
-    others.forEach((p, idx) => {
-      const isLast = idx === others.length - 1;
-      let share: number;
-      if (isLast) {
-        share = Math.max(0, 100 - updates.reduce((sum, u) => sum + u.share, 0));
-      } else if (othersTotal > 0) {
-        share = Math.round(((p.budgetShare / othersTotal) * remainder) * 100) / 100;
-      } else {
-        share = Math.round((remainder / others.length) * 100) / 100;
-      }
-      updates.push({ id: p.id, share });
-    });
-  }
-
-  await Promise.all(updates.map((u) => supabaseServer.from('projects').update({ budget_share: u.share }).eq('id', u.id)));
-}
-
 function projectInvoiceRowToProjectInvoice(row: Record<string, any>): ProjectInvoice {
   return {
     id: row.id,
@@ -1711,40 +1680,16 @@ function projectInvoiceRowToProjectInvoice(row: Record<string, any>): ProjectInv
  * visibile solo agli admin nella pagina Fatture. L'importo è calcolato dal budget
  * del lavoro collegato per la quota % assegnata al progetto.
  */
-export async function markProjectCompleted(
-  projectId: string,
-  input: { netAmount: number; vatRate: number; projectTitle: string; jobId?: string; jobTitle?: string; clientId?: string; clientName: string; createdBy: string }
-): Promise<ProjectInvoice> {
-  const vatAmount = Math.round(input.netAmount * (input.vatRate / 100) * 100) / 100;
-  const totalAmount = Math.round((input.netAmount + vatAmount) * 100) / 100;
-
-  const { error: updateError } = await supabaseServer
+/**
+ * Segna un progetto come completato. Non genera più fatture automatiche:
+ * la fatturazione va sempre creata manualmente dagli admin nella pagina Fatture.
+ */
+export async function markProjectCompleted(projectId: string): Promise<void> {
+  const { error } = await supabaseServer
     .from('projects')
     .update({ completed_at: new Date().toISOString() })
     .eq('id', projectId);
-  if (updateError) throw updateError;
-
-  const { data, error } = await supabaseServer
-    .from('project_invoices')
-    .insert([
-      {
-        project_id: projectId,
-        job_id: input.jobId ?? null,
-        client_id: input.clientId ?? null,
-        project_title: input.projectTitle,
-        job_title: input.jobTitle ?? null,
-        client_name: input.clientName,
-        net_amount: input.netAmount,
-        vat_rate: input.vatRate,
-        vat_amount: vatAmount,
-        total_amount: totalAmount,
-        created_by: input.createdBy,
-      },
-    ])
-    .select()
-    .single();
   if (error) throw error;
-  return projectInvoiceRowToProjectInvoice(data);
 }
 
 /**

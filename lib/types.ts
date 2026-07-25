@@ -172,6 +172,10 @@ export interface Job {
   approvedBy?: string;
   archivedAt?: Date;
   productIds?: string[];
+  // Anno di competenza economica del lavoro, per la Overview Lavori
+  fiscalYear: number;
+  // Spesa fornitori/sottofornitori sostenuta per questo lavoro (importo singolo)
+  supplierCost?: number;
   // Campi economico/fiscali di riga, popolati dall'import storico da export
   // Fatture in Cloud (1 job = 1 voce di fattura)
   invoiceNumber?: string;
@@ -193,9 +197,6 @@ export interface Project {
   title: string;
   description?: string;
   assignedTo?: string;
-  // Quota % del budget del lavoro collegato assegnata a questo progetto; la somma
-  // dei progetti attivi di uno stesso lavoro deve sempre dare 100.
-  budgetShare: number;
   completedAt?: Date;
   isDemo?: boolean;
   createdBy: string;

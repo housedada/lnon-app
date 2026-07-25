@@ -4,7 +4,6 @@ import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Trash2, Briefcase, ChevronDown } from 'lucide-react';
 import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/ProjectTaskList';
-import ProjectShareBadge from '@/components/ProjectShareBadge';
 import MarkProjectCompletedButton from '@/components/MarkProjectCompletedButton';
 import type { Project, ProjectTask } from '@/lib/types';
 
@@ -77,9 +76,8 @@ export default function TeamMemberDetailModal({
                       )}
                     </div>
                   </button>
-                  {project.jobId && <ProjectShareBadge projectId={project.id} share={project.budgetShare} textClass="text-secondary" />}
                   {project.jobId && canManageInvoices && !project.completedAt && (
-                    <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} budgetShare={project.budgetShare} />
+                    <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} />
                   )}
                   <button
                     type="button"

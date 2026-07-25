@@ -19,7 +19,6 @@ import { useTaskBoardScrollStore } from '@/lib/store/taskBoardScrollStore';
 import { useTaskBoardExpandStore } from '@/lib/store/taskBoardExpandStore';
 import { savePersonalColumnOrderAction } from '@/lib/actions/projects';
 import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/ProjectTaskList';
-import ProjectShareBadge from '@/components/ProjectShareBadge';
 import MarkProjectCompletedButton from '@/components/MarkProjectCompletedButton';
 import SortableColumn from '@/components/SortableColumn';
 import ProjectDetailModal from '@/components/ProjectDetailModal';
@@ -309,16 +308,13 @@ export default function PersonalBoard({
                           )}
                         </div>
                       </button>
-                      {project.jobId && (
-                        <ProjectShareBadge projectId={project.id} share={project.budgetShare} textClass={headerSubTextClass} />
-                      )}
                       {project.jobId && canManageInvoices && (
                         project.completedAt ? (
                           <span title="Progetto completato" className="shrink-0">
                             <CheckCircle2 size={13} strokeWidth={1.75} className={headerTextClass} aria-label="Progetto completato" />
                           </span>
                         ) : (
-                          <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} budgetShare={project.budgetShare} />
+                          <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} />
                         )
                       )}
                       <button
