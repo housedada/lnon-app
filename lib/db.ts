@@ -19,6 +19,8 @@ import type {
   ProjectTask,
   ProjectTaskStatus,
   ProjectInvoice,
+  HourlyContract,
+  HourlyWorkEntry,
 } from './types';
 import { buildProductColorMap } from './productColors';
 
@@ -338,6 +340,8 @@ function jobRowToJob(row: Record<string, any>): Job {
     clientName: row.clients?.name ?? undefined,
     contractLabel: row.contracts ? (row.contracts.clients?.name ?? row.contracts.client_name_raw) : undefined,
     assignedToName: row.assigned_user?.name ?? undefined,
+    isSystemGenerated: row.is_system_generated ?? false,
+    systemSource: row.system_source ?? undefined,
   };
 }
 
@@ -358,6 +362,8 @@ function jobToRow(data: Partial<Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'cl
   if (data.createdBy !== undefined) row.created_by = data.createdBy;
   if (data.fiscalYear !== undefined) row.fiscal_year = data.fiscalYear;
   if (data.supplierCost !== undefined) row.supplier_cost = data.supplierCost;
+  if (data.isSystemGenerated !== undefined) row.is_system_generated = data.isSystemGenerated;
+  if (data.systemSource !== undefined) row.system_source = data.systemSource;
   return row;
 }
 
@@ -1636,6 +1642,8 @@ function projectRowToProject(row: Record<string, any>): Project {
     deletedAt: row.deleted_at ? new Date(row.deleted_at) : undefined,
     jobTitle: row.jobs?.title ?? undefined,
     assignedToName: row.assigned_user?.name ?? undefined,
+    isSystemGenerated: row.is_system_generated ?? false,
+    systemSource: row.system_source ?? undefined,
   };
 }
 
@@ -1648,6 +1656,8 @@ function projectToRow(data: Partial<Omit<Project, 'id' | 'createdAt' | 'updatedA
   if (data.completedAt !== undefined) row.completed_at = data.completedAt ? data.completedAt.toISOString() : null;
   if (data.isDemo !== undefined) row.is_demo = data.isDemo;
   if (data.createdBy !== undefined) row.created_by = data.createdBy;
+  if (data.isSystemGenerated !== undefined) row.is_system_generated = data.isSystemGenerated;
+  if (data.systemSource !== undefined) row.system_source = data.systemSource;
   return row;
 }
 
@@ -2341,6 +2351,71 @@ export async function upsertFixedExpenseEntry(input: {
     .single();
   if (error) throw error;
   return fixedExpenseEntryRowToEntry(data);
+}
+
+function hourlyContractRowToHourlyContract(row: Record<string, any>): HourlyContract {
+  return {
+    id: row.id,
+    clientId: row.client_id,
+    rateType: row.rate_type,
+    customHourlyRate: row.custom_hourly_rate != null ? Number(row.custom_hourly_rate) : undefined,
+    status: row.status,
+    jobId: row.job_id ?? undefined,
+    projectId: row.project_id ?? undefined,
+    createdBy: row.created_by,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+    deletedAt: row.deleted_at ? new Date(row.deleted_at) : undefined,
+    clientName: row.clients?.name ?? undefined,
+  };
+}
+
+function hourlyContractToRow(data: Partial<Omit<HourlyContract, 'id' | 'createdAt' | 'updatedAt' | 'clientName' | 'effectiveHourlyRate' | 'entriesCount' | 'lastEntryDate' | 'totalAmount'>>): Record<string, any> {
+  const row: Record<string, any> = {};
+  if (data.clientId !== undefined) row.client_id = data.clientId;
+  if (data.rateType !== undefined) row.rate_type = data.rateType;
+  if (data.customHourlyRate !== undefined) row.custom_hourly_rate = data.customHourlyRate;
+  if (data.status !== undefined) row.status = data.status;
+  if (data.jobId !== undefined) row.job_id = data.jobId;
+  if (data.projectId !== undefined) row.project_id = data.projectId;
+  if (data.createdBy !== undefined) row.created_by = data.createdBy;
+  return row;
+}
+
+function hourlyWorkEntryRowToHourlyWorkEntry(row: Record<string, any>): HourlyWorkEntry {
+  return {
+    id: row.id,
+    hourlyContractId: row.hourly_contract_id,
+    projectTaskId: row.project_task_id ?? undefined,
+    platformReference: row.platform_reference ?? undefined,
+    description: row.description,
+    entryDate: new Date(row.entry_date),
+    hours: Number(row.hours),
+    status: row.status,
+    amount: Number(row.amount ?? 0),
+    invoiceId: row.invoice_id ?? undefined,
+    invoicedAt: row.invoiced_at ? new Date(row.invoiced_at) : undefined,
+    createdBy: row.created_by,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+    deletedAt: row.deleted_at ? new Date(row.deleted_at) : undefined,
+  };
+}
+
+function hourlyWorkEntryToRow(data: Partial<Omit<HourlyWorkEntry, 'id' | 'createdAt' | 'updatedAt'>>): Record<string, any> {
+  const row: Record<string, any> = {};
+  if (data.hourlyContractId !== undefined) row.hourly_contract_id = data.hourlyContractId;
+  if (data.projectTaskId !== undefined) row.project_task_id = data.projectTaskId;
+  if (data.platformReference !== undefined) row.platform_reference = data.platformReference;
+  if (data.description !== undefined) row.description = data.description;
+  if (data.entryDate !== undefined) row.entry_date = data.entryDate.toISOString().slice(0, 10);
+  if (data.hours !== undefined) row.hours = data.hours;
+  if (data.status !== undefined) row.status = data.status;
+  if (data.amount !== undefined) row.amount = data.amount;
+  if (data.invoiceId !== undefined) row.invoice_id = data.invoiceId;
+  if (data.invoicedAt !== undefined) row.invoiced_at = data.invoicedAt ? data.invoicedAt.toISOString() : null;
+  if (data.createdBy !== undefined) row.created_by = data.createdBy;
+  return row;
 }
 
 export type { User, Client, Job, Task, Invoice, Invitation, ActivityLog, Product, Contract, Project, ProjectTask, ProjectInvoice };
