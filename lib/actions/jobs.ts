@@ -30,6 +30,8 @@ const JobSchema = z.object({
   status: z.enum(['draft', 'pending_approval', 'approved', 'in_progress', 'completed', 'cancelled']),
   estimatedBudget: z.coerce.number().optional().or(z.literal('')),
   actualBudget: z.coerce.number().optional().or(z.literal('')),
+  fiscalYear: z.coerce.number().int().min(2000).max(2100),
+  supplierCost: z.coerce.number().optional().or(z.literal('')),
   currency: z.string().default('EUR'),
   startDate: z.string().optional().or(z.literal('')),
   endDate: z.string().optional().or(z.literal('')),

@@ -164,11 +164,20 @@ export default function JobForm({
 
       <section className="card-shadow space-y-4 rounded-xl border border-grid-border bg-card-bg p-6">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-secondary">Budget e date</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <Field label="Budget stimato" name="estimatedBudget" defaultValue={job?.estimatedBudget} type="number" icon={Euro} />
           <Field label="Budget reale" name="actualBudget" defaultValue={job?.actualBudget} type="number" icon={Euro} />
+          <Field label="Spese fornitori" name="supplierCost" defaultValue={job?.supplierCost} type="number" icon={Euro} />
           <Field label="Data inizio" name="startDate" defaultValue={toDateInputValue(job?.startDate)} type="date" icon={Calendar} />
           <Field label="Data fine" name="endDate" defaultValue={toDateInputValue(job?.endDate)} type="date" icon={Calendar} />
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <Field
+            label="Anno di competenza *"
+            name="fiscalYear"
+            defaultValue={job?.fiscalYear ?? new Date().getFullYear()}
+            type="number"
+          />
         </div>
         <input type="hidden" name="currency" value={job?.currency ?? 'EUR'} />
       </section>

@@ -5,6 +5,7 @@ import type {
   User,
   Client,
   Job,
+  JobStatus,
   Task,
   Invoice,
   Invitation,
@@ -460,6 +461,103 @@ export async function getJobs(filters?: {
   }
 
   return { data: jobs, total };
+}
+
+const JOB_FORECAST_CATEGORY: Partial<Record<JobStatus, JobForecastCategory>> = {
+  draft: 'potenziale',
+  pending_approval: 'preventivato',
+  approved: 'confermato',
+  in_progress: 'confermato',
+  completed: 'confermato',
+  // cancelled: intenzionalmente assente, escluso da tutti i totali
+};
+
+export type JobForecastCategory = 'potenziale' | 'preventivato' | 'confermato';
+
+export interface JobForecastRow {
+  jobId: string;
+  clientName: string;
+  title: string;
+  status: JobStatus;
+  category: JobForecastCategory;
+  estimatedBudget: number;
+  supplierCost: number;
+  invoicedAmount: number;
+  margin: number;
+}
+
+export interface JobsForecastResult {
+  rows: JobForecastRow[];
+  totals: {
+    potenziale: number;
+    preventivato: number;
+    confermato: number;
+    fatturato: number;
+    speseFornitori: number;
+  };
+}
+
+/**
+ * Aggrega i lavori di un anno di competenza in Potenziale/Preventivato/
+ * Confermato/Fatturato/Spese Fornitori per la Overview Lavori (Reports).
+ */
+export async function getJobsForecast(fiscalYear: number): Promise<JobsForecastResult> {
+  const { data: jobRows, error: jobsError } = await supabaseServer
+    .from('jobs')
+    .select('*, clients(name), contracts(client_name_raw, clients(name))')
+    .eq('fiscal_year', fiscalYear)
+    .is('deleted_at', null)
+    .neq('status', 'cancelled');
+  if (jobsError) throw jobsError;
+
+  const jobs = (jobRows ?? []).map(jobRowToJob);
+  const jobIds = jobs.map((j) => j.id);
+
+  let invoicedByJobId = new Map<string, number>();
+  if (jobIds.length > 0) {
+    const { data: invoiceRows, error: invoicesError } = await supabaseServer
+      .from('project_invoices')
+      .select('job_id, net_amount')
+      .in('job_id', jobIds)
+      .eq('status', 'fatturata');
+    if (invoicesError) throw invoicesError;
+
+    invoicedByJobId = (invoiceRows ?? []).reduce((map, row: any) => {
+      if (!row.job_id) return map;
+      map.set(row.job_id, (map.get(row.job_id) ?? 0) + Number(row.net_amount ?? 0));
+      return map;
+    }, new Map<string, number>());
+  }
+
+  const totals = { potenziale: 0, preventivato: 0, confermato: 0, fatturato: 0, speseFornitori: 0 };
+  const rows: JobForecastRow[] = [];
+
+  for (const job of jobs) {
+    const category = JOB_FORECAST_CATEGORY[job.status];
+    if (!category) continue; // cancelled o stato non mappato
+
+    const estimatedBudget = job.estimatedBudget ?? 0;
+    const supplierCost = job.supplierCost ?? 0;
+    const invoicedAmount = invoicedByJobId.get(job.id) ?? 0;
+
+    totals[category] += estimatedBudget;
+    totals.fatturato += invoicedAmount;
+    totals.speseFornitori += supplierCost;
+
+    rows.push({
+      jobId: job.id,
+      clientName: job.clientName ?? job.clientNameRaw ?? 'Cliente non specificato',
+      title: job.title,
+      status: job.status,
+      category,
+      estimatedBudget,
+      supplierCost,
+      invoicedAmount,
+      margin: Math.round((invoicedAmount - supplierCost) * 100) / 100,
+    });
+  }
+
+  return { rows, totals };
 }
 
 /**
