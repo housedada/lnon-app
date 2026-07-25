@@ -14,6 +14,7 @@ import {
   getDeletedProjectTasks,
 } from '@/lib/db';
 import type { ProjectTask, ProjectTaskStatus } from '@/lib/types';
+import { applyHourlyWorkEntryCascade } from '@/lib/hourlyBillingCascade';
 
 async function requireCanManage() {
   const session = await auth();
@@ -67,6 +68,7 @@ export async function updateProjectTaskStatusAction(
   try {
     await requireCanManage();
     const task = await updateProjectTaskStatus(taskId, status);
+    await applyHourlyWorkEntryCascade(task, status);
     revalidatePath('/dashboard/tasks');
     return { success: true, message: 'Stato aggiornato.', task };
   } catch (err) {
