@@ -53,6 +53,7 @@ export async function updateHourlyContractAction(id: string, formData: FormData)
     const customHourlyRate = customHourlyRateRaw ? Number(customHourlyRateRaw) : undefined;
     const status = String(formData.get('status') || 'in_corso') as 'in_corso' | 'non_in_corso';
 
+    if (!['standard', 'cheap', 'custom'].includes(rateType)) return { success: false, message: 'Tipo tariffa non valido.' };
     if (rateType === 'custom' && (!customHourlyRate || customHourlyRate <= 0)) {
       return { success: false, message: 'Inserisci una tariffa oraria valida.' };
     }
