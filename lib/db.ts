@@ -1718,7 +1718,10 @@ export async function getOpenHourlyWorkEntriesCount(): Promise<number> {
     .select('id', { count: 'exact', head: true })
     .eq('status', 'assegnata')
     .is('deleted_at', null);
-  if (error) throw error;
+  if (error) {
+    console.error('getOpenHourlyWorkEntriesCount failed:', error);
+    return 0;
+  }
   return count ?? 0;
 }
 
@@ -2546,6 +2549,7 @@ export async function createHourlyContract(
     isSystemGenerated: true,
     systemSource: 'hourly_contract',
     createdBy,
+    assignedTo: createdBy,
   });
 
   const { data: updatedRow, error: updateError } = await supabaseServer

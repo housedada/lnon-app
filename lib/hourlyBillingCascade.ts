@@ -15,6 +15,7 @@ export async function applyHourlyWorkEntryCascade(task: ProjectTask, newStatus: 
     .select('id, status')
     .eq('project_task_id', task.id)
     .is('deleted_at', null)
+    .is('invoice_id', null)
     .maybeSingle();
   if (!entry) return;
 
