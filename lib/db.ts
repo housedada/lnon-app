@@ -21,8 +21,11 @@ import type {
   ProjectInvoice,
   HourlyContract,
   HourlyWorkEntry,
+  HourlyRateType,
+  HourlyContractStatus,
 } from './types';
 import { buildProductColorMap } from './productColors';
+import { resolveHourlyRate } from './hourlyBilling';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -2416,6 +2419,251 @@ function hourlyWorkEntryToRow(data: Partial<Omit<HourlyWorkEntry, 'id' | 'create
   if (data.invoicedAt !== undefined) row.invoiced_at = data.invoicedAt ? data.invoicedAt.toISOString() : null;
   if (data.createdBy !== undefined) row.created_by = data.createdBy;
   return row;
+}
+
+/**
+ * Contratti a conteggio orario, con aggregati calcolati lato applicazione
+ * (conteggio lavorazioni, ultima data, totale).
+ */
+export async function getHourlyContracts(filters?: { q?: string; status?: HourlyContractStatus }): Promise<HourlyContract[]> {
+  let query = supabaseServer
+    .from('hourly_contracts')
+    .select('*, clients(name)')
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false });
+
+  if (filters?.status) {
+    query = query.eq('status', filters.status);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  let contracts = (data ?? []).map(hourlyContractRowToHourlyContract);
+
+  if (filters?.q) {
+    const q = filters.q.toLowerCase();
+    contracts = contracts.filter((c) => (c.clientName ?? '').toLowerCase().includes(q));
+  }
+
+  if (contracts.length > 0) {
+    const { data: entryRows, error: entriesError } = await supabaseServer
+      .from('hourly_work_entries')
+      .select('hourly_contract_id, entry_date, amount')
+      .in('hourly_contract_id', contracts.map((c) => c.id))
+      .is('deleted_at', null);
+    if (entriesError) throw entriesError;
+
+    const aggByContract = new Map<string, { count: number; lastDate?: Date; total: number }>();
+    for (const row of entryRows ?? []) {
+      const agg = aggByContract.get(row.hourly_contract_id) ?? { count: 0, total: 0 };
+      agg.count += 1;
+      agg.total += Number(row.amount ?? 0);
+      const entryDate = new Date(row.entry_date);
+      if (!agg.lastDate || entryDate > agg.lastDate) agg.lastDate = entryDate;
+      aggByContract.set(row.hourly_contract_id, agg);
+    }
+
+    contracts = contracts.map((c) => {
+      const agg = aggByContract.get(c.id);
+      return {
+        ...c,
+        effectiveHourlyRate: resolveHourlyRate(c),
+        entriesCount: agg?.count ?? 0,
+        lastEntryDate: agg?.lastDate,
+        totalAmount: agg?.total ?? 0,
+      };
+    });
+  }
+
+  return contracts;
+}
+
+export async function getHourlyContractById(id: string): Promise<HourlyContract | null> {
+  const { data, error } = await supabaseServer
+    .from('hourly_contracts')
+    .select('*, clients(name)')
+    .eq('id', id)
+    .is('deleted_at', null)
+    .single();
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw error;
+  }
+  const contract = hourlyContractRowToHourlyContract(data);
+  return { ...contract, effectiveHourlyRate: resolveHourlyRate(contract) };
+}
+
+/**
+ * Crea un contratto a conteggio orario e genera il Job+Project speciali
+ * (is_system_generated=true, system_source='hourly_contract') che
+ * accumuleranno un Task per ogni lavorazione futura.
+ */
+export async function createHourlyContract(
+  input: { clientId: string; rateType: HourlyRateType; customHourlyRate?: number },
+  createdBy: string
+): Promise<HourlyContract> {
+  const { data: clientRow, error: clientError } = await supabaseServer
+    .from('clients').select('name').eq('id', input.clientId).single();
+  if (clientError) throw clientError;
+
+  const { data: contractRow, error: insertError } = await supabaseServer
+    .from('hourly_contracts')
+    .insert([hourlyContractToRow({ clientId: input.clientId, rateType: input.rateType, customHourlyRate: input.customHourlyRate, status: 'in_corso', createdBy })])
+    .select()
+    .single();
+  if (insertError) throw insertError;
+
+  const title = `Conteggio orario — ${clientRow.name}`;
+  const job = await createDbJob({
+    title,
+    clientId: input.clientId,
+    status: 'in_progress',
+    currency: 'EUR',
+    fiscalYear: new Date().getFullYear(),
+    isSystemGenerated: true,
+    systemSource: 'hourly_contract',
+    createdBy,
+  });
+
+  const project = await createDbProject({
+    title,
+    jobId: job.id,
+    isSystemGenerated: true,
+    systemSource: 'hourly_contract',
+    createdBy,
+  });
+
+  const { data: updatedRow, error: updateError } = await supabaseServer
+    .from('hourly_contracts')
+    .update({ job_id: job.id, project_id: project.id })
+    .eq('id', contractRow.id)
+    .select('*, clients(name)')
+    .single();
+  if (updateError) throw updateError;
+
+  return hourlyContractRowToHourlyContract(updatedRow);
+}
+
+export async function updateHourlyContract(
+  id: string,
+  patch: Partial<Pick<HourlyContract, 'rateType' | 'customHourlyRate' | 'status'>>
+): Promise<HourlyContract> {
+  const { data, error } = await supabaseServer
+    .from('hourly_contracts')
+    .update(hourlyContractToRow(patch))
+    .eq('id', id)
+    .select('*, clients(name)')
+    .single();
+  if (error) throw error;
+  return hourlyContractRowToHourlyContract(data);
+}
+
+export async function softDeleteHourlyContract(id: string): Promise<void> {
+  const { error } = await supabaseServer
+    .from('hourly_contracts')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+export async function getHourlyWorkEntries(hourlyContractId: string): Promise<HourlyWorkEntry[]> {
+  const { data, error } = await supabaseServer
+    .from('hourly_work_entries')
+    .select('*')
+    .eq('hourly_contract_id', hourlyContractId)
+    .is('deleted_at', null)
+    .order('entry_date', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(hourlyWorkEntryRowToHourlyWorkEntry);
+}
+
+/**
+ * Crea una lavorazione e il Task collegato nel Project speciale del
+ * contratto. L'importo è uno snapshot calcolato con la tariffa corrente.
+ */
+export async function createHourlyWorkEntry(
+  input: { hourlyContractId: string; platformReference?: string; description: string; entryDate: Date; hours: number },
+  createdBy: string
+): Promise<HourlyWorkEntry> {
+  const contract = await getHourlyContractById(input.hourlyContractId);
+  if (!contract) throw new Error('Contratto a conteggio orario non trovato.');
+  if (!contract.projectId) throw new Error('Il contratto non ha un progetto collegato.');
+
+  const rate = resolveHourlyRate(contract);
+  const amount = Math.round(input.hours * rate * 100) / 100;
+
+  const { data: entryRow, error: insertError } = await supabaseServer
+    .from('hourly_work_entries')
+    .insert([
+      hourlyWorkEntryToRow({
+        hourlyContractId: input.hourlyContractId,
+        platformReference: input.platformReference,
+        description: input.description,
+        entryDate: input.entryDate,
+        hours: input.hours,
+        status: 'assegnata',
+        amount,
+        createdBy,
+      }),
+    ])
+    .select()
+    .single();
+  if (insertError) throw insertError;
+
+  const task = await createProjectTask({ projectId: contract.projectId, title: input.description, createdBy });
+
+  const { data: updatedRow, error: updateError } = await supabaseServer
+    .from('hourly_work_entries')
+    .update({ project_task_id: task.id })
+    .eq('id', entryRow.id)
+    .select()
+    .single();
+  if (updateError) throw updateError;
+
+  return hourlyWorkEntryRowToHourlyWorkEntry(updatedRow);
+}
+
+export async function updateHourlyWorkEntry(
+  id: string,
+  patch: Partial<Pick<HourlyWorkEntry, 'platformReference' | 'description' | 'entryDate' | 'hours'>>
+): Promise<HourlyWorkEntry> {
+  const { data: existingRow, error: fetchError } = await supabaseServer
+    .from('hourly_work_entries').select('*').eq('id', id).single();
+  if (fetchError) throw fetchError;
+  const existing = hourlyWorkEntryRowToHourlyWorkEntry(existingRow);
+  if (existing.invoiceId) throw new Error('Questa lavorazione è già stata fatturata e non può essere modificata.');
+
+  const row = hourlyWorkEntryToRow(patch);
+  if (patch.hours !== undefined) {
+    const contract = await getHourlyContractById(existing.hourlyContractId);
+    if (contract) row.amount = Math.round(patch.hours * resolveHourlyRate(contract) * 100) / 100;
+  }
+
+  const { data, error } = await supabaseServer
+    .from('hourly_work_entries').update(row).eq('id', id).select().single();
+  if (error) throw error;
+
+  if (patch.description !== undefined && existing.projectTaskId) {
+    await updateProjectTaskTitle(existing.projectTaskId, patch.description);
+  }
+
+  return hourlyWorkEntryRowToHourlyWorkEntry(data);
+}
+
+export async function softDeleteHourlyWorkEntry(id: string): Promise<void> {
+  const { data: row, error: fetchError } = await supabaseServer
+    .from('hourly_work_entries').select('project_task_id').eq('id', id).single();
+  if (fetchError) throw fetchError;
+
+  const { error } = await supabaseServer
+    .from('hourly_work_entries')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw error;
+
+  if (row?.project_task_id) {
+    await softDeleteProjectTask(row.project_task_id);
+  }
 }
 
 export type { User, Client, Job, Task, Invoice, Invitation, ActivityLog, Product, Contract, Project, ProjectTask, ProjectInvoice };
