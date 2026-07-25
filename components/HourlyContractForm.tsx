@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { HOURLY_RATES } from '@/lib/hourlyBilling';
+import AssignedToPicker from '@/components/AssignedToPicker';
 import type { HourlyContract, HourlyRateType } from '@/lib/types';
 
 const RATE_LABELS: Record<HourlyRateType, string> = {
@@ -13,10 +14,12 @@ const RATE_LABELS: Record<HourlyRateType, string> = {
 export default function HourlyContractForm({
   contract,
   clientOptions,
+  userOptions,
   action,
 }: {
   contract?: HourlyContract;
   clientOptions: { id: string; name: string }[];
+  userOptions: { id: string; name: string; color?: string }[];
   action: (formData: FormData) => void;
 }) {
   const [rateType, setRateType] = useState<HourlyRateType>(contract?.rateType ?? 'standard');
@@ -61,6 +64,8 @@ export default function HourlyContractForm({
           </label>
         </div>
       )}
+
+      {!contract && <AssignedToPicker userOptions={userOptions} />}
 
       <div className="flex gap-4">
         {(['standard', 'cheap', 'custom'] as HourlyRateType[]).map((rt) => (

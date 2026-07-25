@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
-import { getHourlyContracts, getAllClientNames } from '@/lib/db';
+import { getHourlyContracts, getAllClientNames, getUsers } from '@/lib/db';
 import SectionTabs from '@/components/SectionTabs';
 import HourlyContractRow from '@/components/HourlyContractRow';
 import NewHourlyContractButton from '@/components/NewHourlyContractButton';
@@ -15,14 +15,15 @@ export default async function HourlyContractsPage() {
     redirect('/dashboard');
   }
 
-  const [contracts, clientOptions] = await Promise.all([getHourlyContracts(), getAllClientNames()]);
+  const [contracts, clientOptions, users] = await Promise.all([getHourlyContracts(), getAllClientNames(), getUsers()]);
+  const userOptions = users.filter((u) => u.isActive).map((u) => ({ id: u.id, name: u.name, color: u.color }));
   const canCreate = hasPermission(role, 'hourly_billing', 'create');
 
   return (
     <div>
       <div className="flex items-center justify-between p-6 pb-0">
         <h1 className="text-2xl font-semibold text-primary">Contratti</h1>
-        {canCreate && <NewHourlyContractButton clientOptions={clientOptions} />}
+        {canCreate && <NewHourlyContractButton clientOptions={clientOptions} userOptions={userOptions} />}
       </div>
 
       <SectionTabs

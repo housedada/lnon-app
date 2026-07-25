@@ -2522,7 +2522,7 @@ export async function getHourlyContractById(id: string): Promise<HourlyContract 
  * accumuleranno un Task per ogni lavorazione futura.
  */
 export async function createHourlyContract(
-  input: { clientId: string; referenceName?: string; rateType: HourlyRateType; customHourlyRate?: number },
+  input: { clientId: string; referenceName?: string; assignedTo?: string; rateType: HourlyRateType; customHourlyRate?: number },
   createdBy: string
 ): Promise<HourlyContract> {
   const { data: clientRow, error: clientError } = await supabaseServer
@@ -2554,7 +2554,7 @@ export async function createHourlyContract(
     isSystemGenerated: true,
     systemSource: 'hourly_contract',
     createdBy,
-    assignedTo: createdBy,
+    assignedTo: input.assignedTo ?? createdBy,
   });
 
   const { data: updatedRow, error: updateError } = await supabaseServer

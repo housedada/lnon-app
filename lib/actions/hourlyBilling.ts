@@ -28,6 +28,7 @@ export async function createHourlyContractAction(formData: FormData): Promise<{ 
     const { userId } = await requireRole('hourly_billing', 'create');
     const clientId = String(formData.get('clientId') || '');
     const referenceName = String(formData.get('referenceName') || '').trim() || undefined;
+    const assignedTo = String(formData.get('assignedTo') || '').trim() || undefined;
     const rateType = String(formData.get('rateType') || '') as HourlyRateType;
     const customHourlyRateRaw = formData.get('customHourlyRate');
     const customHourlyRate = customHourlyRateRaw ? Number(customHourlyRateRaw) : undefined;
@@ -38,7 +39,7 @@ export async function createHourlyContractAction(formData: FormData): Promise<{ 
       return { success: false, message: 'Inserisci una tariffa oraria valida.' };
     }
 
-    await createHourlyContract({ clientId, referenceName, rateType, customHourlyRate }, userId);
+    await createHourlyContract({ clientId, referenceName, assignedTo, rateType, customHourlyRate }, userId);
     revalidatePath('/dashboard/contracts/hourly');
     return { success: true, message: 'Contratto a conteggio orario creato.' };
   } catch (err) {

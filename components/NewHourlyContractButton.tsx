@@ -6,7 +6,13 @@ import FormPageModal from '@/components/FormPageModal';
 import HourlyContractForm from '@/components/HourlyContractForm';
 import { createHourlyContractAction } from '@/lib/actions/hourlyBilling';
 
-export default function NewHourlyContractButton({ clientOptions }: { clientOptions: { id: string; name: string }[] }) {
+export default function NewHourlyContractButton({
+  clientOptions,
+  userOptions,
+}: {
+  clientOptions: { id: string; name: string }[];
+  userOptions: { id: string; name: string; color?: string }[];
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -25,7 +31,7 @@ export default function NewHourlyContractButton({ clientOptions }: { clientOptio
           icon={<Clock size={16} strokeWidth={1.75} className="text-white/70" aria-hidden="true" />}
           onClose={() => setOpen(false)}
         >
-          <HourlyContractForm clientOptions={clientOptions} action={createHourlyContractAction} />
+          <HourlyContractForm clientOptions={clientOptions} userOptions={userOptions} action={createHourlyContractAction} />
         </FormPageModal>
       )}
     </>
