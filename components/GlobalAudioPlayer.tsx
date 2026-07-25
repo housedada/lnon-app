@@ -115,7 +115,8 @@ export default function GlobalAudioPlayer() {
 
       {visible && (
         <div
-          className="fixed bottom-16 left-4 z-50 flex h-[66px] items-center gap-2.5 rounded-full border border-grid-border bg-card-bg pr-3 shadow-lg"
+          className="fixed left-4 z-50 flex h-[66px] items-center gap-2.5 rounded-full border border-grid-border bg-card-bg pr-3 shadow-lg"
+          style={{ bottom: 'calc(var(--spacing) * 6)' }}
         >
           <div
             onMouseEnter={() => setHovered(true)}
