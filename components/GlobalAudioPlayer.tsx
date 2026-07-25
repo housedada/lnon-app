@@ -11,6 +11,8 @@ const EDGE_MARGIN = 16;
 const COLLAPSED_WIDTH = 66;
 const EXPANDED_MAX_WIDTH = 260;
 const COLLAPSE_DELAY_MS = 2690;
+const RESIZE_TRANSITION = 'max-width 360ms cubic-bezier(0.4, 0, 0.2, 1)';
+const SNAP_TRANSITION = 'left 420ms cubic-bezier(0.34, 1.56, 0.64, 1)';
 
 type Anchor = 'left' | 'center' | 'right';
 
@@ -145,7 +147,7 @@ export default function GlobalAudioPlayer() {
     if (!el) return;
     const apply = () => {
       const width = el.offsetWidth;
-      el.style.transition = 'left 420ms cubic-bezier(0.34, 1.56, 0.64, 1)';
+      el.style.transition = `${SNAP_TRANSITION}, ${RESIZE_TRANSITION}`;
       el.style.left = `${anchorLeft(anchor, width)}px`;
       el.style.right = 'auto';
       el.style.transform = 'none';
@@ -242,7 +244,7 @@ export default function GlobalAudioPlayer() {
             if (isDragging) return;
             scheduleCollapse();
           }}
-          className="fixed z-50 flex h-[66px] touch-none items-center overflow-hidden rounded-full border border-grid-border bg-card-bg shadow-lg transition-[max-width] duration-300 ease-out"
+          className="fixed z-50 flex h-[66px] touch-none items-center overflow-hidden rounded-full border border-grid-border bg-card-bg shadow-lg"
           style={{ bottom: 'calc(var(--spacing) * 6)', maxWidth: expanded ? EXPANDED_MAX_WIDTH : COLLAPSED_WIDTH, cursor: isDragging ? 'grabbing' : 'grab' }}
         >
           <div
@@ -279,10 +281,10 @@ export default function GlobalAudioPlayer() {
           </div>
 
           <div
-            className={`flex min-w-0 shrink-0 items-center gap-2 pr-3 transition-opacity duration-200 ${
+            className={`flex min-w-0 shrink-0 items-center gap-2 pr-3 transition-opacity duration-150 ease-out ${
               expanded ? 'opacity-100' : 'pointer-events-none opacity-0'
             }`}
-            style={{ transitionDelay: expanded ? '120ms' : '0ms' }}
+            style={{ transitionDelay: expanded ? '160ms' : '0ms' }}
           >
             <div className="flex min-w-0 flex-col leading-tight">
               <span className="truncate text-[11px] font-medium text-primary">Funki Porcini</span>
