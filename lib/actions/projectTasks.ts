@@ -68,7 +68,11 @@ export async function updateProjectTaskStatusAction(
   try {
     await requireCanManage();
     const task = await updateProjectTaskStatus(taskId, status);
-    await applyHourlyWorkEntryCascade(task, status);
+    try {
+      await applyHourlyWorkEntryCascade(task, status);
+    } catch (cascadeErr) {
+      console.error('applyHourlyWorkEntryCascade failed (task update already succeeded):', cascadeErr);
+    }
     revalidatePath('/dashboard/tasks');
     return { success: true, message: 'Stato aggiornato.', task };
   } catch (err) {
