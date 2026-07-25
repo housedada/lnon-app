@@ -244,7 +244,7 @@ export default function GlobalAudioPlayer() {
             if (isDragging) return;
             scheduleCollapse();
           }}
-          className="fixed z-50 flex h-[66px] touch-none items-center overflow-hidden rounded-full border border-grid-border bg-card-bg shadow-lg"
+          className="fixed z-50 flex h-[66px] touch-none select-none items-center overflow-hidden rounded-full border border-grid-border bg-card-bg shadow-lg"
           style={{ bottom: 'calc(var(--spacing) * 6)', maxWidth: expanded ? EXPANDED_MAX_WIDTH : COLLAPSED_WIDTH, cursor: isDragging ? 'grabbing' : 'grab' }}
         >
           <div
