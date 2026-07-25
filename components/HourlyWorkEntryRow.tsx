@@ -4,6 +4,7 @@ import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateProjectTaskStatusAction } from '@/lib/actions/projectTasks';
 import { notify } from '@/lib/notify';
+import { HOURLY_ENTRY_GRID_TEMPLATE } from '@/lib/hourlyBilling';
 import type { HourlyWorkEntry } from '@/lib/types';
 
 function formatDate(value?: Date): string {
@@ -25,14 +26,17 @@ export default function HourlyWorkEntryRow({ entry }: { entry: HourlyWorkEntry }
   }
 
   return (
-    <div className="grid grid-cols-7 items-center gap-3 border-b border-grid-border px-4 py-3 text-sm text-primary">
-      <span>{entry.platformReference ?? '—'}</span>
+    <div
+      className="grid min-w-fit items-center gap-4 border-b border-grid-border px-4 py-3 text-sm text-primary"
+      style={{ gridTemplateColumns: HOURLY_ENTRY_GRID_TEMPLATE }}
+    >
       <span>{entry.description}</span>
-      <span>{formatDate(entry.taskCreatedAt)}</span>
-      <span>{formatDate(entry.taskCompletedAt)}</span>
-      <span>{entry.hours}</span>
-      <span className="font-medium">€ {entry.amount.toFixed(2)}</span>
-      <label className="flex items-center gap-1.5 text-xs text-secondary">
+      <span className="whitespace-nowrap text-secondary">{entry.platformReference ?? '—'}</span>
+      <span className="whitespace-nowrap">{formatDate(entry.taskCreatedAt)}</span>
+      <span className="whitespace-nowrap">{formatDate(entry.taskCompletedAt)}</span>
+      <span className="whitespace-nowrap">{entry.hours}</span>
+      <span className="whitespace-nowrap font-medium">€ {entry.amount.toFixed(2)}</span>
+      <label className="flex items-center gap-1.5 whitespace-nowrap text-xs text-secondary">
         <input type="checkbox" checked={completed} disabled={isPending || !entry.projectTaskId} onChange={toggle} className="cursor-pointer" />
         {completed ? 'Completata' : 'Assegnata'}
       </label>

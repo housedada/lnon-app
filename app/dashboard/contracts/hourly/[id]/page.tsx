@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { getHourlyContractById, getHourlyWorkEntries } from '@/lib/db';
+import { HOURLY_ENTRY_GRID_TEMPLATE } from '@/lib/hourlyBilling';
 import HourlyWorkEntryRow from '@/components/HourlyWorkEntryRow';
 import NewHourlyWorkEntryButton from '@/components/NewHourlyWorkEntryButton';
 
@@ -36,10 +37,10 @@ export default async function HourlyContractDetailPage({ params }: { params: Pro
         {canCreate && <NewHourlyWorkEntryButton hourlyContractId={contract.id} />}
       </div>
 
-      <div className="p-6">
-        <div className="grid grid-cols-7 gap-3 border-b border-grid-border px-4 py-2 text-xs font-medium text-secondary">
-          <span>Riferimento</span>
+      <div className="overflow-x-auto p-6">
+        <div className="grid min-w-fit gap-4 border-b border-grid-border px-4 py-2 text-xs font-medium text-secondary" style={{ gridTemplateColumns: HOURLY_ENTRY_GRID_TEMPLATE }}>
           <span>Descrizione</span>
+          <span>Riferimento</span>
           <span>Aperta</span>
           <span>Completata</span>
           <span>Ore</span>

@@ -1630,6 +1630,33 @@ export async function getContractsStats(): Promise<ContractsStats> {
   };
 }
 
+export interface HourlyContractsSummary {
+  count: number;
+  totalAmount: number;
+}
+
+/**
+ * Riepilogo aggregato di tutti i contratti a conteggio orario (conteggio +
+ * totale guadagnato), per il widget statistiche di Contratti.
+ */
+export async function getHourlyContractsSummary(): Promise<HourlyContractsSummary> {
+  const { count, error: countError } = await supabaseServer
+    .from('hourly_contracts')
+    .select('id', { count: 'exact', head: true })
+    .is('deleted_at', null);
+  if (countError) throw countError;
+
+  const { data: entryRows, error: entriesError } = await supabaseServer
+    .from('hourly_work_entries')
+    .select('amount')
+    .is('deleted_at', null);
+  if (entriesError) throw entriesError;
+
+  const totalAmount = (entryRows ?? []).reduce((sum, row: any) => sum + Number(row.amount ?? 0), 0);
+
+  return { count: count ?? 0, totalAmount };
+}
+
 function projectRowToProject(row: Record<string, any>): Project {
   return {
     id: row.id,

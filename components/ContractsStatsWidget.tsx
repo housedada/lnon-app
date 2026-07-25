@@ -23,7 +23,7 @@ function StatTile({
   emphasize,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   exact?: string;
   color?: string;
   emphasize?: boolean;
@@ -45,20 +45,42 @@ function StatTile({
 const ICON_COLOR = '#0ea5e9';
 const TOTAL_COLOR = '#2f9e6b';
 const EXPENSE_COLOR = '#c94848';
+const HOURLY_COLOR = '#b8860b';
 
-export default function ContractsStatsWidget({ stats }: { stats: ContractsStats }) {
+export default function ContractsStatsWidget({
+  stats,
+  hourlyContractsCount,
+  hourlyContractsTotal,
+}: {
+  stats: ContractsStats;
+  hourlyContractsCount?: number;
+  hourlyContractsTotal?: number;
+}) {
   const visible = useContractsStatsStore((s) => s.visible);
 
   return (
     <AnimatedVisibility visible={visible}>
-      <div className="card-shadow mx-6 mt-6 grid grid-cols-2 overflow-hidden rounded-lg border border-sky-500/30 bg-sky-500/5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+      <div className="card-shadow mx-6 mt-6 grid grid-cols-2 overflow-hidden rounded-lg border border-sky-500/30 bg-sky-500/5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
         <StatTile label="Totale generale" value={formatCompact(stats.generalTotal)} exact={formatExact(stats.generalTotal)} color={TOTAL_COLOR} emphasize />
-        <StatTile label="Contratti totali" value={String(stats.count)} />
+        <StatTile
+          label="Contratti (web / orario)"
+          value={
+            <>
+              <span style={{ color: ICON_COLOR }}>{stats.count}</span>
+              {hourlyContractsCount !== undefined && (
+                <span style={{ color: HOURLY_COLOR }}> / {hourlyContractsCount}</span>
+              )}
+            </>
+          }
+        />
         <StatTile label="Manutenzione WP" value={formatCompact(stats.maintenanceTotal)} exact={formatExact(stats.maintenanceTotal)} color={ICON_COLOR} />
         <StatTile label="Hosting" value={formatCompact(stats.hostingTotal)} exact={formatExact(stats.hostingTotal)} color={ICON_COLOR} />
         <StatTile label="Analytics e GDPR" value={formatCompact(stats.analyticsTotal)} exact={formatExact(stats.analyticsTotal)} color={ICON_COLOR} />
         <StatTile label="Cookie (Complianz)" value={formatCompact(stats.cookieTotal)} exact={formatExact(stats.cookieTotal)} color={ICON_COLOR} />
         <StatTile label="Costi fornitori totali" value={formatCompact(stats.providerCostTotal)} exact={formatExact(stats.providerCostTotal)} color={EXPENSE_COLOR} emphasize />
+        {hourlyContractsTotal !== undefined && (
+          <StatTile label="Guadagnato conteggio orario" value={formatCompact(hourlyContractsTotal)} exact={formatExact(hourlyContractsTotal)} color={HOURLY_COLOR} />
+        )}
       </div>
     </AnimatedVisibility>
   );

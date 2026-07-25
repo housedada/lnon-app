@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { auth } from '@/lib/auth';
-import { getContracts, getContractsStats, getAllClientNames } from '@/lib/db';
+import { getContracts, getContractsStats, getAllClientNames, getHourlyContractsSummary } from '@/lib/db';
 import { hasPermission, canDeleteResource, canViewAmounts } from '@/lib/permissions';
 import ListNavigator from '@/components/ListNavigator';
 import ListPlaceholder from '@/components/ListPlaceholder';
@@ -50,9 +50,10 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
   const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role ?? 'dipendente';
 
   const showAmounts = canViewAmounts(role);
-  const [stats, clientOptions] = await Promise.all([
+  const [stats, clientOptions, hourlySummary] = await Promise.all([
     showAmounts ? getContractsStats() : Promise.resolve(null),
     getAllClientNames(),
+    showAmounts ? getHourlyContractsSummary() : Promise.resolve(null),
   ]);
 
   const canCreate = hasPermission(role, 'contracts', 'create');
@@ -68,7 +69,13 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
         {canUpdate && <SyncContractsClientsButton />}
       </div>
 
-      {stats && <ContractsStatsWidget stats={stats} />}
+      {stats && (
+        <ContractsStatsWidget
+          stats={stats}
+          hourlyContractsCount={hourlySummary?.count}
+          hourlyContractsTotal={hourlySummary?.totalAmount}
+        />
+      )}
       <ContractsFilterWidget />
 
       <Suspense fallback={<ListPlaceholder />}>
