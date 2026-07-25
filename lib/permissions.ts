@@ -18,6 +18,7 @@ export const PERMISSION_MATRIX: Record<UserRole, Record<string, string[]>> = {
     tasks: ['read', 'create', 'update', 'delete', 'reassign'],
     invoices: ['read', 'create', 'update', 'delete', 'send', 'cancel'],
     reports: ['read', 'create', 'export', 'delete'],
+    hourly_billing: ['read', 'create', 'update', 'delete'],
     fixed_expenses: ['read', 'create', 'update', 'delete'],
     settings: ['read', 'update', 'manage_integrations'],
     audit_logs: ['read', 'export'],
@@ -32,6 +33,7 @@ export const PERMISSION_MATRIX: Record<UserRole, Record<string, string[]>> = {
     tasks: ['read', 'create', 'update', 'reassign'],
     invoices: ['read', 'create', 'update', 'send'],
     reports: ['read', 'export'],
+    hourly_billing: ['read', 'create', 'update'],
     fixed_expenses: ['read', 'create', 'update'],
     settings: ['read'],
     audit_logs: ['read'],
@@ -46,6 +48,7 @@ export const PERMISSION_MATRIX: Record<UserRole, Record<string, string[]>> = {
     tasks: ['read', 'update'], // Può aggiornare status dei suoi task
     invoices: ['read'], // Lettura sola
     reports: [],
+    hourly_billing: ['read'],
     fixed_expenses: [],
     settings: ['read'], // Solo lettura settings
     audit_logs: [],

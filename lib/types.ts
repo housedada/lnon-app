@@ -174,6 +174,9 @@ export interface Job {
   productIds?: string[];
   // Anno di competenza economica del lavoro, per la Overview Lavori
   fiscalYear: number;
+  // Generazione automatica (es. da un contratto a conteggio orario)
+  isSystemGenerated?: boolean;
+  systemSource?: 'hourly_contract';
   // Spesa fornitori/sottofornitori sostenuta per questo lavoro (importo singolo)
   supplierCost?: number;
   // Campi economico/fiscali di riga, popolati dall'import storico da export
@@ -198,6 +201,9 @@ export interface Project {
   description?: string;
   assignedTo?: string;
   completedAt?: Date;
+  // Generazione automatica (es. da un contratto a conteggio orario)
+  isSystemGenerated?: boolean;
+  systemSource?: 'hourly_contract';
   isDemo?: boolean;
   createdBy: string;
   createdAt: Date;
@@ -240,6 +246,8 @@ export interface ProjectInvoice {
   updatedAt: Date;
   archivedAt?: Date;
   deletedAt?: Date;
+  sourceType?: 'project' | 'hourly_contract';
+  hourlyContractId?: string;
 }
 
 export interface FixedExpenseCategory {
@@ -261,6 +269,48 @@ export interface FixedExpenseEntry {
   updatedAt: Date;
   // Popolato solo in lettura, se collegato
   categoryLabel?: string;
+}
+
+export type HourlyRateType = 'standard' | 'cheap' | 'custom';
+export type HourlyContractStatus = 'in_corso' | 'non_in_corso';
+export type HourlyWorkEntryStatus = 'assegnata' | 'completata';
+
+export interface HourlyContract {
+  id: string;
+  clientId: string;
+  rateType: HourlyRateType;
+  customHourlyRate?: number;
+  status: HourlyContractStatus;
+  jobId?: string;
+  projectId?: string;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt?: Date;
+  // Popolati solo in lettura (lista/dettaglio)
+  clientName?: string;
+  effectiveHourlyRate?: number;
+  entriesCount?: number;
+  lastEntryDate?: Date;
+  totalAmount?: number;
+}
+
+export interface HourlyWorkEntry {
+  id: string;
+  hourlyContractId: string;
+  projectTaskId?: string;
+  platformReference?: string;
+  description: string;
+  entryDate: Date;
+  hours: number;
+  status: HourlyWorkEntryStatus;
+  amount: number;
+  invoiceId?: string;
+  invoicedAt?: Date;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt?: Date;
 }
 
 export type ProjectTaskStatus = 'todo' | 'in_progress' | 'completed';
