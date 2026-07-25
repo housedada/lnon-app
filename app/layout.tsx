@@ -13,6 +13,7 @@ export const metadata: Metadata = {
     template: "%s · Housedada",
   },
   description: "Gestionale aziendale Housedada",
+  manifest: "/site.webmanifest",
 };
 
 export default function RootLayout({
