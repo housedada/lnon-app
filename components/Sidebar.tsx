@@ -4,55 +4,13 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  Menu,
-  X,
-  Users,
-  Briefcase,
-  CheckSquare,
-  FileText,
-  FileSignature,
-  UserCog,
-  BarChart2,
-  History,
-  Settings,
-  type LucideIcon,
-} from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import type { UserRole } from '@/lib/types';
 import { getUserPermissions } from '@/lib/permissions';
+import { NAV_ITEMS, shouldShowNavItem } from '@/lib/navItems';
 
 interface SidebarProps {
   role: UserRole;
-}
-
-interface NavItem {
-  resource: string;
-  label: string;
-  href: string;
-  icon: LucideIcon;
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { resource: 'clients', label: 'Clienti', href: '/dashboard/clients', icon: Users },
-  { resource: 'contracts', label: 'Contratti', href: '/dashboard/contracts', icon: FileSignature },
-  { resource: 'jobs', label: 'Lavori', href: '/dashboard/jobs', icon: Briefcase },
-  { resource: 'tasks', label: 'Task', href: '/dashboard/tasks', icon: CheckSquare },
-  { resource: 'invoices', label: 'Fatture', href: '/dashboard/invoices', icon: FileText },
-  { resource: 'users', label: 'Utenti', href: '/dashboard/users', icon: UserCog },
-  { resource: 'reports', label: 'Report', href: '/dashboard/reports', icon: BarChart2 },
-  { resource: 'audit_logs', label: 'Log Attività', href: '/dashboard/audit-logs', icon: History },
-  { resource: 'settings', label: 'Impostazioni', href: '/dashboard/settings', icon: Settings },
-];
-
-// 'users' e 'settings' concedono sempre almeno 'read' a tutti i ruoli
-// (vedi PERMISSION_MATRIX in lib/permissions.ts) ma non devono comparire
-// come sezioni di navigazione complete per i ruoli con permessi minimi:
-// mostriamo 'Utenti' solo a chi può fare più di un semplice 'read' del
-// proprio profilo (cioè chi ha anche 'invite' o superiore).
-function shouldShowNavItem(resource: string, permissions: string[]): boolean {
-  if (permissions.length === 0) return false;
-  if (resource === 'users') return permissions.includes('invite') || permissions.includes('create');
-  return true;
 }
 
 function SidebarContent({ role, onNavigate }: SidebarProps & { onNavigate?: () => void }) {
