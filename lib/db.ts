@@ -6,6 +6,8 @@ import type {
   Client,
   Job,
   JobStatus,
+  FixedExpenseCategory,
+  FixedExpenseEntry,
   Task,
   Invoice,
   Invitation,
@@ -2197,5 +2199,148 @@ export async function reorderProjectTasks(orderedTaskIds: string[]): Promise<voi
   );
 }
 
+
+function fixedExpenseCategoryRowToCategory(row: Record<string, any>): FixedExpenseCategory {
+  return {
+    id: row.id,
+    label: row.label,
+    createdBy: row.created_by,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+    deletedAt: row.deleted_at ? new Date(row.deleted_at) : undefined,
+  };
+}
+
+function fixedExpenseEntryRowToEntry(row: Record<string, any>): FixedExpenseEntry {
+  return {
+    id: row.id,
+    categoryId: row.category_id,
+    fiscalYear: row.fiscal_year,
+    amount: Number(row.amount ?? 0),
+    isActive: row.is_active,
+    updatedBy: row.updated_by,
+    updatedAt: new Date(row.updated_at),
+  };
+}
+
+/**
+ * Elenco delle categorie di spesa fissa non eliminate, in ordine di creazione.
+ */
+export async function getFixedExpenseCategories(): Promise<FixedExpenseCategory[]> {
+  const { data, error } = await supabaseServer
+    .from('fixed_expense_categories')
+    .select('*')
+    .is('deleted_at', null)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(fixedExpenseCategoryRowToCategory);
+}
+
+/**
+ * Crea una nuova categoria di spesa fissa (solo etichetta, l'importo si
+ * inserisce separatamente per anno).
+ */
+export async function createFixedExpenseCategory(label: string, createdBy: string): Promise<FixedExpenseCategory> {
+  const { data, error } = await supabaseServer
+    .from('fixed_expense_categories')
+    .insert([{ label, created_by: createdBy }])
+    .select()
+    .single();
+  if (error) throw error;
+  return fixedExpenseCategoryRowToCategory(data);
+}
+
+/**
+ * Soft delete di una categoria di spesa fissa (solo superadmin, vedi
+ * lib/permissions.ts). Non cancella le entry storiche collegate.
+ */
+export async function softDeleteFixedExpenseCategory(id: string): Promise<void> {
+  const { error } = await supabaseServer
+    .from('fixed_expense_categories')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+export interface FixedExpenseYearRow {
+  categoryId: string;
+  categoryLabel: string;
+  entryId?: string;
+  amount: number;
+  isActive: boolean;
+}
+
+export interface FixedExpensesYearResult {
+  rows: FixedExpenseYearRow[];
+  total: number;
+}
+
+/**
+ * Categorie di spesa fissa con l'importo per un anno specifico (0 e attivo
+ * di default se non esiste ancora una entry per quella categoria/anno).
+ * Il totale somma solo le entry con isActive = true.
+ */
+export async function getFixedExpensesForYear(fiscalYear: number): Promise<FixedExpensesYearResult> {
+  const categories = await getFixedExpenseCategories();
+
+  let entriesByCategoryId = new Map<string, Record<string, any>>();
+  if (categories.length > 0) {
+    const { data: entryRows, error } = await supabaseServer
+      .from('fixed_expense_entries')
+      .select('*')
+      .eq('fiscal_year', fiscalYear)
+      .in('category_id', categories.map((c) => c.id));
+    if (error) throw error;
+    entriesByCategoryId = (entryRows ?? []).reduce((map, row: any) => {
+      map.set(row.category_id, row);
+      return map;
+    }, new Map<string, Record<string, any>>());
+  }
+
+  const rows: FixedExpenseYearRow[] = categories.map((category) => {
+    const entryRow = entriesByCategoryId.get(category.id);
+    return {
+      categoryId: category.id,
+      categoryLabel: category.label,
+      entryId: entryRow?.id,
+      amount: entryRow ? Number(entryRow.amount ?? 0) : 0,
+      isActive: entryRow ? entryRow.is_active : true,
+    };
+  });
+
+  const total = rows.reduce((sum, row) => (row.isActive ? sum + row.amount : sum), 0);
+
+  return { rows, total };
+}
+
+/**
+ * Crea o aggiorna l'importo/stato attivo di una categoria per un anno
+ * specifico (upsert su category_id+fiscal_year).
+ */
+export async function upsertFixedExpenseEntry(input: {
+  categoryId: string;
+  fiscalYear: number;
+  amount: number;
+  isActive: boolean;
+  updatedBy: string;
+}): Promise<FixedExpenseEntry> {
+  const { data, error } = await supabaseServer
+    .from('fixed_expense_entries')
+    .upsert(
+      {
+        category_id: input.categoryId,
+        fiscal_year: input.fiscalYear,
+        amount: input.amount,
+        is_active: input.isActive,
+        updated_by: input.updatedBy,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'category_id,fiscal_year' }
+    )
+    .select()
+    .single();
+  if (error) throw error;
+  return fixedExpenseEntryRowToEntry(data);
+}
 
 export type { User, Client, Job, Task, Invoice, Invitation, ActivityLog, Product, Contract, Project, ProjectTask, ProjectInvoice };
