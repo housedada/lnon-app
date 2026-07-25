@@ -10,6 +10,7 @@ const TRACK_SRC = '/audio/lnon.mp3';
 const EDGE_MARGIN = 16;
 const COLLAPSED_WIDTH = 66;
 const EXPANDED_MAX_WIDTH = 260;
+const COLLAPSE_DELAY_MS = 2690;
 
 type Anchor = 'left' | 'center' | 'right';
 
@@ -30,6 +31,7 @@ export default function GlobalAudioPlayer() {
   const fadeFrameRef = useRef<number | null>(null);
   const dragStateRef = useRef<{ startX: number; startLeft: number; width: number; moved: boolean; currentLeft: number } | null>(null);
   const justDraggedRef = useRef(false);
+  const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [hoveredAvatar, setHoveredAvatar] = useState(false);
   const [hoveredBalloon, setHoveredBalloon] = useState(false);
@@ -72,6 +74,23 @@ export default function GlobalAudioPlayer() {
       fadeFrameRef.current = null;
     }
   }
+
+  function clearCollapseTimer() {
+    if (collapseTimerRef.current !== null) {
+      clearTimeout(collapseTimerRef.current);
+      collapseTimerRef.current = null;
+    }
+  }
+
+  function scheduleCollapse() {
+    clearCollapseTimer();
+    collapseTimerRef.current = setTimeout(() => {
+      collapseTimerRef.current = null;
+      setHoveredBalloon(false);
+    }, COLLAPSE_DELAY_MS);
+  }
+
+  useEffect(() => clearCollapseTimer, []);
 
   function fadeTo(target: number, onDone?: () => void) {
     const audio = audioRef.current;
@@ -165,6 +184,7 @@ export default function GlobalAudioPlayer() {
         setAnchor(next);
       }
       setIsDragging(false);
+      scheduleCollapse();
     }
 
     window.addEventListener('pointermove', onMove);
@@ -173,11 +193,13 @@ export default function GlobalAudioPlayer() {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDragging]);
 
   function handlePointerDown(e: React.PointerEvent) {
     const el = containerRef.current;
     if (!el) return;
+    clearCollapseTimer();
     const rect = el.getBoundingClientRect();
     dragStateRef.current = { startX: e.clientX, startLeft: rect.left, width: rect.width, moved: false, currentLeft: rect.left };
     setIsDragging(true);
@@ -212,8 +234,14 @@ export default function GlobalAudioPlayer() {
           ref={containerRef}
           onPointerDown={handlePointerDown}
           onClick={handleContainerClick}
-          onMouseEnter={() => setHoveredBalloon(true)}
-          onMouseLeave={() => setHoveredBalloon(false)}
+          onMouseEnter={() => {
+            clearCollapseTimer();
+            setHoveredBalloon(true);
+          }}
+          onMouseLeave={() => {
+            if (isDragging) return;
+            scheduleCollapse();
+          }}
           className="fixed z-50 flex h-[66px] touch-none items-center overflow-hidden rounded-full border border-grid-border bg-card-bg shadow-lg transition-[max-width] duration-300 ease-out"
           style={{ bottom: 'calc(var(--spacing) * 6)', maxWidth: expanded ? EXPANDED_MAX_WIDTH : COLLAPSED_WIDTH, cursor: isDragging ? 'grabbing' : 'grab' }}
         >
