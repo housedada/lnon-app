@@ -2411,6 +2411,7 @@ function hourlyWorkEntryRowToHourlyWorkEntry(row: Record<string, any>): HourlyWo
     platformReference: row.platform_reference ?? undefined,
     description: row.description,
     entryDate: new Date(row.entry_date),
+    entryDateEnd: row.entry_date_end ? new Date(row.entry_date_end) : undefined,
     hours: Number(row.hours),
     status: row.status,
     amount: Number(row.amount ?? 0),
@@ -2430,6 +2431,7 @@ function hourlyWorkEntryToRow(data: Partial<Omit<HourlyWorkEntry, 'id' | 'create
   if (data.platformReference !== undefined) row.platform_reference = data.platformReference;
   if (data.description !== undefined) row.description = data.description;
   if (data.entryDate !== undefined) row.entry_date = data.entryDate.toISOString().slice(0, 10);
+  if (data.entryDateEnd !== undefined) row.entry_date_end = data.entryDateEnd ? data.entryDateEnd.toISOString().slice(0, 10) : null;
   if (data.hours !== undefined) row.hours = data.hours;
   if (data.status !== undefined) row.status = data.status;
   if (data.amount !== undefined) row.amount = data.amount;

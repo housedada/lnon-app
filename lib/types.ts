@@ -302,6 +302,7 @@ export interface HourlyWorkEntry {
   platformReference?: string;
   description: string;
   entryDate: Date;
+  entryDateEnd?: Date;
   hours: number;
   status: HourlyWorkEntryStatus;
   amount: number;
