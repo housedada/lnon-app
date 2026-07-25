@@ -27,7 +27,10 @@ export default function HourlyContractRow({ contract }: { contract: HourlyContra
       href={`/dashboard/contracts/hourly/${contract.id}`}
       className="grid grid-cols-6 items-center gap-3 border-b border-grid-border px-4 py-3 text-sm text-primary transition hover:bg-row-hover"
     >
-      <span>{contract.clientName ?? '—'}</span>
+      <span>
+        {contract.clientName ?? '—'}
+        {contract.referenceName && <span className="text-secondary"> ({contract.referenceName})</span>}
+      </span>
       <span className="capitalize">
         {contract.rateType} — € {contract.effectiveHourlyRate?.toFixed(2)}/h
       </span>

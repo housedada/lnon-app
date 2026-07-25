@@ -278,6 +278,11 @@ export type HourlyWorkEntryStatus = 'assegnata' | 'completata';
 export interface HourlyContract {
   id: string;
   clientId: string;
+  // Nome informale di riferimento (es. nome del sito/progetto), quando
+  // clientId è un intermediario di fatturazione (es. Dunter S.R.L.) e non
+  // il cliente nominale a cui il lavoro si riferisce davvero. Mostrato tra
+  // parentesi accanto al nome del cliente reale nel titolo del Project.
+  referenceName?: string;
   rateType: HourlyRateType;
   customHourlyRate?: number;
   status: HourlyContractStatus;
@@ -301,8 +306,6 @@ export interface HourlyWorkEntry {
   projectTaskId?: string;
   platformReference?: string;
   description: string;
-  entryDate: Date;
-  entryDateEnd?: Date;
   hours: number;
   status: HourlyWorkEntryStatus;
   amount: number;
@@ -312,6 +315,9 @@ export interface HourlyWorkEntry {
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;
+  // Popolate solo in lettura, dal Task collegato (project_task_id)
+  taskCreatedAt?: Date;
+  taskCompletedAt?: Date;
 }
 
 export type ProjectTaskStatus = 'todo' | 'in_progress' | 'completed';
@@ -326,6 +332,8 @@ export interface ProjectTask {
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
+  // Valorizzato automaticamente quando status passa a completed, azzerato se riaperto
+  completedAt?: Date;
   deletedAt?: Date;
   // Popolati solo in lettura: un task può essere condiviso tra più membri
   assignedToIds: string[];

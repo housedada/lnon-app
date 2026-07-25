@@ -6,8 +6,8 @@ import { updateProjectTaskStatusAction } from '@/lib/actions/projectTasks';
 import { notify } from '@/lib/notify';
 import type { HourlyWorkEntry } from '@/lib/types';
 
-function formatDate(value: Date): string {
-  return value.toLocaleDateString('it-IT');
+function formatDate(value?: Date): string {
+  return value ? value.toLocaleDateString('it-IT') : '—';
 }
 
 export default function HourlyWorkEntryRow({ entry }: { entry: HourlyWorkEntry }) {
@@ -25,10 +25,11 @@ export default function HourlyWorkEntryRow({ entry }: { entry: HourlyWorkEntry }
   }
 
   return (
-    <div className="grid grid-cols-6 items-center gap-3 border-b border-grid-border px-4 py-3 text-sm text-primary">
+    <div className="grid grid-cols-7 items-center gap-3 border-b border-grid-border px-4 py-3 text-sm text-primary">
       <span>{entry.platformReference ?? '—'}</span>
       <span>{entry.description}</span>
-      <span>{formatDate(entry.entryDate)}</span>
+      <span>{formatDate(entry.taskCreatedAt)}</span>
+      <span>{formatDate(entry.taskCompletedAt)}</span>
       <span>{entry.hours}</span>
       <span className="font-medium">€ {entry.amount.toFixed(2)}</span>
       <label className="flex items-center gap-1.5 text-xs text-secondary">

@@ -25,7 +25,10 @@ export default async function HourlyContractDetailPage({ params }: { params: Pro
     <div>
       <div className="flex items-center justify-between p-6 pb-0">
         <div>
-          <h1 className="text-2xl font-semibold text-primary">{contract.clientName}</h1>
+          <h1 className="text-2xl font-semibold text-primary">
+            {contract.clientName}
+            {contract.referenceName && <span className="text-secondary"> ({contract.referenceName})</span>}
+          </h1>
           <p className="text-sm text-secondary">
             {contract.rateType} — € {contract.effectiveHourlyRate?.toFixed(2)}/h
           </p>
@@ -34,10 +37,11 @@ export default async function HourlyContractDetailPage({ params }: { params: Pro
       </div>
 
       <div className="p-6">
-        <div className="grid grid-cols-6 gap-3 border-b border-grid-border px-4 py-2 text-xs font-medium text-secondary">
+        <div className="grid grid-cols-7 gap-3 border-b border-grid-border px-4 py-2 text-xs font-medium text-secondary">
           <span>Riferimento</span>
           <span>Descrizione</span>
-          <span>Data</span>
+          <span>Aperta</span>
+          <span>Completata</span>
           <span>Ore</span>
           <span>Importo</span>
           <span>Stato</span>

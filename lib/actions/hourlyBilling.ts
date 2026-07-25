@@ -27,6 +27,7 @@ export async function createHourlyContractAction(formData: FormData): Promise<{ 
   try {
     const { userId } = await requireRole('hourly_billing', 'create');
     const clientId = String(formData.get('clientId') || '');
+    const referenceName = String(formData.get('referenceName') || '').trim() || undefined;
     const rateType = String(formData.get('rateType') || '') as HourlyRateType;
     const customHourlyRateRaw = formData.get('customHourlyRate');
     const customHourlyRate = customHourlyRateRaw ? Number(customHourlyRateRaw) : undefined;
@@ -37,7 +38,7 @@ export async function createHourlyContractAction(formData: FormData): Promise<{ 
       return { success: false, message: 'Inserisci una tariffa oraria valida.' };
     }
 
-    await createHourlyContract({ clientId, rateType, customHourlyRate }, userId);
+    await createHourlyContract({ clientId, referenceName, rateType, customHourlyRate }, userId);
     revalidatePath('/dashboard/contracts/hourly');
     return { success: true, message: 'Contratto a conteggio orario creato.' };
   } catch (err) {
@@ -84,14 +85,12 @@ export async function createHourlyWorkEntryAction(hourlyContractId: string, form
     const { userId } = await requireRole('hourly_billing', 'create');
     const platformReference = String(formData.get('platformReference') || '') || undefined;
     const description = String(formData.get('description') || '').trim();
-    const entryDateRaw = String(formData.get('entryDate') || '');
     const hours = Number(formData.get('hours'));
 
     if (!description) return { success: false, message: 'La descrizione è obbligatoria.' };
-    if (!entryDateRaw) return { success: false, message: 'La data è obbligatoria.' };
     if (!Number.isFinite(hours) || hours <= 0) return { success: false, message: 'Le ore devono essere un numero maggiore di zero.' };
 
-    await createHourlyWorkEntry({ hourlyContractId, platformReference, description, entryDate: new Date(entryDateRaw), hours }, userId);
+    await createHourlyWorkEntry({ hourlyContractId, platformReference, description, hours }, userId);
     revalidatePath(`/dashboard/contracts/hourly/${hourlyContractId}`);
     revalidatePath('/dashboard/contracts/hourly');
     return { success: true, message: 'Lavorazione aggiunta.' };
@@ -105,13 +104,12 @@ export async function updateHourlyWorkEntryAction(id: string, formData: FormData
     await requireRole('hourly_billing', 'update');
     const platformReference = String(formData.get('platformReference') || '') || undefined;
     const description = String(formData.get('description') || '').trim();
-    const entryDateRaw = String(formData.get('entryDate') || '');
     const hours = Number(formData.get('hours'));
 
     if (!description) return { success: false, message: 'La descrizione è obbligatoria.' };
     if (!Number.isFinite(hours) || hours <= 0) return { success: false, message: 'Le ore devono essere un numero maggiore di zero.' };
 
-    await updateHourlyWorkEntry(id, { platformReference, description, entryDate: entryDateRaw ? new Date(entryDateRaw) : undefined, hours });
+    await updateHourlyWorkEntry(id, { platformReference, description, hours });
     revalidatePath('/dashboard/contracts/hourly');
     return { success: true, message: 'Lavorazione aggiornata.' };
   } catch (err) {

@@ -2042,6 +2042,7 @@ function projectTaskRowToProjectTask(row: Record<string, any>): ProjectTask {
     createdBy: row.created_by,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
+    completedAt: row.completed_at ? new Date(row.completed_at) : undefined,
     deletedAt: row.deleted_at ? new Date(row.deleted_at) : undefined,
     assignedToIds: [],
     assignedToUsers: [],
@@ -2135,7 +2136,7 @@ export async function updateProjectTaskTitle(taskId: string, title: string): Pro
 export async function updateProjectTaskStatus(taskId: string, status: ProjectTaskStatus): Promise<ProjectTask> {
   const { data, error } = await supabaseServer
     .from('project_tasks')
-    .update({ status })
+    .update({ status, completed_at: status === 'completed' ? new Date().toISOString() : null })
     .eq('id', taskId)
     .select('*')
     .single();
@@ -2378,6 +2379,7 @@ function hourlyContractRowToHourlyContract(row: Record<string, any>): HourlyCont
   return {
     id: row.id,
     clientId: row.client_id,
+    referenceName: row.reference_name ?? undefined,
     rateType: row.rate_type,
     customHourlyRate: row.custom_hourly_rate != null ? Number(row.custom_hourly_rate) : undefined,
     status: row.status,
@@ -2394,6 +2396,7 @@ function hourlyContractRowToHourlyContract(row: Record<string, any>): HourlyCont
 function hourlyContractToRow(data: Partial<Omit<HourlyContract, 'id' | 'createdAt' | 'updatedAt' | 'clientName' | 'effectiveHourlyRate' | 'entriesCount' | 'lastEntryDate' | 'totalAmount'>>): Record<string, any> {
   const row: Record<string, any> = {};
   if (data.clientId !== undefined) row.client_id = data.clientId;
+  if (data.referenceName !== undefined) row.reference_name = data.referenceName;
   if (data.rateType !== undefined) row.rate_type = data.rateType;
   if (data.customHourlyRate !== undefined) row.custom_hourly_rate = data.customHourlyRate;
   if (data.status !== undefined) row.status = data.status;
@@ -2410,8 +2413,6 @@ function hourlyWorkEntryRowToHourlyWorkEntry(row: Record<string, any>): HourlyWo
     projectTaskId: row.project_task_id ?? undefined,
     platformReference: row.platform_reference ?? undefined,
     description: row.description,
-    entryDate: new Date(row.entry_date),
-    entryDateEnd: row.entry_date_end ? new Date(row.entry_date_end) : undefined,
     hours: Number(row.hours),
     status: row.status,
     amount: Number(row.amount ?? 0),
@@ -2421,17 +2422,17 @@ function hourlyWorkEntryRowToHourlyWorkEntry(row: Record<string, any>): HourlyWo
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
     deletedAt: row.deleted_at ? new Date(row.deleted_at) : undefined,
+    taskCreatedAt: row.project_tasks?.created_at ? new Date(row.project_tasks.created_at) : undefined,
+    taskCompletedAt: row.project_tasks?.completed_at ? new Date(row.project_tasks.completed_at) : undefined,
   };
 }
 
-function hourlyWorkEntryToRow(data: Partial<Omit<HourlyWorkEntry, 'id' | 'createdAt' | 'updatedAt'>>): Record<string, any> {
+function hourlyWorkEntryToRow(data: Partial<Omit<HourlyWorkEntry, 'id' | 'createdAt' | 'updatedAt' | 'taskCreatedAt' | 'taskCompletedAt'>>): Record<string, any> {
   const row: Record<string, any> = {};
   if (data.hourlyContractId !== undefined) row.hourly_contract_id = data.hourlyContractId;
   if (data.projectTaskId !== undefined) row.project_task_id = data.projectTaskId;
   if (data.platformReference !== undefined) row.platform_reference = data.platformReference;
   if (data.description !== undefined) row.description = data.description;
-  if (data.entryDate !== undefined) row.entry_date = data.entryDate.toISOString().slice(0, 10);
-  if (data.entryDateEnd !== undefined) row.entry_date_end = data.entryDateEnd ? data.entryDateEnd.toISOString().slice(0, 10) : null;
   if (data.hours !== undefined) row.hours = data.hours;
   if (data.status !== undefined) row.status = data.status;
   if (data.amount !== undefined) row.amount = data.amount;
@@ -2468,18 +2469,20 @@ export async function getHourlyContracts(filters?: { q?: string; status?: Hourly
   if (contracts.length > 0) {
     const { data: entryRows, error: entriesError } = await supabaseServer
       .from('hourly_work_entries')
-      .select('hourly_contract_id, entry_date, amount')
+      .select('hourly_contract_id, amount, project_tasks(created_at)')
       .in('hourly_contract_id', contracts.map((c) => c.id))
       .is('deleted_at', null);
     if (entriesError) throw entriesError;
 
     const aggByContract = new Map<string, { count: number; lastDate?: Date; total: number }>();
-    for (const row of entryRows ?? []) {
+    for (const row of (entryRows ?? []) as any[]) {
       const agg = aggByContract.get(row.hourly_contract_id) ?? { count: 0, total: 0 };
       agg.count += 1;
       agg.total += Number(row.amount ?? 0);
-      const entryDate = new Date(row.entry_date);
-      if (!agg.lastDate || entryDate > agg.lastDate) agg.lastDate = entryDate;
+      if (row.project_tasks?.created_at) {
+        const taskCreatedAt = new Date(row.project_tasks.created_at);
+        if (!agg.lastDate || taskCreatedAt > agg.lastDate) agg.lastDate = taskCreatedAt;
+      }
       aggByContract.set(row.hourly_contract_id, agg);
     }
 
@@ -2519,7 +2522,7 @@ export async function getHourlyContractById(id: string): Promise<HourlyContract 
  * accumuleranno un Task per ogni lavorazione futura.
  */
 export async function createHourlyContract(
-  input: { clientId: string; rateType: HourlyRateType; customHourlyRate?: number },
+  input: { clientId: string; referenceName?: string; rateType: HourlyRateType; customHourlyRate?: number },
   createdBy: string
 ): Promise<HourlyContract> {
   const { data: clientRow, error: clientError } = await supabaseServer
@@ -2528,12 +2531,12 @@ export async function createHourlyContract(
 
   const { data: contractRow, error: insertError } = await supabaseServer
     .from('hourly_contracts')
-    .insert([hourlyContractToRow({ clientId: input.clientId, rateType: input.rateType, customHourlyRate: input.customHourlyRate, status: 'in_corso', createdBy })])
+    .insert([hourlyContractToRow({ clientId: input.clientId, referenceName: input.referenceName, rateType: input.rateType, customHourlyRate: input.customHourlyRate, status: 'in_corso', createdBy })])
     .select()
     .single();
   if (insertError) throw insertError;
 
-  const title = `Conteggio orario — ${clientRow.name}`;
+  const title = `Conteggio orario — ${clientRow.name}${input.referenceName ? ` (${input.referenceName})` : ''}`;
   const job = await createDbJob({
     title,
     clientId: input.clientId,
@@ -2590,10 +2593,10 @@ export async function softDeleteHourlyContract(id: string): Promise<void> {
 export async function getHourlyWorkEntries(hourlyContractId: string): Promise<HourlyWorkEntry[]> {
   const { data, error } = await supabaseServer
     .from('hourly_work_entries')
-    .select('*')
+    .select('*, project_tasks(created_at, completed_at)')
     .eq('hourly_contract_id', hourlyContractId)
     .is('deleted_at', null)
-    .order('entry_date', { ascending: false });
+    .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []).map(hourlyWorkEntryRowToHourlyWorkEntry);
 }
@@ -2603,7 +2606,7 @@ export async function getHourlyWorkEntries(hourlyContractId: string): Promise<Ho
  * contratto. L'importo è uno snapshot calcolato con la tariffa corrente.
  */
 export async function createHourlyWorkEntry(
-  input: { hourlyContractId: string; platformReference?: string; description: string; entryDate: Date; hours: number },
+  input: { hourlyContractId: string; platformReference?: string; description: string; hours: number },
   createdBy: string
 ): Promise<HourlyWorkEntry> {
   const contract = await getHourlyContractById(input.hourlyContractId);
@@ -2620,7 +2623,6 @@ export async function createHourlyWorkEntry(
         hourlyContractId: input.hourlyContractId,
         platformReference: input.platformReference,
         description: input.description,
-        entryDate: input.entryDate,
         hours: input.hours,
         status: 'assegnata',
         amount,
@@ -2637,7 +2639,7 @@ export async function createHourlyWorkEntry(
     .from('hourly_work_entries')
     .update({ project_task_id: task.id })
     .eq('id', entryRow.id)
-    .select()
+    .select('*, project_tasks(created_at, completed_at)')
     .single();
   if (updateError) throw updateError;
 
@@ -2646,7 +2648,7 @@ export async function createHourlyWorkEntry(
 
 export async function updateHourlyWorkEntry(
   id: string,
-  patch: Partial<Pick<HourlyWorkEntry, 'platformReference' | 'description' | 'entryDate' | 'hours'>>
+  patch: Partial<Pick<HourlyWorkEntry, 'platformReference' | 'description' | 'hours'>>
 ): Promise<HourlyWorkEntry> {
   const { data: existingRow, error: fetchError } = await supabaseServer
     .from('hourly_work_entries').select('*').eq('id', id).single();
@@ -2661,7 +2663,7 @@ export async function updateHourlyWorkEntry(
   }
 
   const { data, error } = await supabaseServer
-    .from('hourly_work_entries').update(row).eq('id', id).select().single();
+    .from('hourly_work_entries').update(row).eq('id', id).select('*, project_tasks(created_at, completed_at)').single();
   if (error) throw error;
 
   if (patch.description !== undefined && existing.projectTaskId) {

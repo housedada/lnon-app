@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { HOURLY_RATES } from '@/lib/hourlyBilling';
 import type { HourlyContract, HourlyRateType } from '@/lib/types';
 
 const RATE_LABELS: Record<HourlyRateType, string> = {
-  standard: 'Standard (80€/h)',
-  cheap: 'Cheap (45€/h)',
+  standard: `Standard (${HOURLY_RATES.standard}€/h)`,
+  cheap: `Cheap (${HOURLY_RATES.cheap}€/h)`,
   custom: 'Custom',
 };
 
@@ -42,6 +43,21 @@ export default function HourlyContractForm({
           </select>
           <label htmlFor="clientId" className="field-floating-label">
             Cliente *
+          </label>
+        </div>
+      )}
+
+      {!contract && (
+        <div className="field-wrap">
+          <input
+            type="text"
+            name="referenceName"
+            id="referenceName"
+            placeholder=" "
+            className="field-input w-full border border-grid-border bg-transparent px-3 pb-2 pt-4 text-sm text-primary placeholder-transparent"
+          />
+          <label htmlFor="referenceName" className="field-floating-label">
+            Nome di riferimento (opzionale, es. nome sito/progetto se diverso dal cliente fatturato)
           </label>
         </div>
       )}
