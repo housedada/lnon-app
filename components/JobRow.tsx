@@ -121,7 +121,14 @@ export default function JobRow({
       <div className="list-cell-deco flex items-center justify-center border-b border-grid-border px-1 py-2 group-hover:bg-row-hover">
         <JobRowSelectCheckbox jobId={job.id} />
       </div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{job.title}</div>
+      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">
+        {job.title}
+        {job.isSystemGenerated && (
+          <span className="ml-1.5 rounded-full bg-sky-500/10 px-1.5 py-0.5 text-[9px] font-medium text-sky-700">
+            Conteggio orario
+          </span>
+        )}
+      </div>
       <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">
         {job.clientName ?? job.clientNameRaw ?? '—'}
       </div>
