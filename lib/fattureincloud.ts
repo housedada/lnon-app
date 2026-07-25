@@ -33,6 +33,7 @@ export const FIC_SCOPES = [
   Scope.ENTITY_CLIENTS_ALL,
   Scope.PRODUCTS_READ,
   Scope.PRODUCTS_ALL,
+  Scope.ISSUED_DOCUMENTS_INVOICES_READ,
 ];
 
 function getOAuthManager() {
