@@ -115,12 +115,12 @@ export default function GlobalAudioPlayer() {
 
       {visible && (
         <div
-          className="fixed bottom-16 left-4 z-50 flex h-[45px] items-center gap-2.5 rounded-full border border-grid-border bg-card-bg pr-3 shadow-lg"
+          className="fixed bottom-16 left-4 z-50 flex h-[66px] items-center gap-2.5 rounded-full border border-grid-border bg-card-bg pr-3 shadow-lg"
         >
           <div
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
-            className="relative h-[45px] w-[45px] shrink-0 p-[3px]"
+            className="relative h-[66px] w-[66px] shrink-0 p-[6px]"
           >
             <div
               className={`h-full w-full rounded-full bg-cover bg-center ${playing ? 'audio-disc-spin' : ''}`}
@@ -128,7 +128,7 @@ export default function GlobalAudioPlayer() {
             />
 
             {!hovered && (
-              <span className="audio-eq pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden="true">
+              <span className="audio-eq pointer-events-none absolute inset-[6px] flex items-center justify-center" aria-hidden="true">
                 <i />
                 <i />
                 <i />
@@ -139,12 +139,12 @@ export default function GlobalAudioPlayer() {
                 type="button"
                 onClick={togglePlayPause}
                 aria-label={playing ? 'Pausa' : 'Riproduci'}
-                className="absolute inset-[3px] flex items-center justify-center rounded-full bg-black/50 text-white"
+                className="absolute inset-[6px] flex items-center justify-center rounded-full bg-black/50 text-white"
               >
                 {playing ? (
-                  <Pause size={14} strokeWidth={2} fill="currentColor" />
+                  <Pause size={16} strokeWidth={2} fill="currentColor" />
                 ) : (
-                  <Play size={14} strokeWidth={2} fill="currentColor" />
+                  <Play size={16} strokeWidth={2} fill="currentColor" />
                 )}
               </button>
             )}

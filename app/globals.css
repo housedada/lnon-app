@@ -662,7 +662,7 @@ select:disabled {
 /* Equalizer animato sul widget del player globale. */
 .audio-eq {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   gap: 2px;
   height: 14px;
@@ -702,9 +702,9 @@ select:disabled {
   }
 }
 
-/* Disco che gira come un 33 giri (33 rpm = 60/33s a rotazione). */
+/* Disco che gira lentamente sul widget del player. */
 .audio-disc-spin {
-  animation: audio-disc-spin-anim 1.818s linear infinite;
+  animation: audio-disc-spin-anim 14s linear infinite;
 }
 
 @keyframes audio-disc-spin-anim {
