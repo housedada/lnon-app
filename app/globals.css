@@ -639,3 +639,79 @@ select:disabled {
     opacity: 0;
   }
 }
+
+/* Pulsante player audio in topbar: gradient lento in loop quando attivo. */
+.audio-toggle-active {
+  background: linear-gradient(120deg, #736c88, #a86bd8, #5c5570, #d86bb0, #736c88);
+  background-size: 300% 300%;
+  animation: audio-toggle-gradient 6s ease-in-out infinite;
+}
+
+@keyframes audio-toggle-gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Equalizer animato sul widget del player globale. */
+.audio-eq {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  height: 14px;
+  pointer-events: none;
+}
+
+.audio-eq i {
+  display: block;
+  width: 2.5px;
+  border-radius: 1px;
+  background: #ffffff;
+  animation: audio-eq-bounce 900ms ease-in-out infinite;
+}
+
+.audio-eq i:nth-child(1) {
+  animation-delay: -600ms;
+  height: 6px;
+}
+
+.audio-eq i:nth-child(2) {
+  animation-delay: -300ms;
+  height: 10px;
+}
+
+.audio-eq i:nth-child(3) {
+  animation-delay: 0ms;
+  height: 8px;
+}
+
+@keyframes audio-eq-bounce {
+  0%,
+  100% {
+    transform: scaleY(0.4);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* Disco che gira come un 33 giri (33 rpm = 60/33s a rotazione). */
+.audio-disc-spin {
+  animation: audio-disc-spin-anim 1.818s linear infinite;
+}
+
+@keyframes audio-disc-spin-anim {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -10,6 +10,7 @@ import { getRoleLabel } from '@/lib/permissions';
 import ThemeToggle from '@/components/ThemeToggle';
 import Popover from '@/components/Popover';
 import UserColorPicker from '@/components/UserColorPicker';
+import AudioPlayerToggle from '@/components/AudioPlayerToggle';
 import { useContractsFilterStore } from '@/lib/store/contractsFilterStore';
 import { useContractsStatsStore } from '@/lib/store/contractsStatsStore';
 import { useJobsFilterStore } from '@/lib/store/jobsFilterStore';
@@ -82,6 +83,8 @@ export default function TopBar({
             <SlidersHorizontal size={17} strokeWidth={1.75} aria-hidden="true" />
           </button>
         )}
+
+        <AudioPlayerToggle />
 
         <Popover
           trigger={({ toggle }) => (

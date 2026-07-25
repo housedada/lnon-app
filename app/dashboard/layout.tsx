@@ -6,6 +6,7 @@ import TopBar from '@/components/TopBar';
 import PageTransition from '@/components/PageTransition';
 import NotificationStack from '@/components/NotificationStack';
 import ClickPulseEffect from '@/components/ClickPulseEffect';
+import GlobalAudioPlayer from '@/components/GlobalAudioPlayer';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -37,6 +38,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </div>
       <NotificationStack />
       <ClickPulseEffect color={dbUser?.color} />
+      <GlobalAudioPlayer />
     </div>
   );
 }
