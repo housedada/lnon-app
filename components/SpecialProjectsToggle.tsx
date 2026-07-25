@@ -12,6 +12,7 @@ export default function SpecialProjectsToggle({ openCount }: { openCount: number
       type="button"
       onClick={toggle}
       title={visible ? 'Nascondi progetti speciali (conteggio orario)' : 'Mostra progetti speciali (conteggio orario)'}
+      aria-label={visible ? 'Nascondi progetti speciali (conteggio orario)' : 'Mostra progetti speciali (conteggio orario)'}
       aria-pressed={visible}
       className={`relative flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition ${
         visible ? 'bg-row-hover text-primary' : 'text-secondary hover:text-primary'

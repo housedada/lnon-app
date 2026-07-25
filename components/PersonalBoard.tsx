@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -51,7 +51,10 @@ export default function PersonalBoard({
   canManageInvoices: boolean;
 }) {
   const specialProjectsVisible = useSpecialProjectsVisibilityStore((s) => s.visible);
-  const projects = specialProjectsVisible ? rawProjects : rawProjects.filter((p) => !p.isSystemGenerated);
+  const projects = useMemo(
+    () => (specialProjectsVisible ? rawProjects : rawProjects.filter((p) => !p.isSystemGenerated)),
+    [rawProjects, specialProjectsVisible]
+  );
 
   const density = useTaskBoardViewStore((s) => s.density);
   const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());

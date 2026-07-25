@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import {
   DndContext,
@@ -46,9 +46,13 @@ export default function TeamBoard({
   canManageInvoices: boolean;
 }) {
   const specialProjectsVisible = useSpecialProjectsVisibilityStore((s) => s.visible);
-  const projectsByUser: Record<string, Project[]> = specialProjectsVisible
-    ? rawProjectsByUser
-    : Object.fromEntries(Object.entries(rawProjectsByUser).map(([uid, ps]) => [uid, ps.filter((p) => !p.isSystemGenerated)]));
+  const projectsByUser: Record<string, Project[]> = useMemo(
+    () =>
+      specialProjectsVisible
+        ? rawProjectsByUser
+        : Object.fromEntries(Object.entries(rawProjectsByUser).map(([uid, ps]) => [uid, ps.filter((p) => !p.isSystemGenerated)])),
+    [rawProjectsByUser, specialProjectsVisible]
+  );
 
   const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
   const listRefs = useRef<Map<string, ProjectTaskListHandle>>(new Map());
