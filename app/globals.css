@@ -507,20 +507,76 @@ input[type='radio']:focus-visible {
   color: var(--color-primary);
 }
 
-/* Notifiche push: fade + slide (destra -> sinistra), ingresso lento */
-@keyframes notify-in {
-  from {
-    opacity: 0;
-    transform: translateX(28px);
+/* Notifiche push: zoom-in dal basso con lieve rimbalzo in entrata,
+   simmetrico (rimpicciolisce verso il basso) in uscita. Sfondo con
+   gradiente animato nella stessa palette accent, in movimento continuo. */
+@keyframes notify-gradient-flow {
+  0% {
+    background-position: 0% 50%;
   }
-  to {
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes notify-in {
+  0% {
+    opacity: 0;
+    transform: translateY(22px) scale(0.8);
+  }
+  55% {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(-6px) scale(1.05);
+  }
+  80% {
+    transform: translateY(2px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes notify-out {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.82);
   }
 }
 
 .notify-toast {
-  animation: notify-in 480ms ease-out;
+  border: none;
+  color: var(--accent-text);
+  background: linear-gradient(
+    120deg,
+    var(--accent-from),
+    color-mix(in srgb, var(--accent-to) 55%, #9b8cd9 45%),
+    var(--accent-to),
+    var(--accent-from)
+  );
+  background-size: 280% 280%;
+  animation:
+    notify-in 520ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    notify-gradient-flow 5s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.notify-toast-exit {
+  animation: notify-out 260ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@media (min-width: 1024px) {
+  .notify-toast {
+    font-size: 0.9375rem;
+    padding: 0.9rem 1.25rem;
+  }
 }
 
 /* Backdrop e pannello modale generico */

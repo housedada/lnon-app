@@ -5,15 +5,21 @@ import { Bell } from 'lucide-react';
 import { subscribeToNotifications, type AppNotification } from '@/lib/notify';
 
 const AUTO_DISMISS_MS = 3690;
+const EXIT_ANIMATION_MS = 260;
+
+type DisplayedNotification = AppNotification & { exiting?: boolean };
 
 export default function NotificationStack() {
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [notifications, setNotifications] = useState<DisplayedNotification[]>([]);
 
   useEffect(() => {
     return subscribeToNotifications((notification) => {
       setNotifications((prev) => [...prev, notification]);
       setTimeout(() => {
-        setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
+        setNotifications((prev) => prev.map((n) => (n.id === notification.id ? { ...n, exiting: true } : n)));
+        setTimeout(() => {
+          setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
+        }, EXIT_ANIMATION_MS);
       }, AUTO_DISMISS_MS);
     });
   }, []);
@@ -26,9 +32,9 @@ export default function NotificationStack() {
         <div
           key={notification.id}
           role="status"
-          className="notify-toast card-shadow flex items-center gap-2.5 rounded-lg border border-grid-border bg-card-bg px-4 py-3 text-sm text-primary"
+          className={`notify-toast card-shadow flex items-center gap-2.5 rounded-lg px-4 py-3 text-sm font-medium ${notification.exiting ? 'notify-toast-exit' : ''}`}
         >
-          <Bell size={15} strokeWidth={1.75} className="shrink-0 text-secondary" aria-hidden="true" />
+          <Bell size={15} strokeWidth={1.75} className="shrink-0 opacity-90" aria-hidden="true" />
           {notification.message}
         </div>
       ))}
