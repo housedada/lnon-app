@@ -5,6 +5,8 @@ import { Play, Pause, X } from 'lucide-react';
 import { useAudioPlayerStore } from '@/lib/store/audioPlayerStore';
 
 const FADE_MS = 690;
+const BALLOON_FADE_IN_MS = 660;
+const BALLOON_FADE_OUT_MS = 360;
 const POSITION_KEY = 'lnon-audio-position';
 const TRACK_SRC = '/audio/lnon.mp3';
 const EDGE_MARGIN = 16;
@@ -235,27 +237,31 @@ export default function GlobalAudioPlayer() {
       <audio ref={audioRef} src={TRACK_SRC} loop preload="auto" />
 
       {visible && (
-        <div
-          ref={containerRef}
-          onPointerDown={handlePointerDown}
-          onClick={handleContainerClick}
-          onMouseEnter={() => {
-            clearCollapseTimer();
-            setHoveredBalloon(true);
-          }}
-          onMouseLeave={() => {
-            if (isDragging) return;
-            scheduleCollapse();
-          }}
-          className="fixed z-50 flex h-[66px] touch-none select-none items-center overflow-hidden rounded-full border border-grid-border bg-card-bg shadow-lg transition-opacity"
-          style={{
-            bottom: 'calc(var(--spacing) * 6)',
-            maxWidth: expanded ? EXPANDED_MAX_WIDTH : COLLAPSED_WIDTH,
-            cursor: isDragging ? 'grabbing' : 'grab',
-            opacity: active ? 1 : 0,
-            transitionDuration: `${FADE_MS}ms`,
-          }}
-        >
+        // Wrapper dedicato solo al fade di opacità: il div interno gestisce
+        // il proprio "transition" via JS per il drag/snap (left, max-width),
+        // e sovrascriverlo in toto avrebbe cancellato anche il fade opacity
+        // se fosse stato sullo stesso elemento (bug: comparsa/scomparsa a
+        // scatto invece che in dissolvenza).
+        <div style={{ opacity: active ? 1 : 0, transition: `opacity ${active ? BALLOON_FADE_IN_MS : BALLOON_FADE_OUT_MS}ms ease` }}>
+          <div
+            ref={containerRef}
+            onPointerDown={handlePointerDown}
+            onClick={handleContainerClick}
+            onMouseEnter={() => {
+              clearCollapseTimer();
+              setHoveredBalloon(true);
+            }}
+            onMouseLeave={() => {
+              if (isDragging) return;
+              scheduleCollapse();
+            }}
+            className="fixed z-50 flex h-[66px] touch-none select-none items-center overflow-hidden rounded-full border border-grid-border bg-card-bg shadow-lg"
+            style={{
+              bottom: 'calc(var(--spacing) * 6)',
+              maxWidth: expanded ? EXPANDED_MAX_WIDTH : COLLAPSED_WIDTH,
+              cursor: isDragging ? 'grabbing' : 'grab',
+            }}
+          >
           <div
             onMouseEnter={() => setHoveredAvatar(true)}
             onMouseLeave={() => setHoveredAvatar(false)}
@@ -308,6 +314,7 @@ export default function GlobalAudioPlayer() {
             >
               <X size={13} strokeWidth={2} />
             </button>
+          </div>
           </div>
         </div>
       )}

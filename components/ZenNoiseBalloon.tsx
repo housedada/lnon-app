@@ -8,9 +8,8 @@ const EDGE_MARGIN = 16;
 const COLLAPSED_WIDTH = 66;
 const EXPANDED_MAX_WIDTH = 276;
 const COLLAPSE_DELAY_MS = 2690;
-// Stessa durata del fade audio (ZenNoisePlayer/GlobalAudioPlayer): il
-// balloon si vede/sparisce in dissolvenza insieme al suono, non di scatto.
-const FADE_MS = 690;
+const BALLOON_FADE_IN_MS = 660;
+const BALLOON_FADE_OUT_MS = 360;
 const RESIZE_TRANSITION = 'max-width 360ms cubic-bezier(0.4, 0, 0.2, 1)';
 const SNAP_TRANSITION = 'left 420ms cubic-bezier(0.34, 1.56, 0.64, 1)';
 
@@ -52,7 +51,7 @@ export default function ZenNoiseBalloon() {
       setVisible(true);
       return;
     }
-    const t = setTimeout(() => setVisible(false), FADE_MS);
+    const t = setTimeout(() => setVisible(false), BALLOON_FADE_OUT_MS);
     return () => clearTimeout(t);
   }, [active]);
 
@@ -151,51 +150,56 @@ export default function ZenNoiseBalloon() {
   if (!visible) return null;
 
   return (
-    <div
-      ref={containerRef}
-      onPointerDown={handlePointerDown}
-      onClick={handleContainerClick}
-      onMouseEnter={() => {
-        clearCollapseTimer();
-        setHoveredBalloon(true);
-      }}
-      onMouseLeave={() => {
-        if (isDragging) return;
-        scheduleCollapse();
-      }}
-      className="fixed z-50 flex h-[66px] touch-none select-none items-center overflow-hidden rounded-full border border-grid-border bg-card-bg shadow-lg transition-opacity"
-      style={{
-        bottom: 'calc(var(--spacing) * 6)',
-        maxWidth: expanded ? EXPANDED_MAX_WIDTH : COLLAPSED_WIDTH,
-        cursor: isDragging ? 'grabbing' : 'grab',
-        opacity: active ? 1 : 0,
-        transitionDuration: `${FADE_MS}ms`,
-      }}
-    >
-      {/* onPointerDown qui si ferma: l'area dell'icona non trascina il balloon */}
-      <div onPointerDown={(e) => e.stopPropagation()} className="relative h-[66px] w-[66px] shrink-0 p-[6px]">
-        <div className="zen-noise-icon h-full w-full rounded-full" aria-hidden="true" />
-      </div>
-
+    // Wrapper dedicato solo al fade di opacità: il div interno gestisce il
+    // proprio "transition" via JS per il drag/snap (left, max-width), e
+    // sovrascriverlo in toto avrebbe cancellato anche il fade opacity se
+    // fosse stato sullo stesso elemento (bug: comparsa/scomparsa a scatto
+    // invece che in dissolvenza, e "salto" al bordo sinistro al mount).
+    <div style={{ opacity: active ? 1 : 0, transition: `opacity ${active ? BALLOON_FADE_IN_MS : BALLOON_FADE_OUT_MS}ms ease` }}>
       <div
-        className={`flex min-w-0 shrink-0 items-center gap-2 pr-3 transition-opacity duration-150 ease-out ${
-          expanded ? 'opacity-100' : 'pointer-events-none opacity-0'
-        }`}
-        style={{ transitionDelay: expanded ? '160ms' : '0ms' }}
+        ref={containerRef}
+        onPointerDown={handlePointerDown}
+        onClick={handleContainerClick}
+        onMouseEnter={() => {
+          clearCollapseTimer();
+          setHoveredBalloon(true);
+        }}
+        onMouseLeave={() => {
+          if (isDragging) return;
+          scheduleCollapse();
+        }}
+        className="fixed z-50 flex h-[66px] touch-none select-none items-center overflow-hidden rounded-full border border-grid-border bg-card-bg shadow-lg"
+        style={{
+          bottom: 'calc(var(--spacing) * 6)',
+          maxWidth: expanded ? EXPANDED_MAX_WIDTH : COLLAPSED_WIDTH,
+          cursor: isDragging ? 'grabbing' : 'grab',
+        }}
       >
-        <div className="flex min-w-0 flex-col leading-tight">
-          <span className="truncate text-[11px] font-medium text-primary">HAL 9000</span>
-          <span className="truncate text-[10px] text-secondary">Unità AE-35 = Error 404</span>
+        {/* onPointerDown qui si ferma: l'area dell'icona non trascina il balloon */}
+        <div onPointerDown={(e) => e.stopPropagation()} className="relative h-[66px] w-[66px] shrink-0 p-[6px]">
+          <div className="zen-noise-icon h-full w-full rounded-full" aria-hidden="true" />
         </div>
 
-        <button
-          type="button"
-          onClick={toggleActive}
-          aria-label="Spegni rumore bianco"
-          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-secondary transition hover:bg-row-hover hover:text-primary"
+        <div
+          className={`flex min-w-0 shrink-0 items-center gap-2 pr-3 transition-opacity duration-150 ease-out ${
+            expanded ? 'opacity-100' : 'pointer-events-none opacity-0'
+          }`}
+          style={{ transitionDelay: expanded ? '160ms' : '0ms' }}
         >
-          <X size={13} strokeWidth={2} />
-        </button>
+          <div className="flex min-w-0 flex-col leading-tight">
+            <span className="truncate text-[11px] font-medium text-primary">HAL 9000</span>
+            <span className="truncate text-[10px] text-secondary">Unità AE-35 = Error 404</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={toggleActive}
+            aria-label="Spegni rumore bianco"
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-secondary transition hover:bg-row-hover hover:text-primary"
+          >
+            <X size={13} strokeWidth={2} />
+          </button>
+        </div>
       </div>
     </div>
   );

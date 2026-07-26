@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { playRandomChiptune } from '@/lib/chiptunes';
+import { playSavedChiptuneChoice } from '@/lib/chiptunes';
 
 const STORAGE_KEY = 'pacman-intro-last-played';
 // TEMP: per testare la melodia aggiornata, riproduce ad ogni refresh invece
@@ -27,7 +27,7 @@ export default function PacmanIntroPlayer() {
 
     function markPlayedAndPlay() {
       localStorage.setItem(STORAGE_KEY, today);
-      playRandomChiptune();
+      playSavedChiptuneChoice();
     }
 
     // I browser bloccano l'audio senza un gesto dell'utente sulla pagina

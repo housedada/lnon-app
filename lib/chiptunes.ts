@@ -9,7 +9,8 @@ function freq(note: string, octave: number): number {
   return 440 * Math.pow(2, semitoneFromA4 / 12);
 }
 
-interface Tune {
+export interface Tune {
+  id: string;
   name: string;
   notes: number[];
   noteDurationS: number;
@@ -19,6 +20,7 @@ interface Tune {
 
 // Pac-Man: le due frasi dell'apertura, tonalità abbassata (~ottava e mezza).
 const PACMAN: Tune = {
+  id: 'pacman',
   name: 'Pac-Man',
   notes: [
     freq('B', 3), freq('B', 4), freq('FS', 4), freq('DS', 4),
@@ -32,6 +34,7 @@ const PACMAN: Tune = {
 
 // Donkey Kong: il breve motivo/fanfara di inizio partita.
 const DONKEY_KONG: Tune = {
+  id: 'donkey-kong',
   name: 'Donkey Kong',
   notes: [
     freq('C', 4), freq('E', 4), freq('G', 4), freq('C', 5),
@@ -45,6 +48,7 @@ const DONKEY_KONG: Tune = {
 
 // Tetris: apertura di Korobeiniki (tema A).
 const TETRIS: Tune = {
+  id: 'tetris',
   name: 'Tetris',
   notes: [
     freq('E', 5), freq('B', 4), freq('C', 5), freq('D', 5),
@@ -59,6 +63,7 @@ const TETRIS: Tune = {
 
 // Super Mario Bros: motivo del tema sott'acqua (Koji Kondo).
 const MARIO_UNDERWATER: Tune = {
+  id: 'mario-underwater',
   name: 'Super Mario Bros (sott’acqua)',
   notes: [
     freq('C', 4), freq('E', 4), freq('G', 4), freq('C', 5),
@@ -71,7 +76,9 @@ const MARIO_UNDERWATER: Tune = {
   volumeScale: 0.9,
 };
 
-const TUNES: Tune[] = [PACMAN, DONKEY_KONG, TETRIS, MARIO_UNDERWATER];
+export const TUNES: Tune[] = [PACMAN, DONKEY_KONG, TETRIS, MARIO_UNDERWATER];
+export const RANDOM_CHOICE = 'random';
+export const CHIPTUNE_CHOICE_STORAGE_KEY = 'lnon-chiptune-choice';
 
 const BASE_VOLUME = 0.0064; // metà del volume precedente (0.0128)
 const GLOBAL_PITCH_SHIFT = Math.pow(2, -2 / 12); // un tono sotto, applicato a tutte le melodie
@@ -115,4 +122,22 @@ function playTune(tune: Tune): void {
 export function playRandomChiptune(): void {
   const tune = TUNES[Math.floor(Math.random() * TUNES.length)];
   playTune(tune);
+}
+
+export function playChiptuneById(id: string): void {
+  const tune = TUNES.find((t) => t.id === id);
+  if (tune) playTune(tune);
+}
+
+/** Legge la preferenza salvata e riproduce quella, o una a caso se 'random'/assente. */
+export function playSavedChiptuneChoice(): void {
+  const choice = localStorage.getItem(CHIPTUNE_CHOICE_STORAGE_KEY);
+  if (choice && choice !== RANDOM_CHOICE) {
+    const tune = TUNES.find((t) => t.id === choice);
+    if (tune) {
+      playTune(tune);
+      return;
+    }
+  }
+  playRandomChiptune();
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -12,6 +13,9 @@ import Popover from '@/components/Popover';
 import UserColorPicker from '@/components/UserColorPicker';
 import AudioPlayerToggle from '@/components/AudioPlayerToggle';
 import ZenNoiseToggle from '@/components/ZenNoiseToggle';
+import SpaceInvaderIcon from '@/components/SpaceInvaderIcon';
+import ChiptuneSelectModal from '@/components/ChiptuneSelectModal';
+import { TUNES, RANDOM_CHOICE, CHIPTUNE_CHOICE_STORAGE_KEY } from '@/lib/chiptunes';
 import { useContractsFilterStore } from '@/lib/store/contractsFilterStore';
 import { useContractsStatsStore } from '@/lib/store/contractsStatsStore';
 import { useJobsFilterStore } from '@/lib/store/jobsFilterStore';
@@ -36,6 +40,13 @@ export default function TopBar({
   const toggleContractsStats = useContractsStatsStore((s) => s.toggle);
   const jobsFilterVisible = useJobsFilterStore((s) => s.visible);
   const toggleJobsFilter = useJobsFilterStore((s) => s.toggle);
+
+  const [chiptuneChoice, setChiptuneChoice] = useState(RANDOM_CHOICE);
+  const [chiptuneModalOpen, setChiptuneModalOpen] = useState(false);
+  useEffect(() => {
+    setChiptuneChoice(localStorage.getItem(CHIPTUNE_CHOICE_STORAGE_KEY) ?? RANDOM_CHOICE);
+  }, []);
+  const chiptuneLabel = chiptuneChoice === RANDOM_CHOICE ? 'Casuale' : (TUNES.find((t) => t.id === chiptuneChoice)?.name ?? 'Casuale');
 
   return (
     <header className="fixed inset-x-0 top-0 z-40 flex h-[50px] items-center justify-between border-b border-neutral-800 bg-[var(--color-chrome-bg)] px-4">
@@ -148,6 +159,18 @@ export default function TopBar({
           <div className="my-1 border-t border-grid-border" />
           <button
             type="button"
+            onClick={() => setChiptuneModalOpen(true)}
+            className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-secondary transition hover:bg-row-hover hover:text-primary"
+          >
+            <span className="flex items-center gap-2">
+              <SpaceInvaderIcon size={14} />
+              Motivetto intro
+            </span>
+            <span className="text-xs text-secondary">{chiptuneLabel}</span>
+          </button>
+          <div className="my-1 border-t border-grid-border" />
+          <button
+            type="button"
             onClick={() => signOut({ callbackUrl: '/auth/signin' })}
             className="flex w-full items-center gap-2 px-3 py-2 text-left text-secondary transition hover:bg-row-hover hover:text-primary"
           >
@@ -156,6 +179,14 @@ export default function TopBar({
           </button>
         </Popover>
       </div>
+
+      {chiptuneModalOpen && (
+        <ChiptuneSelectModal
+          selected={chiptuneChoice}
+          onSelect={setChiptuneChoice}
+          onClose={() => setChiptuneModalOpen(false)}
+        />
+      )}
     </header>
   );
 }

@@ -5,116 +5,115 @@ import { useZenNoiseStore } from '@/lib/store/zenNoiseStore';
 
 const VOLUME = 0.018;
 const BUFFER_SECONDS = 2;
-const FADE_S = 0.69;
+const FADE_MS = 690;
 
 /**
  * Rumore bianco calmante generato via Web Audio API (nessun file audio),
  * stesso principio del motivetto intro di Pac-Man: un buffer di rumore
- * casuale in loop, ammorbidito da un filtro passa-basso. Fade in/out di 0.69s
- * (si alterna con la musica di sottofondo, mai in contemporanea).
+ * casuale in loop, ammorbidito da un filtro passa-basso. Fade in/out di
+ * 690ms (si alterna con la musica di sottofondo, mai in contemporanea).
+ *
+ * Il volume è animato "a mano" frame per frame (rAF) invece di affidarsi a
+ * GainNode.linearRampToValueAtTime: quella rampa nativa viene schedulata
+ * rispetto al clock interno dell'AudioContext, che con un contesto ancora
+ * sospeso non avanza in modo affidabile — risultato, il volume "esplodeva"
+ * di colpo al target invece di salire dolcemente. Il fade manuale (stessa
+ * tecnica già usata in GlobalAudioPlayer per la musica) è immune al problema.
  */
 export default function ZenNoisePlayer() {
   const active = useZenNoiseStore((s) => s.active);
   const ctxRef = useRef<AudioContext | null>(null);
   const gainRef = useRef<GainNode | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
-  const stopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const activationTokenRef = useRef(0);
+  const fadeFrameRef = useRef<number | null>(null);
+
+  function cancelFade() {
+    if (fadeFrameRef.current !== null) {
+      cancelAnimationFrame(fadeFrameRef.current);
+      fadeFrameRef.current = null;
+    }
+  }
+
+  function fadeTo(target: number, onDone?: () => void) {
+    const gain: GainNode | null = gainRef.current;
+    if (!gain) return;
+    cancelFade();
+    const start = gain.gain.value;
+    const startTime = performance.now();
+
+    function step(now: number) {
+      const progress = Math.min((now - startTime) / FADE_MS, 1);
+      gain!.gain.value = start + (target - start) * progress;
+      if (progress < 1) {
+        fadeFrameRef.current = requestAnimationFrame(step);
+      } else {
+        fadeFrameRef.current = null;
+        onDone?.();
+      }
+    }
+    fadeFrameRef.current = requestAnimationFrame(step);
+  }
 
   useEffect(() => {
-    if (stopTimeoutRef.current !== null) {
-      clearTimeout(stopTimeoutRef.current);
-      stopTimeoutRef.current = null;
-    }
-    // Invalida eventuali attivazioni precedenti ancora in attesa di resume().
-    const token = ++activationTokenRef.current;
-
     if (active) {
       const AudioContextCtor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!AudioContextCtor) return;
       const ctx = ctxRef.current ?? new AudioContextCtor();
       ctxRef.current = ctx;
+      if (ctx.state === 'suspended') ctx.resume();
 
-      // Un AudioContext sospeso non fa avanzare currentTime in modo affidabile:
-      // schedulare la rampa prima che sia "running" la faceva collassare
-      // all'istante (volume sparato) appena il resume() completava. Si
-      // schedula tutto SOLO dopo che il contesto è davvero attivo.
-      const start = () => {
-        if (activationTokenRef.current !== token) return; // superato da un toggle successivo
-
-        if (!sourceRef.current) {
-          const bufferSize = ctx.sampleRate * BUFFER_SECONDS;
-          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-          const data = buffer.getChannelData(0);
-          // Rumore "bruno" (integrazione con leak del rumore bianco): a parità
-          // di gain è percepito molto più morbido/attutito del bianco puro,
-          // che ha energia piena su tutte le frequenze ed è percettivamente
-          // molto più "forte" anche a volumi bassi.
-          let lastOut = 0;
-          for (let i = 0; i < bufferSize; i++) {
-            const white = Math.random() * 2 - 1;
-            lastOut = (lastOut + 0.02 * white) / 1.02;
-            data[i] = lastOut * 3.5;
-          }
-
-          const source = ctx.createBufferSource();
-          source.buffer = buffer;
-          source.loop = true;
-
-          // Passa-basso stretto: taglia ulteriormente le frequenze alte,
-          // lasciando solo un rombo di sottofondo morbido.
-          const filter = ctx.createBiquadFilter();
-          filter.type = 'lowpass';
-          filter.frequency.value = 900;
-
-          const gain = ctx.createGain();
-          gain.gain.setValueAtTime(0, ctx.currentTime);
-
-          source.connect(filter);
-          filter.connect(gain);
-          gain.connect(ctx.destination);
-          source.start();
-
-          sourceRef.current = source;
-          gainRef.current = gain;
+      if (!sourceRef.current) {
+        const bufferSize = ctx.sampleRate * BUFFER_SECONDS;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        // Rumore "bruno" (integrazione con leak del rumore bianco): a parità
+        // di gain è percepito molto più morbido/attutito del bianco puro.
+        let lastOut = 0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          lastOut = (lastOut + 0.02 * white) / 1.02;
+          data[i] = Math.max(-1, Math.min(1, lastOut * 3.5));
         }
 
-        const gain = gainRef.current;
-        if (gain) {
-          gain.gain.cancelScheduledValues(ctx.currentTime);
-          gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
-          gain.gain.linearRampToValueAtTime(VOLUME, ctx.currentTime + FADE_S);
-        }
-      };
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.loop = true;
 
-      if (ctx.state === 'suspended') {
-        ctx.resume().then(start);
-      } else {
-        start();
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 900;
+
+        const gain = ctx.createGain();
+        gain.gain.value = 0;
+
+        source.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        source.start();
+
+        sourceRef.current = source;
+        gainRef.current = gain;
       }
+
+      fadeTo(VOLUME);
     } else {
-      const ctx = ctxRef.current;
-      const gain = gainRef.current;
       const source = sourceRef.current;
-      if (!ctx || !gain || !source) return;
+      const gain = gainRef.current;
+      if (!source || !gain) return;
 
-      gain.gain.cancelScheduledValues(ctx.currentTime);
-      gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + FADE_S);
-
-      stopTimeoutRef.current = setTimeout(() => {
+      fadeTo(0, () => {
         source.stop();
         source.disconnect();
         gain.disconnect();
         sourceRef.current = null;
         gainRef.current = null;
-        stopTimeoutRef.current = null;
-      }, FADE_S * 1000 + 100);
+      });
     }
 
     return () => {
-      if (stopTimeoutRef.current !== null) clearTimeout(stopTimeoutRef.current);
+      cancelFade();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
   return null;
