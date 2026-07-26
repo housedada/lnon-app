@@ -4,6 +4,7 @@ import { useTransition } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { X, FolderPlus, Loader2 } from 'lucide-react';
+import type { Project } from '@/lib/types';
 import { createProjectFromJobAction } from '@/lib/actions/projects';
 import { notify } from '@/lib/notify';
 import AssignedToPicker from '@/components/AssignedToPicker';
@@ -14,11 +15,13 @@ export default function CreateProjectFromJobModal({
   jobTitle,
   userOptions,
   onClose,
+  onSuccess,
 }: {
   jobId: string;
   jobTitle: string;
   userOptions: { id: string; name: string; color?: string }[];
   onClose: () => void;
+  onSuccess?: (project: Project) => void;
 }) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -31,7 +34,11 @@ export default function CreateProjectFromJobModal({
       notify(res.message);
       if (res.success) {
         router.refresh();
-        onClose();
+        if (onSuccess && res.project) {
+          onSuccess(res.project);
+        } else {
+          onClose();
+        }
       }
     });
   }
