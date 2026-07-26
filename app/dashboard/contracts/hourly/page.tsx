@@ -5,7 +5,7 @@ import { getHourlyContracts, getAllClientNames, getUsers } from '@/lib/db';
 import HourlyContractRow from '@/components/HourlyContractRow';
 import NewHourlyContractButton from '@/components/NewHourlyContractButton';
 
-export const metadata = { title: 'Conteggio Orario' };
+export const metadata = { title: 'Contratti' };
 
 export default async function HourlyContractsPage() {
   const session = await auth();
