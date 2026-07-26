@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type TaskBoardDensity = 'narrow' | 'wide' | 'masonry';
+export type TaskBoardDensity = 'list' | 'narrow' | 'wide' | 'masonry';
 
 interface TaskBoardViewState {
   density: TaskBoardDensity;

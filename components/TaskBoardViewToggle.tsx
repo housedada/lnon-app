@@ -1,9 +1,10 @@
 'use client';
 
-import { Columns4, Columns2, LayoutGrid } from 'lucide-react';
+import { List, Columns4, Columns2, LayoutGrid } from 'lucide-react';
 import { useTaskBoardViewStore, type TaskBoardDensity } from '@/lib/store/taskBoardViewStore';
 
 const OPTIONS: { value: TaskBoardDensity; label: string; icon: typeof Columns4 }[] = [
+  { value: 'list', label: 'Lista', icon: List },
   { value: 'narrow', label: 'Colonne strette', icon: Columns4 },
   { value: 'wide', label: 'Colonne larghe', icon: Columns2 },
   { value: 'masonry', label: 'Masonry', icon: LayoutGrid },
