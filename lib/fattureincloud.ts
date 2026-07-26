@@ -8,6 +8,8 @@ import {
   WebhooksApi,
   IssuedDocumentsApi,
   ListIssuedDocumentsTypeEnum,
+  InfoApi,
+  IssuedDocumentType,
   Scope,
   OAuth2AuthorizationCodeManager,
   Condition,
@@ -267,6 +269,12 @@ async function getIssuedDocumentsApi(): Promise<{ api: IssuedDocumentsApi; compa
   return { api, companyId };
 }
 
+async function getInfoApi(): Promise<{ api: InfoApi; companyId: number }> {
+  const { accessToken, companyId } = await getValidAccessToken();
+  const api = new InfoApi(new Configuration({ accessToken }));
+  return { api, companyId };
+}
+
 /**
  * Scarica tutte le fatture di vendita emesse su Fatture in Cloud (per il match
  * automatico bulk con le fatture progetto storiche, vedi bulkMatchInvoicesAction).
@@ -294,6 +302,62 @@ export async function listAllFicInvoices(): Promise<FicIssuedDocumentModel[]> {
   }
 
   return all;
+}
+
+/**
+ * Cerca tra le aliquote IVA configurate sull'account Fatture in Cloud
+ * connesso quella con percentuale uguale a vatRatePercent (es. 22 per il 22%).
+ * Nessun fallback: se non esiste, l'emissione fattura deve fermarsi.
+ */
+export async function resolveFicVatType(vatRatePercent: number): Promise<number> {
+  const { api, companyId } = await getInfoApi();
+  const response = await api.listVatTypes(companyId);
+  const vatTypes = response.data.data ?? [];
+  const match = vatTypes.find((v) => v.value === vatRatePercent);
+  if (!match?.id) {
+    throw new Error(`Nessuna aliquota IVA del ${vatRatePercent}% configurata su Fatture in Cloud.`);
+  }
+  return match.id;
+}
+
+/**
+ * Crea un documento fattura definitivo (non una bozza: l'API di Fatture in
+ * Cloud non supporta uno stato bozza) su Fatture in Cloud, con una riga per
+ * ogni item passato. Non invia email né allega nulla: il documento viene
+ * solo creato.
+ */
+export async function createFicInvoiceDocument(params: {
+  ficClientId: number;
+  vatTypeId: number;
+  items: { label: string; netAmount: number }[];
+}): Promise<{ ficId: number; number: string; date: string }> {
+  const { api, companyId } = await getIssuedDocumentsApi();
+  const today = new Date().toISOString().slice(0, 10);
+
+  const response = await api.createIssuedDocument(companyId, {
+    data: {
+      type: IssuedDocumentType.Invoice,
+      entity: { id: params.ficClientId },
+      date: today,
+      items_list: params.items.map((item) => ({
+        description: item.label,
+        qty: 1,
+        net_price: item.netAmount,
+        vat: { id: params.vatTypeId },
+      })),
+    },
+  });
+
+  const created = response.data.data;
+  if (!created?.id || created.number == null) {
+    throw new Error('Fatture in Cloud non ha restituito i dati del documento creato.');
+  }
+
+  return {
+    ficId: created.id,
+    number: String(created.number),
+    date: created.date ?? today,
+  };
 }
 
 const CLIENT_DELETE_EVENT_TYPE = EventType.ItFattureincloudWebhooksEntitiesClientsDelete;
