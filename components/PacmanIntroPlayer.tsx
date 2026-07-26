@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { playPacmanIntro } from '@/lib/pacmanTune';
+import { playRandomChiptune } from '@/lib/chiptunes';
 
 const STORAGE_KEY = 'pacman-intro-last-played';
 // TEMP: per testare la melodia aggiornata, riproduce ad ogni refresh invece
@@ -14,9 +14,10 @@ function todayKey(): string {
 }
 
 /**
- * Fa suonare il motivetto di apertura di Pac-Man una sola volta al giorno:
- * al login, o al primo accesso dopo mezzanotte. Non è legato alla comparsa
- * del PacmanLoader (che può ricomparire molte volte al giorno durante l'uso
+ * Fa suonare un motivetto retro-game a caso (Pac-Man, Donkey Kong, Tetris,
+ * Super Mario sott'acqua, ...) una sola volta al giorno: al login, o al
+ * primo accesso dopo mezzanotte. Non è legato alla comparsa del
+ * PacmanLoader (che può ricomparire molte volte al giorno durante l'uso
  * normale) — solo al primo "ingresso" nell'app della giornata.
  */
 export default function PacmanIntroPlayer() {
@@ -26,7 +27,7 @@ export default function PacmanIntroPlayer() {
 
     function markPlayedAndPlay() {
       localStorage.setItem(STORAGE_KEY, today);
-      playPacmanIntro();
+      playRandomChiptune();
     }
 
     // I browser bloccano l'audio senza un gesto dell'utente sulla pagina
