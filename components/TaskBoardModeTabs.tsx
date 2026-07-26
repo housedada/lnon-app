@@ -24,10 +24,16 @@ export default function TaskBoardModeTabs({ mode }: { mode: 'team' | 'personal' 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function hrefFor(next: 'team' | 'personal') {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('view', next);
+    return `/dashboard/tasks?${params.toString()}`;
+  }
+
   return (
     <>
       <Link
-        href="/dashboard/tasks?view=team"
+        href={hrefFor('team')}
         onClick={() => localStorage.setItem(STORAGE_KEY, 'team')}
         className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
           mode === 'team' ? 'bg-row-hover text-primary' : 'text-secondary hover:text-primary'
@@ -37,7 +43,7 @@ export default function TaskBoardModeTabs({ mode }: { mode: 'team' | 'personal' 
         Team
       </Link>
       <Link
-        href="/dashboard/tasks?view=personal"
+        href={hrefFor('personal')}
         onClick={() => localStorage.setItem(STORAGE_KEY, 'personal')}
         className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
           mode === 'personal' ? 'bg-row-hover text-primary' : 'text-secondary hover:text-primary'

@@ -786,3 +786,23 @@ select:disabled {
     transform: rotate(360deg);
   }
 }
+
+/* Pulsante dati demo attivo: sfumatura ocra animata, per segnalare a colpo
+   d'occhio che la board sta mostrando utenti/progetti fittizi. */
+@keyframes demo-data-glow {
+  0%,
+  100% {
+    background-position: 0% 50%;
+    box-shadow: 0 0 0 1px rgba(217, 119, 6, 0.35), 0 0 10px rgba(245, 158, 11, 0.35);
+  }
+  50% {
+    background-position: 100% 50%;
+    box-shadow: 0 0 0 1px rgba(217, 119, 6, 0.55), 0 0 16px rgba(245, 158, 11, 0.55);
+  }
+}
+
+.demo-data-active {
+  background: linear-gradient(120deg, #fde68a, #fbbf24, #fcd34d, #fde68a);
+  background-size: 260% 260%;
+  animation: demo-data-glow 2.6s ease-in-out infinite;
+}
