@@ -946,7 +946,7 @@ select:disabled {
 
 /* Preloader liste (ricerca/paginazione/filtri): il pacman.svg (mouth/dots
    già animati via CSS interno all'SVG) è usato come mask, con dietro un
-   gradiente "acceso" giallo-viola in movimento invece di un colore piatto. */
+   gradiente azzurro-violaceo leggero ma vivace in movimento. */
 @keyframes pacman-glow {
   0%,
   100% {
@@ -968,7 +968,7 @@ select:disabled {
   mask-size: contain;
   -webkit-mask-position: center;
   mask-position: center;
-  background: linear-gradient(120deg, #ffd93d, #ffb703, var(--accent-to), #ffd93d);
+  background: linear-gradient(120deg, #6dd5fa, #8e7cf1, #a78bfa, #6dd5fa);
   background-size: 300% 300%;
   animation: pacman-glow 1.6s ease-in-out infinite;
 }

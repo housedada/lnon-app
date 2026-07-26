@@ -6,7 +6,8 @@ import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { LIST_PAGE_SIZE_OPTIONS, LIST_PAGE_SIZE_STORAGE_KEY, DEFAULT_LIST_PAGE_SIZE } from '@/lib/listPageSize';
 import PacmanLoader from '@/components/PacmanLoader';
 
-const OVERLAY_FADE_MS = 140;
+const OVERLAY_FADE_MS = 100;
+const CONTENT_FADE_MS = 90;
 
 // Fade in/out rapido per l'overlay di caricamento: montato finché `active`
 // è true, e per altri OVERLAY_FADE_MS dopo essere tornato false (giusto il
@@ -210,11 +211,16 @@ export default function ListNavigator({
       </div>
 
       <div className="list-fade-in relative">
-        {children}
+        <div
+          className="transition-opacity"
+          style={{ opacity: isPending ? 0 : 1, transitionDuration: `${CONTENT_FADE_MS}ms` }}
+        >
+          {children}
+        </div>
         {overlay.mounted && (
           <div
             className="absolute inset-0 z-10 flex items-start justify-center pt-16 transition-opacity"
-            style={{ backgroundColor: 'rgba(255,255,255,0.16)', opacity: overlay.visible ? 1 : 0, transitionDuration: `${OVERLAY_FADE_MS}ms` }}
+            style={{ opacity: overlay.visible ? 1 : 0, transitionDuration: `${OVERLAY_FADE_MS}ms` }}
           >
             <PacmanLoader />
           </div>
