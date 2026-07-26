@@ -346,7 +346,7 @@ export default function TeamBoard({
                                     <CheckCircle2 size={13} strokeWidth={1.75} className="text-secondary" aria-label="Progetto completato" />
                                   </span>
                                 ) : (
-                                  <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} />
+                                  <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} isHourlyContract={project.isSystemGenerated} />
                                 )
                               )}
                               <button

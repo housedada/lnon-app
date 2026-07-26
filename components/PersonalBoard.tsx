@@ -321,7 +321,7 @@ export default function PersonalBoard({
                             <CheckCircle2 size={13} strokeWidth={1.75} className={headerTextClass} aria-label="Progetto completato" />
                           </span>
                         ) : (
-                          <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} />
+                          <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} isHourlyContract={project.isSystemGenerated} />
                         )
                       )}
                       <button

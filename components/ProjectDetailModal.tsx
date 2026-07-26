@@ -54,7 +54,7 @@ export default function ProjectDetailModal({
           </div>
           <div className="relative z-10 flex shrink-0 items-center gap-2.5">
             {project.jobId && canManageInvoices && !project.completedAt && (
-              <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} />
+              <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} isHourlyContract={project.isSystemGenerated} />
             )}
             <button
               type="button"

@@ -77,7 +77,7 @@ export default function TeamMemberDetailModal({
                     </div>
                   </button>
                   {project.jobId && canManageInvoices && !project.completedAt && (
-                    <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} />
+                    <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} isHourlyContract={project.isSystemGenerated} />
                   )}
                   <button
                     type="button"

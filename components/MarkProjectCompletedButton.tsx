@@ -4,15 +4,18 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2 } from 'lucide-react';
 import DoubleConfirmModal from '@/components/DoubleConfirmModal';
+import SimpleConfirmModal from '@/components/SimpleConfirmModal';
 import { markProjectCompletedAction } from '@/lib/actions/projectInvoices';
 import { notify } from '@/lib/notify';
 
 export default function MarkProjectCompletedButton({
   projectId,
   projectTitle,
+  isHourlyContract,
 }: {
   projectId: string;
   projectTitle: string;
+  isHourlyContract?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -42,7 +45,15 @@ export default function MarkProjectCompletedButton({
       >
         <CheckCircle2 size={12} strokeWidth={2} className="special-action-icon" aria-hidden="true" />
       </button>
-      {open && (
+      {open && isHourlyContract && (
+        <SimpleConfirmModal
+          message={`Completando "${projectTitle}" metti in riposo il contratto a conteggio orario collegato: la lavorazione in corso verrà chiusa. Confermi?`}
+          confirmLabel="Completa"
+          onConfirm={handleConfirm}
+          onClose={() => setOpen(false)}
+        />
+      )}
+      {open && !isHourlyContract && (
         <DoubleConfirmModal
           firstMessage={`Segnare il progetto "${projectTitle}" come completato?`}
           secondMessage="Il completamento non genera più fatture automatiche: potrai creare la fattura manualmente dalla pagina Fatture, se necessario. Confermi?"
