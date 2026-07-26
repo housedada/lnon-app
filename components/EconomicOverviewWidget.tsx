@@ -38,7 +38,8 @@ function Tile({
 const FATTURATO_COLOR = '#2f9e6b';
 const CONTRACTS_WEB_COLOR = '#0ea5e9';
 const HOURLY_COLOR = '#b8860b';
-const POTENZIALE_GRAYS = ['#9ca3af', '#6b7280', '#4b5563'];
+// Dal più tenue (meno certo) al più marcato/brillante (Confermato).
+const POTENZIALE_GRAYS = ['#9ca3af', '#6b7280', '#1f2937'];
 const USCITE_COLOR = '#c94848';
 const MARGINE_POSITIVE_COLOR = '#2f9e6b';
 const MARGINE_NEGATIVE_COLOR = '#c94848';
@@ -46,10 +47,14 @@ const MARGINE_NEGATIVE_COLOR = '#c94848';
 /**
  * Prima bozza di quadro economico complessivo: mette insieme le fonti già
  * integrate nell'app (contratti web ricorrenti, conteggio orario, lavori
- * dell'anno selezionato, spese fisse dell'anno). "Entrate attuali" = ricavi
- * già certi (contratti web, il cui importo è già annuale — nessuna
- * annualizzazione applicata — + conteggio orario + lavori già fatturati);
- * "Potenziale" = lavori non ancora confermati/fatturati, upside dell'anno;
+ * dell'anno selezionato, spese fisse dell'anno).
+ *
+ * "Entrate attuali" = solo il fatturato lavori dell'anno: contratti web e
+ * conteggio orario generano Job/fatture a loro volta, quindi sono già
+ * ricompresi in quel totale — le due tessere qui sotto sono un dettaglio
+ * informativo (quanto viene da lì), NON un importo da sommare di nuovo,
+ * altrimenti li conteggeremmo due volte.
+ * "Potenziale" = lavori non ancora confermati/fatturati, upside dell'anno.
  * "Uscite" = spese fornitori + spese fisse + costo provider dei contratti.
  * Punto di partenza da rifinire insieme.
  */
@@ -66,7 +71,9 @@ export default function EconomicOverviewWidget({
   fixedExpensesTotal: number;
   jobsForecastTotals: JobsForecastResult['totals'];
 }) {
-  const entrateAttuali = jobsForecastTotals.fatturato + contractsStats.generalTotal + hourlySummary.totalAmount;
+  // Contratti Web e Conteggio Orario sono già ricompresi nel fatturato lavori
+  // (generano a loro volta Job/fatture): non li sommiamo di nuovo qui sotto.
+  const entrateAttuali = jobsForecastTotals.fatturato;
   const usciteTotali = jobsForecastTotals.speseFornitori + fixedExpensesTotal + contractsStats.providerCostTotal;
   const margine = entrateAttuali - usciteTotali;
 
@@ -74,7 +81,7 @@ export default function EconomicOverviewWidget({
     <div className="mx-6 mt-6 space-y-4">
       <div>
         <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-secondary">
-          Entrate attuali — lavori {fiscalYear} già fatturati, contratti ricorrenti, conteggio orario
+          Entrate attuali {fiscalYear} — contratti web e conteggio orario sono dettaglio, già inclusi nel fatturato
         </p>
         <div className="card-shadow grid grid-cols-2 overflow-hidden rounded-lg border border-grid-border bg-card-bg sm:grid-cols-3">
           <Tile label={`Fatturato lavori ${fiscalYear}`} value={jobsForecastTotals.fatturato} color={FATTURATO_COLOR} icon={Receipt} />
