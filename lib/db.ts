@@ -1846,12 +1846,59 @@ function projectInvoiceRowToProjectInvoice(row: Record<string, any>): ProjectInv
  * Segna un progetto come completato. Non genera più fatture automatiche:
  * la fatturazione va sempre creata manualmente dagli admin nella pagina Fatture.
  */
+async function lockLastAssignedHourlyEntry(hourlyContractId: string): Promise<void> {
+  const { data: lastEntryRow, error: lastEntryError } = await supabaseServer
+    .from('hourly_work_entries')
+    .select('id, project_task_id')
+    .eq('hourly_contract_id', hourlyContractId)
+    .eq('status', 'assegnata')
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (lastEntryError) throw lastEntryError;
+  if (!lastEntryRow) return;
+
+  if (lastEntryRow.project_task_id) {
+    const { error: completeTaskError } = await supabaseServer
+      .from('project_tasks')
+      .update({ status: 'completed', completed_at: new Date().toISOString() })
+      .eq('id', lastEntryRow.project_task_id);
+    if (completeTaskError) throw completeTaskError;
+  }
+
+  const { error: lockEntryError } = await supabaseServer
+    .from('hourly_work_entries')
+    .update({ status: 'completata', locked: true })
+    .eq('id', lastEntryRow.id);
+  if (lockEntryError) throw lockEntryError;
+}
+
 export async function markProjectCompleted(projectId: string): Promise<void> {
   const { error } = await supabaseServer
     .from('projects')
     .update({ completed_at: new Date().toISOString() })
     .eq('id', projectId);
   if (error) throw error;
+
+  // Se il progetto è quello generato da un contratto a conteggio orario, il completamento
+  // (anche fatto dalla board generica, dall'utente assegnato) equivale a mettere in riposo
+  // il contratto: stessa cascata di restHourlyContract, per non desincronizzare i due stati.
+  const { data: contract, error: contractError } = await supabaseServer
+    .from('hourly_contracts')
+    .select('id, status')
+    .eq('project_id', projectId)
+    .is('deleted_at', null)
+    .maybeSingle();
+  if (contractError) throw contractError;
+  if (!contract || contract.status !== 'in_corso') return;
+
+  await lockLastAssignedHourlyEntry(contract.id);
+  const { error: restError } = await supabaseServer
+    .from('hourly_contracts')
+    .update({ status: 'riposo' })
+    .eq('id', contract.id);
+  if (restError) throw restError;
 }
 
 /**
@@ -2708,31 +2755,7 @@ export async function restHourlyContract(contractId: string): Promise<HourlyCont
   if (!contract) throw new Error('Contratto a conteggio orario non trovato.');
   if (!contract.projectId) throw new Error('Il contratto non ha un progetto collegato.');
 
-  const { data: lastEntryRow, error: lastEntryError } = await supabaseServer
-    .from('hourly_work_entries')
-    .select('id, project_task_id')
-    .eq('hourly_contract_id', contractId)
-    .eq('status', 'assegnata')
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (lastEntryError) throw lastEntryError;
-
-  if (lastEntryRow) {
-    if (lastEntryRow.project_task_id) {
-      const { error: completeTaskError } = await supabaseServer
-        .from('project_tasks')
-        .update({ status: 'completed', completed_at: new Date().toISOString() })
-        .eq('id', lastEntryRow.project_task_id);
-      if (completeTaskError) throw completeTaskError;
-    }
-    const { error: lockEntryError } = await supabaseServer
-      .from('hourly_work_entries')
-      .update({ status: 'completata', locked: true })
-      .eq('id', lastEntryRow.id);
-    if (lockEntryError) throw lockEntryError;
-  }
+  await lockLastAssignedHourlyEntry(contractId);
 
   const { error: completeProjectError } = await supabaseServer
     .from('projects')
