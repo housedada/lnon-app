@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { getJobsForecast, getContractsStats, getHourlyContractsSummary, getFixedExpensesForYear, type JobForecastCategory } from '@/lib/db';
-import JobsForecastStatsWidget from '@/components/JobsForecastStatsWidget';
 import EconomicOverviewWidget from '@/components/EconomicOverviewWidget';
 import ReportsYearSelect from '@/components/ReportsYearSelect';
 
@@ -55,8 +54,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         jobsForecastTotals={totals}
       />
 
-      <h2 className="mx-6 mt-8 text-sm font-semibold text-primary">Overview Lavori {fiscalYear}</h2>
-      <JobsForecastStatsWidget totals={totals} />
+      <h2 className="mx-6 mt-8 text-sm font-semibold text-primary">Lavori {fiscalYear}</h2>
 
       <div className="overflow-x-auto p-6">
         <table className="w-full border-collapse text-sm">
