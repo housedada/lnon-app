@@ -80,15 +80,20 @@ export default function PersonalBoard({
   const projectsById = new Map(projects.map((p) => [p.id, p]));
 
   useEffect(() => {
+    // La navbar in basso deve rispecchiare l'ordine del drag-and-drop (order),
+    // non l'ordine grezzo di arrivo di projects — altrimenti riordinare le
+    // colonne non si vedeva mai riflesso lì.
+    const ordered = order.map((id) => projectsById.get(id)).filter((p): p is Project => Boolean(p));
     setColumns(
-      projects.map((p) => ({
+      ordered.map((p) => ({
         id: p.id,
         label: p.title,
         background: p.isSystemGenerated ? undefined : projectHeaderBackground(p, productColorsByJob),
         isSpecial: p.isSystemGenerated,
       }))
     );
-  }, [projects, productColorsByJob, setColumns]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order, projects, productColorsByJob, setColumns]);
 
   useEffect(() => {
     listRefs.current.forEach((handle) => handle.setAllCollapsed(!expandTarget));

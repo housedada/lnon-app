@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useTaskBoardScrollStore, scrollToColumn } from '@/lib/store/taskBoardScrollStore';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
 
@@ -59,11 +59,43 @@ function useEdgeAutoScroll(ref: React.RefObject<HTMLDivElement | null>) {
   }, [ref]);
 }
 
+// Animazione FLIP: quando il drag-and-drop sulle colonne cambia l'ordine,
+// i pill non "saltano" di colpo alla nuova posizione — si registra la
+// posizione precedente di ciascuno e si anima la differenza verso 0.
+function useFlipAnimation(itemRefs: React.RefObject<Map<string, HTMLButtonElement>>, columns: { id: string }[]) {
+  const prevRects = useRef<Map<string, DOMRect>>(new Map());
+
+  useLayoutEffect(() => {
+    const nextRects = new Map<string, DOMRect>();
+    itemRefs.current.forEach((el, id) => nextRects.set(id, el.getBoundingClientRect()));
+
+    itemRefs.current.forEach((el, id) => {
+      const prev = prevRects.current.get(id);
+      const next = nextRects.get(id);
+      if (!prev || !next) return;
+      const dx = prev.left - next.left;
+      if (Math.abs(dx) < 1) return;
+      el.style.transition = 'none';
+      el.style.transform = `translateX(${dx}px)`;
+      el.getBoundingClientRect(); // forza il reflow prima di riattivare la transition
+      requestAnimationFrame(() => {
+        el.style.transition = 'transform 320ms ease';
+        el.style.transform = '';
+      });
+    });
+
+    prevRects.current = nextRects;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [columns]);
+}
+
 export default function TaskBoardBottomNav() {
   const columns = useTaskBoardScrollStore((s) => s.columns);
   const density = useTaskBoardViewStore((s) => s.density);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   useEdgeAutoScroll(scrollRef);
+  useFlipAnimation(itemRefs, columns);
 
   if (density === 'masonry' || columns.length === 0) return null;
 
@@ -80,6 +112,10 @@ export default function TaskBoardBottomNav() {
           return (
             <button
               key={col.id}
+              ref={(el) => {
+                if (el) itemRefs.current.set(col.id, el);
+                else itemRefs.current.delete(col.id);
+              }}
               type="button"
               onClick={() => scrollToColumn(col.id)}
               title={col.label}

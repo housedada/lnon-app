@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -25,15 +25,27 @@ function SidebarContent({ role, onNavigate }: SidebarProps & { onNavigate?: () =
   const permissions = getUserPermissions(role);
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  // La Sidebar vive nel layout e non si smonta mai passando da una sezione
+  // all'altra: legge qui la vista Task salvata così il link di primo livello
+  // porta già alla sotto-vista giusta, senza fare affidamento su un redirect
+  // lato pagina che dipende da un remount.
+  const [savedTaskView, setSavedTaskView] = useState<string | null>(null);
+  useEffect(() => {
+    setSavedTaskView(localStorage.getItem('taskBoardView'));
+  }, []);
 
   return (
     <nav className="sidebar-edge flex h-full flex-col bg-neutral-900 px-3 py-4 text-neutral-100">
       {NAV_ITEMS.filter((item) => shouldShowNavItem(item.resource, permissions[item.resource] ?? [])).map((item) => {
         const isActive = pathname?.startsWith(item.href) ?? false;
+        const topHref =
+          item.resource === 'tasks' && (savedTaskView === 'team' || savedTaskView === 'personal')
+            ? `${item.href}?view=${savedTaskView}`
+            : item.href;
         return (
           <div key={item.resource} className={`mb-1 last:mb-0 ${item.subItems ? 'sidebar-nav-item relative' : ''}`}>
             <Link
-              href={item.href}
+              href={topHref}
               onClick={onNavigate}
               className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-semibold transition hover:bg-neutral-800 hover:text-neutral-100 ${
                 isActive ? 'bg-neutral-800 font-bold text-neutral-100' : 'text-neutral-300'
@@ -59,7 +71,13 @@ function SidebarContent({ role, onNavigate }: SidebarProps & { onNavigate?: () =
                       <Link
                         key={sub.href}
                         href={sub.href}
-                        onClick={onNavigate}
+                        onClick={() => {
+                          if (item.resource === 'tasks' && sub.matchQuery) {
+                            localStorage.setItem('taskBoardView', sub.matchQuery.value);
+                            setSavedTaskView(sub.matchQuery.value);
+                          }
+                          onNavigate?.();
+                        }}
                         className={`sidebar-submenu-link block w-full px-2 py-2 text-[11px] font-medium transition-colors ${
                           subActive ? 'text-neutral-100' : 'text-neutral-400 hover:text-neutral-100'
                         }`}
