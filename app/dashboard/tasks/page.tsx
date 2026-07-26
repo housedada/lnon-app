@@ -1,5 +1,3 @@
-import Link from 'next/link';
-import { Users2, User } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import {
   getUsers,
@@ -13,6 +11,7 @@ import {
 } from '@/lib/db';
 import { hasPermission } from '@/lib/permissions';
 import { DEMO_USERS, DEMO_PROJECTS, DEMO_TASKS_BY_PROJECT, DEMO_PRODUCT_COLORS_BY_JOB } from '@/lib/demoData';
+import TaskBoardModeTabs from '@/components/TaskBoardModeTabs';
 import TeamBoard from '@/components/TeamBoard';
 import PersonalBoard from '@/components/PersonalBoard';
 import TaskBoardViewToggle from '@/components/TaskBoardViewToggle';
@@ -46,24 +45,7 @@ export default async function TasksPage({
   return (
     <div className="flex h-[calc(100vh-50px)] flex-col">
       <div className="task-toolbar-border flex shrink-0 items-center gap-1 px-4 py-2">
-        <Link
-          href="/dashboard/tasks?view=team"
-          className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
-            mode === 'team' ? 'bg-row-hover text-primary' : 'text-secondary hover:text-primary'
-          }`}
-        >
-          <Users2 size={14} strokeWidth={1.75} aria-hidden="true" />
-          Team
-        </Link>
-        <Link
-          href="/dashboard/tasks?view=personal"
-          className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
-            mode === 'personal' ? 'bg-row-hover text-primary' : 'text-secondary hover:text-primary'
-          }`}
-        >
-          <User size={14} strokeWidth={1.75} aria-hidden="true" />
-          Personale
-        </Link>
+        <TaskBoardModeTabs mode={mode} />
         <TaskBoardExpandToggle />
         <div className="ml-auto flex items-center gap-2">
           <SpecialProjectsToggle openCount={openHourlyCount} />
