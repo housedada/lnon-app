@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { useZenNoiseStore } from '@/lib/store/zenNoiseStore';
 
@@ -8,6 +8,9 @@ const EDGE_MARGIN = 16;
 const COLLAPSED_WIDTH = 66;
 const EXPANDED_MAX_WIDTH = 276;
 const COLLAPSE_DELAY_MS = 2690;
+// Stessa durata del fade audio (ZenNoisePlayer/GlobalAudioPlayer): il
+// balloon si vede/sparisce in dissolvenza insieme al suono, non di scatto.
+const FADE_MS = 690;
 const RESIZE_TRANSITION = 'max-width 360ms cubic-bezier(0.4, 0, 0.2, 1)';
 const SNAP_TRANSITION = 'left 420ms cubic-bezier(0.34, 1.56, 0.64, 1)';
 
@@ -37,9 +40,21 @@ export default function ZenNoiseBalloon() {
   const [hoveredBalloon, setHoveredBalloon] = useState(false);
   const [expandedClick, setExpandedClick] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [anchor, setAnchor] = useState<Anchor>('right');
+  const [anchor, setAnchor] = useState<Anchor>('left');
+  const [visible, setVisible] = useState(false);
 
   const expanded = hoveredBalloon || expandedClick;
+
+  // Monta subito all'attivazione, ma resta montato durante il fade-out
+  // (stessa logica di GlobalAudioPlayer): si smonta solo a dissolvenza finita.
+  useEffect(() => {
+    if (active) {
+      setVisible(true);
+      return;
+    }
+    const t = setTimeout(() => setVisible(false), FADE_MS);
+    return () => clearTimeout(t);
+  }, [active]);
 
   function clearCollapseTimer() {
     if (collapseTimerRef.current !== null) {
@@ -133,7 +148,7 @@ export default function ZenNoiseBalloon() {
     setExpandedClick((v) => !v);
   }
 
-  if (!active) return null;
+  if (!visible) return null;
 
   return (
     <div
@@ -148,8 +163,14 @@ export default function ZenNoiseBalloon() {
         if (isDragging) return;
         scheduleCollapse();
       }}
-      className="fixed z-50 flex h-[66px] touch-none select-none items-center overflow-hidden rounded-full border border-grid-border bg-card-bg shadow-lg"
-      style={{ bottom: 'calc(var(--spacing) * 6)', maxWidth: expanded ? EXPANDED_MAX_WIDTH : COLLAPSED_WIDTH, cursor: isDragging ? 'grabbing' : 'grab' }}
+      className="fixed z-50 flex h-[66px] touch-none select-none items-center overflow-hidden rounded-full border border-grid-border bg-card-bg shadow-lg transition-opacity"
+      style={{
+        bottom: 'calc(var(--spacing) * 6)',
+        maxWidth: expanded ? EXPANDED_MAX_WIDTH : COLLAPSED_WIDTH,
+        cursor: isDragging ? 'grabbing' : 'grab',
+        opacity: active ? 1 : 0,
+        transitionDuration: `${FADE_MS}ms`,
+      }}
     >
       {/* onPointerDown qui si ferma: l'area dell'icona non trascina il balloon */}
       <div onPointerDown={(e) => e.stopPropagation()} className="relative h-[66px] w-[66px] shrink-0 p-[6px]">

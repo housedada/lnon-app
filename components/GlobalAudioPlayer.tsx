@@ -27,6 +27,7 @@ export default function GlobalAudioPlayer() {
   const playing = useAudioPlayerStore((s) => s.playing);
   const setPlaying = useAudioPlayerStore((s) => s.setPlaying);
   const toggleActive = useAudioPlayerStore((s) => s.toggleActive);
+  const setVisibleInStore = useAudioPlayerStore((s) => s.setVisible);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -122,6 +123,7 @@ export default function GlobalAudioPlayer() {
 
     if (active) {
       queueMicrotask(() => setVisible(true));
+      setVisibleInStore(true);
       audio.volume = 0;
       audio
         .play()
@@ -133,6 +135,7 @@ export default function GlobalAudioPlayer() {
         audio.pause();
         setPlaying(false);
         setVisible(false);
+        setVisibleInStore(false);
       });
     }
 
@@ -244,8 +247,14 @@ export default function GlobalAudioPlayer() {
             if (isDragging) return;
             scheduleCollapse();
           }}
-          className="fixed z-50 flex h-[66px] touch-none select-none items-center overflow-hidden rounded-full border border-grid-border bg-card-bg shadow-lg"
-          style={{ bottom: 'calc(var(--spacing) * 6)', maxWidth: expanded ? EXPANDED_MAX_WIDTH : COLLAPSED_WIDTH, cursor: isDragging ? 'grabbing' : 'grab' }}
+          className="fixed z-50 flex h-[66px] touch-none select-none items-center overflow-hidden rounded-full border border-grid-border bg-card-bg shadow-lg transition-opacity"
+          style={{
+            bottom: 'calc(var(--spacing) * 6)',
+            maxWidth: expanded ? EXPANDED_MAX_WIDTH : COLLAPSED_WIDTH,
+            cursor: isDragging ? 'grabbing' : 'grab',
+            opacity: active ? 1 : 0,
+            transitionDuration: `${FADE_MS}ms`,
+          }}
         >
           <div
             onMouseEnter={() => setHoveredAvatar(true)}

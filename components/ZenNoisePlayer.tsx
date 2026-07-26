@@ -19,62 +19,78 @@ export default function ZenNoisePlayer() {
   const gainRef = useRef<GainNode | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
   const stopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activationTokenRef = useRef(0);
 
   useEffect(() => {
     if (stopTimeoutRef.current !== null) {
       clearTimeout(stopTimeoutRef.current);
       stopTimeoutRef.current = null;
     }
+    // Invalida eventuali attivazioni precedenti ancora in attesa di resume().
+    const token = ++activationTokenRef.current;
 
     if (active) {
       const AudioContextCtor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!AudioContextCtor) return;
       const ctx = ctxRef.current ?? new AudioContextCtor();
       ctxRef.current = ctx;
-      if (ctx.state === 'suspended') ctx.resume();
 
-      if (!sourceRef.current) {
-        const bufferSize = ctx.sampleRate * BUFFER_SECONDS;
-        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        // Rumore "bruno" (integrazione con leak del rumore bianco): a parità
-        // di gain è percepito molto più morbido/attutito del bianco puro,
-        // che ha energia piena su tutte le frequenze ed è percettivamente
-        // molto più "forte" anche a volumi bassi.
-        let lastOut = 0;
-        for (let i = 0; i < bufferSize; i++) {
-          const white = Math.random() * 2 - 1;
-          lastOut = (lastOut + 0.02 * white) / 1.02;
-          data[i] = lastOut * 3.5;
+      // Un AudioContext sospeso non fa avanzare currentTime in modo affidabile:
+      // schedulare la rampa prima che sia "running" la faceva collassare
+      // all'istante (volume sparato) appena il resume() completava. Si
+      // schedula tutto SOLO dopo che il contesto è davvero attivo.
+      const start = () => {
+        if (activationTokenRef.current !== token) return; // superato da un toggle successivo
+
+        if (!sourceRef.current) {
+          const bufferSize = ctx.sampleRate * BUFFER_SECONDS;
+          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          // Rumore "bruno" (integrazione con leak del rumore bianco): a parità
+          // di gain è percepito molto più morbido/attutito del bianco puro,
+          // che ha energia piena su tutte le frequenze ed è percettivamente
+          // molto più "forte" anche a volumi bassi.
+          let lastOut = 0;
+          for (let i = 0; i < bufferSize; i++) {
+            const white = Math.random() * 2 - 1;
+            lastOut = (lastOut + 0.02 * white) / 1.02;
+            data[i] = lastOut * 3.5;
+          }
+
+          const source = ctx.createBufferSource();
+          source.buffer = buffer;
+          source.loop = true;
+
+          // Passa-basso stretto: taglia ulteriormente le frequenze alte,
+          // lasciando solo un rombo di sottofondo morbido.
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.value = 900;
+
+          const gain = ctx.createGain();
+          gain.gain.setValueAtTime(0, ctx.currentTime);
+
+          source.connect(filter);
+          filter.connect(gain);
+          gain.connect(ctx.destination);
+          source.start();
+
+          sourceRef.current = source;
+          gainRef.current = gain;
         }
 
-        const source = ctx.createBufferSource();
-        source.buffer = buffer;
-        source.loop = true;
+        const gain = gainRef.current;
+        if (gain) {
+          gain.gain.cancelScheduledValues(ctx.currentTime);
+          gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(VOLUME, ctx.currentTime + FADE_S);
+        }
+      };
 
-        // Passa-basso stretto: taglia ulteriormente le frequenze alte,
-        // lasciando solo un rombo di sottofondo morbido.
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.value = 900;
-
-        const gain = ctx.createGain();
-        gain.gain.setValueAtTime(0, ctx.currentTime);
-
-        source.connect(filter);
-        filter.connect(gain);
-        gain.connect(ctx.destination);
-        source.start();
-
-        sourceRef.current = source;
-        gainRef.current = gain;
-      }
-
-      const gain = gainRef.current;
-      if (gain) {
-        gain.gain.cancelScheduledValues(ctx.currentTime);
-        gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(VOLUME, ctx.currentTime + FADE_S);
+      if (ctx.state === 'suspended') {
+        ctx.resume().then(start);
+      } else {
+        start();
       }
     } else {
       const ctx = ctxRef.current;
