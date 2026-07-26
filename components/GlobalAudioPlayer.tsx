@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Play, Pause, X } from 'lucide-react';
 import { useAudioPlayerStore } from '@/lib/store/audioPlayerStore';
 
-const FADE_MS = 6690;
+const FADE_MS = 6000;
 const POSITION_KEY = 'lnon-audio-position';
 const TRACK_SRC = '/audio/lnon.mp3';
 const EDGE_MARGIN = 16;
