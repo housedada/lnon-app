@@ -76,7 +76,11 @@ export async function createJobAction(formData: FormData) {
   }
 
   const data = parseJobFormData(formData);
-  await createDbJob({ ...data, createdBy: userId });
+  const job = await createDbJob({ ...data, createdBy: userId });
+
+  if (formData.get('createProject')) {
+    redirect(`/dashboard/jobs?createProject=${job.id}`);
+  }
   redirect('/dashboard/jobs?saved=1');
 }
 
