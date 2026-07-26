@@ -87,7 +87,10 @@ export default function ZenNoiseBalloon() {
     const onResize = () => apply();
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
-  }, [anchor, isDragging, expanded, active]);
+    // "visible" è in dipendenza apposta: al mount (quando passa a true) il
+    // balloon deve posizionarsi subito, non solo alla prima interazione
+    // (hover/drag) successiva che tocca anchor/expanded/active.
+  }, [anchor, isDragging, expanded, active, visible]);
 
   useLayoutEffect(() => {
     if (!isDragging) return;
