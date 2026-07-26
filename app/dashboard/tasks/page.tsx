@@ -92,6 +92,10 @@ async function TeamView({
   const activeUsers = includeDemo ? [...users.filter((u) => u.isActive), ...DEMO_USERS] : users.filter((u) => u.isActive);
   const allProjects = includeDemo ? [...realProjects, ...DEMO_PROJECTS] : realProjects;
 
+  const jobIds = Array.from(new Set(realProjects.map((p) => p.jobId).filter((id): id is string => Boolean(id))));
+  const productColorsMap = await getProductColorsForJobs(jobIds);
+  const productColorsByJob = { ...Object.fromEntries(productColorsMap), ...(includeDemo ? DEMO_PRODUCT_COLORS_BY_JOB : {}) };
+
   const projectsByUser: Record<string, Project[]> = {};
   for (const project of allProjects) {
     if (!project.assignedTo) continue;
@@ -114,6 +118,7 @@ async function TeamView({
     <TeamBoard
       members={members}
       projectsByUser={projectsByUser}
+      productColorsByJob={productColorsByJob}
       tasksByProject={tasksByProject}
       userOptions={userOptions}
       canManageInvoices={canManageInvoices}

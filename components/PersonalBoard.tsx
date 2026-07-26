@@ -30,6 +30,7 @@ import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/Projec
 import MarkProjectCompletedButton from '@/components/MarkProjectCompletedButton';
 import SortableColumn from '@/components/SortableColumn';
 import ProjectDetailModal from '@/components/ProjectDetailModal';
+import { productBorderStyle } from '@/lib/productBorder';
 import type { Project, ProjectTask, ProjectTaskStatus } from '@/lib/types';
 
 const TASK_STATUS_LABEL: Record<ProjectTaskStatus, string> = {
@@ -188,9 +189,11 @@ export default function PersonalBoard({
           <SortableContext items={order} strategy={rectSortingStrategy}>
             {orderedProjects.map((project) => {
               const isSpecial = project.isSystemGenerated;
+              const productColors = project.jobId ? productColorsByJob[project.jobId] : undefined;
               const background = projectHeaderBackground(project, productColorsByJob);
               const headerStyle = !isSpecial && background ? { background } : undefined;
               const headerTextClass = isSpecial || headerStyle ? 'text-neutral-800' : 'text-primary';
+              const borderStyle = !isSpecial ? productBorderStyle(productColors, project.id) : undefined;
               const tasks = tasksByProject[project.id] ?? [];
               const total = tasks.length;
               const completed = tasks.filter((t) => t.status === 'completed').length;
@@ -201,10 +204,10 @@ export default function PersonalBoard({
                   {({ setNodeRef, setActivatorNodeRef, style, attributes, listeners, isDragging }) => (
                     <div
                       ref={setNodeRef}
-                      style={style}
+                      style={{ ...style, ...borderStyle }}
                       onClick={() => setDetailProjectId(project.id)}
                       className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border bg-card-bg text-left transition-[opacity,border-color] duration-150 ${
-                        isSpecial ? 'special-project-border' : 'border-grid-border hover:border-secondary'
+                        isSpecial ? 'special-project-border' : borderStyle ? '' : 'border-grid-border hover:border-secondary'
                       } ${isDragging ? 'opacity-40' : 'opacity-100'}`}
                     >
                       <span
@@ -325,10 +328,12 @@ export default function PersonalBoard({
           <SortableContext items={order} strategy={verticalListSortingStrategy}>
             {orderedProjects.map((project) => {
               const isSpecial = project.isSystemGenerated;
+              const productColors = project.jobId ? productColorsByJob[project.jobId] : undefined;
               const background = projectHeaderBackground(project, productColorsByJob);
               const headerStyle = !isSpecial && background ? { background } : undefined;
               const headerTextClass = isSpecial || headerStyle ? 'text-neutral-800' : 'text-primary';
               const headerSubTextClass = isSpecial || headerStyle ? 'text-neutral-700/70' : 'text-secondary';
+              const borderStyle = !isSpecial ? productBorderStyle(productColors, project.id) : undefined;
               const isCollapsed = collapsedProjects.has(project.id);
               const tasks = tasksByProject[project.id] ?? [];
               const total = tasks.length;
@@ -342,9 +347,9 @@ export default function PersonalBoard({
                         setNodeRef(el);
                         registerColumnRef(project.id, el);
                       }}
-                      style={style}
+                      style={{ ...style, ...borderStyle }}
                       className={`group flex w-full flex-col rounded-xl border bg-grid-header-bg transition-opacity duration-150 ${
-                        isSpecial ? 'special-project-border' : 'border-grid-border'
+                        isSpecial ? 'special-project-border' : borderStyle ? '' : 'border-grid-border'
                       } ${isDragging ? 'opacity-40' : 'opacity-100'}`}
                     >
                       <div
@@ -456,10 +461,12 @@ export default function PersonalBoard({
         <SortableContext items={order} strategy={horizontalListSortingStrategy}>
           {orderedProjects.map((project) => {
             const isSpecial = project.isSystemGenerated;
+            const productColors = project.jobId ? productColorsByJob[project.jobId] : undefined;
             const background = projectHeaderBackground(project, productColorsByJob);
             const headerStyle = !isSpecial && background ? { background } : undefined;
             const headerTextClass = isSpecial || headerStyle ? 'text-neutral-800' : 'text-primary';
             const headerSubTextClass = isSpecial || headerStyle ? 'text-neutral-700/70' : 'text-secondary';
+            const borderStyle = !isSpecial ? productBorderStyle(productColors, project.id) : undefined;
             const isCollapsed = collapsedProjects.has(project.id);
 
             return (
@@ -470,9 +477,9 @@ export default function PersonalBoard({
                       setNodeRef(el);
                       registerColumnRef(project.id, el);
                     }}
-                    style={style}
+                    style={{ ...style, ...borderStyle }}
                     className={`group flex shrink-0 flex-col self-start rounded-xl border bg-grid-header-bg transition-opacity duration-150 ${
-                      isSpecial ? 'special-project-border' : 'border-grid-border'
+                      isSpecial ? 'special-project-border' : borderStyle ? '' : 'border-grid-border'
                     } ${cardWidthClass} ${isDragging ? 'opacity-40' : 'opacity-100'}`}
                   >
                     <div

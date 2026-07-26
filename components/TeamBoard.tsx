@@ -31,6 +31,7 @@ import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/Projec
 import MarkProjectCompletedButton from '@/components/MarkProjectCompletedButton';
 import SortableColumn from '@/components/SortableColumn';
 import TeamMemberDetailModal from '@/components/TeamMemberDetailModal';
+import { productBorderStyle } from '@/lib/productBorder';
 import type { Project, ProjectTask } from '@/lib/types';
 
 interface TeamMember {
@@ -42,12 +43,14 @@ interface TeamMember {
 export default function TeamBoard({
   members,
   projectsByUser: rawProjectsByUser,
+  productColorsByJob,
   tasksByProject,
   userOptions,
   canManageInvoices,
 }: {
   members: TeamMember[];
   projectsByUser: Record<string, Project[]>;
+  productColorsByJob: Record<string, string[]>;
   tasksByProject: Record<string, ProjectTask[]>;
   userOptions: { id: string; name: string; color?: string }[];
   canManageInvoices: boolean;
@@ -377,9 +380,15 @@ export default function TeamBoard({
                         {memberProjects.map((project) => {
                           const isCollapsed = collapsedProjects.has(project.id);
                           const isSpecial = project.isSystemGenerated;
+                          const productColors = project.jobId ? productColorsByJob[project.jobId] : undefined;
+                          const borderStyle = !isSpecial ? productBorderStyle(productColors, project.id) : undefined;
                           const counts = projectTaskCounts(project.id);
                           return (
-                            <div key={project.id} className={`rounded-lg border bg-card-bg ${isSpecial ? 'special-project-border' : 'border-grid-border'}`}>
+                            <div
+                              key={project.id}
+                              style={borderStyle}
+                              className={`rounded-lg border bg-card-bg ${isSpecial ? 'special-project-border' : borderStyle ? '' : 'border-grid-border'}`}
+                            >
                               <div className={`flex w-full items-center gap-3 rounded-t-lg px-4 py-3 ${isSpecial ? 'special-project-header' : ''}`}>
                                 <button type="button" onClick={() => toggleProject(project.id)} className="relative flex min-w-0 flex-1 items-center gap-2 text-left">
                                   <div className="min-w-0">
@@ -528,10 +537,13 @@ export default function TeamBoard({
                       {projects.map((project) => {
                         const isCollapsed = collapsedProjects.has(project.id);
                         const isSpecial = project.isSystemGenerated;
+                        const productColors = project.jobId ? productColorsByJob[project.jobId] : undefined;
+                        const borderStyle = !isSpecial ? productBorderStyle(productColors, project.id) : undefined;
                         return (
                           <div
                             key={project.id}
-                            className={`card-shadow group rounded-lg border bg-card-bg ${isSpecial ? 'special-project-border' : 'border-grid-border'}`}
+                            style={borderStyle}
+                            className={`card-shadow group rounded-lg border bg-card-bg ${isSpecial ? 'special-project-border' : borderStyle ? '' : 'border-grid-border'}`}
                           >
                             <div className={`flex w-full items-center justify-between gap-2 rounded-t-lg p-3 ${isSpecial ? 'special-project-header' : ''}`}>
                               <button type="button" onClick={() => toggleProject(project.id)} className="relative flex min-w-0 flex-1 items-center gap-2 text-left">
