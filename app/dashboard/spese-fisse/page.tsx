@@ -38,7 +38,7 @@ export default async function SpeseFissePage({ searchParams }: { searchParams: P
       <div className="flex items-center justify-between p-6 pb-0">
         <h1 className="text-2xl font-semibold text-primary">Spese Fisse</h1>
         <div className="flex items-center gap-3">
-          <ReportsYearSelect basePath="/dashboard/reports/spese-fisse" fiscalYear={fiscalYear} yearOptions={yearOptions} />
+          <ReportsYearSelect basePath="/dashboard/spese-fisse" fiscalYear={fiscalYear} yearOptions={yearOptions} />
           {canCreate && <AddFixedExpenseCategoryModal />}
         </div>
       </div>

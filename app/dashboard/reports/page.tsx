@@ -1,37 +1,97 @@
-import Link from 'next/link';
-import { BarChart2, Wallet } from 'lucide-react';
+import { redirect } from 'next/navigation';
+import { auth } from '@/lib/auth';
+import { hasPermission } from '@/lib/permissions';
+import { getJobsForecast, getContractsStats, getHourlyContractsSummary, getFixedExpensesForYear, type JobForecastCategory } from '@/lib/db';
+import JobsForecastStatsWidget from '@/components/JobsForecastStatsWidget';
+import EconomicOverviewWidget from '@/components/EconomicOverviewWidget';
+import ReportsYearSelect from '@/components/ReportsYearSelect';
 
 export const metadata = { title: 'Report' };
 
-export default function ReportsPage() {
+const CATEGORY_LABEL: Record<JobForecastCategory, string> = {
+  potenziale: 'Potenziale',
+  preventivato: 'Preventivato',
+  confermato: 'Confermato',
+};
+
+function formatEuro(value: number): string {
+  return `€ ${value.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+type SearchParams = { year?: string };
+
+export default async function ReportsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const session = await auth();
+  const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role;
+  if (!role || !hasPermission(role, 'reports', 'read')) {
+    redirect('/dashboard');
+  }
+
+  const params = await searchParams;
+  const currentYear = new Date().getFullYear();
+  const fiscalYear = params.year ? Number(params.year) : currentYear;
+
+  const [{ rows, totals }, contractsStats, hourlySummary, fixedExpenses] = await Promise.all([
+    getJobsForecast(fiscalYear),
+    getContractsStats(),
+    getHourlyContractsSummary(),
+    getFixedExpensesForYear(fiscalYear),
+  ]);
+
+  const yearOptions = [currentYear + 1, currentYear, currentYear - 1, currentYear - 2];
+
   return (
     <div>
-      <h1 className="p-6 pb-0 text-2xl font-semibold text-primary">Report</h1>
-      <div className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
-        <Link
-          href="/dashboard/reports/lavori"
-          className="card-shadow flex items-center gap-3 rounded-xl border border-grid-border bg-card-bg p-5 transition hover:bg-row-hover"
-        >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-grid-border text-secondary">
-            <BarChart2 size={18} strokeWidth={1.75} aria-hidden="true" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-primary">Overview Lavori</p>
-            <p className="text-xs text-secondary">Potenziale, preventivato, confermato e fatturato per anno</p>
-          </div>
-        </Link>
-        <Link
-          href="/dashboard/reports/spese-fisse"
-          className="card-shadow flex items-center gap-3 rounded-xl border border-grid-border bg-card-bg p-5 transition hover:bg-row-hover"
-        >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-grid-border text-secondary">
-            <Wallet size={18} strokeWidth={1.75} aria-hidden="true" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-primary">Spese Fisse</p>
-            <p className="text-xs text-secondary">Costi fissi aziendali per anno (Commercialista, Attrezzatura, ecc.)</p>
-          </div>
-        </Link>
+      <div className="flex items-center justify-between p-6 pb-0">
+        <h1 className="text-2xl font-semibold text-primary">Report</h1>
+        <ReportsYearSelect basePath="/dashboard/reports" fiscalYear={fiscalYear} yearOptions={yearOptions} />
+      </div>
+
+      <EconomicOverviewWidget
+        fiscalYear={fiscalYear}
+        contractsStats={contractsStats}
+        hourlySummary={hourlySummary}
+        fixedExpensesTotal={fixedExpenses.total}
+        jobsForecastTotals={totals}
+      />
+
+      <h2 className="mx-6 mt-8 text-sm font-semibold text-primary">Overview Lavori {fiscalYear}</h2>
+      <JobsForecastStatsWidget totals={totals} />
+
+      <div className="overflow-x-auto p-6">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-grid-border text-left text-secondary">
+              <th className="px-3 py-2 font-medium">Cliente</th>
+              <th className="px-3 py-2 font-medium">Lavoro</th>
+              <th className="px-3 py-2 font-medium">Categoria</th>
+              <th className="px-3 py-2 text-right font-medium">Budget stimato</th>
+              <th className="px-3 py-2 text-right font-medium">Spese fornitori</th>
+              <th className="px-3 py-2 text-right font-medium">Fatturato</th>
+              <th className="px-3 py-2 text-right font-medium">Margine</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.jobId} className="border-b border-grid-border/60 text-primary">
+                <td className="px-3 py-2">{row.clientName}</td>
+                <td className="px-3 py-2">{row.title}</td>
+                <td className="px-3 py-2">{CATEGORY_LABEL[row.category]}</td>
+                <td className="px-3 py-2 text-right">{formatEuro(row.estimatedBudget)}</td>
+                <td className="px-3 py-2 text-right">{formatEuro(row.supplierCost)}</td>
+                <td className="px-3 py-2 text-right">{formatEuro(row.invoicedAmount)}</td>
+                <td className="px-3 py-2 text-right">{formatEuro(row.margin)}</td>
+              </tr>
+            ))}
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-3 py-8 text-center text-secondary">
+                  Nessun lavoro con anno di competenza {fiscalYear}.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

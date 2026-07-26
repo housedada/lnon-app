@@ -26,7 +26,7 @@ export async function createFixedExpenseCategoryAction(formData: FormData): Prom
     if (!label) return { success: false, message: 'Il nome della categoria è obbligatorio.' };
 
     await createFixedExpenseCategory(label, userId);
-    revalidatePath('/dashboard/reports/spese-fisse');
+    revalidatePath('/dashboard/spese-fisse');
     return { success: true, message: `Categoria "${label}" creata.` };
   } catch (err) {
     return { success: false, message: err instanceof Error ? err.message : 'Errore nella creazione della categoria.' };
@@ -42,7 +42,7 @@ export async function deleteFixedExpenseCategoryAction(id: string): Promise<{ su
   }
 
   await softDeleteFixedExpenseCategory(id);
-  revalidatePath('/dashboard/reports/spese-fisse');
+  revalidatePath('/dashboard/spese-fisse');
   return { success: true, message: 'Categoria eliminata.' };
 }
 
@@ -60,7 +60,7 @@ export async function upsertFixedExpenseEntryAction(input: {
     }
 
     await upsertFixedExpenseEntry({ ...input, updatedBy: userId });
-    revalidatePath('/dashboard/reports/spese-fisse');
+    revalidatePath('/dashboard/spese-fisse');
     return { success: true, message: 'Importo aggiornato.' };
   } catch (err) {
     return { success: false, message: err instanceof Error ? err.message : "Errore nell'aggiornamento dell'importo." };

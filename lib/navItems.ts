@@ -8,6 +8,7 @@ import {
   BarChart2,
   History,
   Settings,
+  Wallet,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -95,6 +96,13 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
   {
+    resource: 'fixed_expenses',
+    label: 'Spese Fisse',
+    href: '/dashboard/spese-fisse',
+    icon: Wallet,
+    description: 'Costi fissi aziendali per anno (Commercialista, Attrezzatura, ecc.)',
+  },
+  {
     resource: 'users',
     label: 'Utenti',
     href: '/dashboard/users',
@@ -106,11 +114,7 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Report',
     href: '/dashboard/reports',
     icon: BarChart2,
-    description: 'Statistiche e reportistica',
-    subItems: [
-      { label: 'Overview Lavori', href: '/dashboard/reports/lavori' },
-      { label: 'Spese Fisse', href: '/dashboard/reports/spese-fisse' },
-    ],
+    description: 'Overview economica di contratti e lavori',
   },
   {
     resource: 'audit_logs',
