@@ -51,6 +51,8 @@ export default function ProjectInvoiceRow({
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [ficConfirmOpen, setFicConfirmOpen] = useState(false);
+  const [ficOverwriteWarning, setFicOverwriteWarning] = useState<string | null>(null);
   const router = useRouter();
 
   async function handleDeleteConfirm() {
@@ -66,9 +68,17 @@ export default function ProjectInvoiceRow({
     if (res.success) router.refresh();
   }
 
-  async function handleGenerateFic() {
-    const res = await generateFicInvoiceAction(invoice.id);
+  async function handleGenerateFic(confirmOverwrite?: boolean) {
+    const res = await generateFicInvoiceAction(invoice.id, { confirmOverwrite });
+    if (res.needsOverwriteConfirm) {
+      setFicOverwriteWarning(res.message);
+      setFicConfirmOpen(true);
+      return;
+    }
     notify(res.message);
+    setFicConfirmOpen(false);
+    setFicOverwriteWarning(null);
+    if (res.success) router.refresh();
   }
 
   function handleInspect() {
@@ -110,7 +120,14 @@ export default function ProjectInvoiceRow({
         )}
       </div>
 
-      {previewOpen && <InvoicePreviewModal invoice={invoice} showAmounts={showAmounts} onClose={() => setPreviewOpen(false)} />}
+      {previewOpen && (
+        <InvoicePreviewModal
+          invoice={invoice}
+          showAmounts={showAmounts}
+          onClose={() => setPreviewOpen(false)}
+          onGenerateFic={() => { setPreviewOpen(false); setFicOverwriteWarning(null); setFicConfirmOpen(true); }}
+        />
+      )}
 
       {deleteOpen && (
         <DoubleConfirmModal
@@ -118,6 +135,21 @@ export default function ProjectInvoiceRow({
           secondMessage="Confermi in modo definitivo? La fattura verrà spostata nel cestino: potrai ripristinarla in seguito."
           onConfirm={handleDeleteConfirm}
           onClose={() => setDeleteOpen(false)}
+        />
+      )}
+
+      {ficConfirmOpen && (
+        <DoubleConfirmModal
+          title="Genera fattura su Fatture in Cloud"
+          firstMessage={
+            ficOverwriteWarning
+              ? `${ficOverwriteWarning} Generandone una nuova, il riferimento al documento precedente verrà sovrascritto in LNON (il vecchio documento resta comunque presente su FIC). Procedere?`
+              : 'Verrà creata una fattura definitiva e numerata su Fatture in Cloud (non è possibile crearla come bozza). Procedere?'
+          }
+          secondMessage="Confermi in modo definitivo? L'operazione non è annullabile da LNON."
+          confirmLabel="Genera su FIC"
+          onConfirm={() => handleGenerateFic(!!ficOverwriteWarning)}
+          onClose={() => { setFicConfirmOpen(false); setFicOverwriteWarning(null); }}
         />
       )}
     </>
@@ -136,10 +168,9 @@ export default function ProjectInvoiceRow({
             <Eye size={15} strokeWidth={1.75} aria-hidden="true" />
             Vedi fattura
           </button>
-          <button type="button" onClick={handleGenerateFic} className={MENU_ROW_CLASS}>
+          <button type="button" onClick={() => { setFicOverwriteWarning(null); setFicConfirmOpen(true); }} className={MENU_ROW_CLASS}>
             <FileOutput size={15} strokeWidth={1.75} aria-hidden="true" />
             Genera su FIC
-            <span className="ml-auto text-[10px] text-secondary">Presto</span>
           </button>
           <button type="button" onClick={handleArchive} className={MENU_ROW_CLASS}>
             <Archive size={15} strokeWidth={1.75} aria-hidden="true" />

@@ -1,7 +1,7 @@
 'use client';
 
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { X, FileOutput } from 'lucide-react';
 import { USER_TAG_COLORS } from '@/lib/types';
 import type { ProjectInvoice, ProjectInvoiceStatus } from '@/lib/types';
 
@@ -45,7 +45,17 @@ const RING_HOLES = 6;
  * di quaderno ad anelli, e un angolo ripiegato verso l'interno in alto a
  * destra come se si fosse piegato per sbaglio.
  */
-export default function InvoicePreviewModal({ invoice, showAmounts, onClose }: { invoice: ProjectInvoice; showAmounts: boolean; onClose: () => void }) {
+export default function InvoicePreviewModal({
+  invoice,
+  showAmounts,
+  onClose,
+  onGenerateFic,
+}: {
+  invoice: ProjectInvoice;
+  showAmounts: boolean;
+  onClose: () => void;
+  onGenerateFic?: () => void;
+}) {
   return createPortal(
     <div className="modal-backdrop fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div
@@ -91,6 +101,17 @@ export default function InvoicePreviewModal({ invoice, showAmounts, onClose }: {
               </p>
             </div>
             <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE[invoice.status]}`}>{STATUS_LABEL[invoice.status]}</span>
+            {onGenerateFic && invoice.status === 'da_fatturare' && (
+              <button
+                type="button"
+                onClick={onGenerateFic}
+                title="Genera su Fatture in Cloud"
+                className="mt-1 flex items-center gap-1 text-[10px] font-medium text-secondary transition hover:text-primary"
+              >
+                <FileOutput size={12} strokeWidth={1.75} aria-hidden="true" />
+                Genera su FIC
+              </button>
+            )}
           </div>
 
           <div className="mt-3 flex items-center justify-between text-xs text-secondary">
