@@ -147,12 +147,12 @@ export default function PersonalBoard({
   }
 
   const isGrid = density === 'masonry';
-  // repeat(auto-fit, minmax(330px, 1fr)): mai una colonna sotto i 330px, si
+  // repeat(auto-fit, minmax(400px, 1fr)): mai una colonna sotto i 400px, si
   // ricalcola da sola ad ogni breakpoint (1 sola su smartphone, dato che nessun
-  // telefono è abbastanza largo per 2 colonne da 330px). Il max-w a 4 colonne
-  // piene evita che sui desktop molto larghi si affollino 5+ colonne.
+  // telefono è abbastanza largo per 2 colonne da 400px). Nessun max-width: la
+  // griglia occupa sempre il 100% dello spazio disponibile, non "boxed".
   const containerClass = isGrid
-    ? 'grid h-full auto-rows-[300px] content-start gap-3 overflow-y-auto px-4 pb-4 pt-3 mx-auto w-full max-w-[1400px] [grid-template-columns:repeat(auto-fit,minmax(330px,1fr))]'
+    ? 'grid h-full w-full auto-rows-[300px] content-start gap-3 overflow-y-auto px-4 pb-4 pt-3 [grid-template-columns:repeat(auto-fit,minmax(400px,1fr))]'
     : 'flex h-full gap-3 overflow-x-auto px-4 pb-4 pt-3';
   const cardWidthClass = density === 'wide' ? 'w-[30%] min-w-[400px]' : 'w-[20%] min-w-[400px]';
 
