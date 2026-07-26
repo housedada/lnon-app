@@ -1,7 +1,7 @@
 // Motivetto di apertura di Pac-Man, sintetizzato via Web Audio API (nessun
 // file audio/MIDI necessario). Trascrizione semplificata delle due frasi
-// dell'intro, note in Hz, tonalità abbassata di un'ottava.
-const PITCH_SHIFT = 0.5; // un'ottava sotto
+// dell'intro, note in Hz, tonalità abbassata di oltre un'ottava.
+const PITCH_SHIFT = 0.42;
 
 const NOTE = {
   B4: 493.88 * PITCH_SHIFT,
@@ -31,8 +31,8 @@ const PHRASE = [
   NOTE.E5,
 ];
 
-const NOTE_DURATION_S = 0.115;
-const NOTE_GAP_S = 0.016;
+const NOTE_DURATION_S = 0.125;
+const NOTE_GAP_S = 0.018;
 
 export function playPacmanIntro(): void {
   const AudioContextCtor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;

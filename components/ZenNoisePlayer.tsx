@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useZenNoiseStore } from '@/lib/store/zenNoiseStore';
 
-const VOLUME = 0.06;
+const VOLUME = 0.018;
 const BUFFER_SECONDS = 2;
 const FADE_S = 6;
 
@@ -37,19 +37,26 @@ export default function ZenNoisePlayer() {
         const bufferSize = ctx.sampleRate * BUFFER_SECONDS;
         const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
         const data = buffer.getChannelData(0);
+        // Rumore "bruno" (integrazione con leak del rumore bianco): a parità
+        // di gain è percepito molto più morbido/attutito del bianco puro,
+        // che ha energia piena su tutte le frequenze ed è percettivamente
+        // molto più "forte" anche a volumi bassi.
+        let lastOut = 0;
         for (let i = 0; i < bufferSize; i++) {
-          data[i] = Math.random() * 2 - 1;
+          const white = Math.random() * 2 - 1;
+          lastOut = (lastOut + 0.02 * white) / 1.02;
+          data[i] = lastOut * 3.5;
         }
 
         const source = ctx.createBufferSource();
         source.buffer = buffer;
         source.loop = true;
 
-        // Passa-basso leggero: ammorbidisce il rumore bianco puro (troppo
-        // sibilante) verso qualcosa di più simile a un rumore rosa/calmante.
+        // Passa-basso stretto: taglia ulteriormente le frequenze alte,
+        // lasciando solo un rombo di sottofondo morbido.
         const filter = ctx.createBiquadFilter();
         filter.type = 'lowpass';
-        filter.frequency.value = 4000;
+        filter.frequency.value = 900;
 
         const gain = ctx.createGain();
         gain.gain.setValueAtTime(0, ctx.currentTime);

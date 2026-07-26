@@ -972,3 +972,31 @@ select:disabled {
   background-size: 300% 300%;
   animation: pacman-glow 1.6s ease-in-out infinite;
 }
+
+/* Icona del balloon "rumore bianco" (HAL 9000): occhio a cerchi concentrici
+   come mask, con dietro un gradiente rosso/ambra pulsante animato. */
+@keyframes zen-noise-pulse {
+  0%,
+  100% {
+    background-position: 0% 50%;
+    transform: scale(1);
+  }
+  50% {
+    background-position: 100% 50%;
+    transform: scale(1.04);
+  }
+}
+
+.zen-noise-icon {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='white'/%3E%3Ccircle cx='50' cy='50' r='34' fill='black'/%3E%3Ccircle cx='50' cy='50' r='24' fill='white'/%3E%3Ccircle cx='50' cy='50' r='9' fill='black'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='white'/%3E%3Ccircle cx='50' cy='50' r='34' fill='black'/%3E%3Ccircle cx='50' cy='50' r='24' fill='white'/%3E%3Ccircle cx='50' cy='50' r='9' fill='black'/%3E%3C/svg%3E");
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  mask-position: center;
+  background: radial-gradient(circle at 35% 35%, #ffdca8, #ff6b4a, #b31217, #ff6b4a);
+  background-size: 220% 220%;
+  animation: zen-noise-pulse 2.2s ease-in-out infinite;
+}
