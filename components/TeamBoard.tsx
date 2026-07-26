@@ -46,13 +46,16 @@ export default function TeamBoard({
   canManageInvoices: boolean;
 }) {
   const specialProjectsVisible = useSpecialProjectsVisibilityStore((s) => s.visible);
-  const projectsByUser: Record<string, Project[]> = useMemo(
-    () =>
-      specialProjectsVisible
-        ? rawProjectsByUser
-        : Object.fromEntries(Object.entries(rawProjectsByUser).map(([uid, ps]) => [uid, ps.filter((p) => !p.isSystemGenerated)])),
-    [rawProjectsByUser, specialProjectsVisible]
-  );
+  const projectsByUser: Record<string, Project[]> = useMemo(() => {
+    // Un progetto a conteggio orario "in riposo" (completato) sparisce dalla board:
+    // si riattiva da solo, ricomparendo, quando arriva una nuova lavorazione.
+    const withoutRestingHourly = Object.fromEntries(
+      Object.entries(rawProjectsByUser).map(([uid, ps]) => [uid, ps.filter((p) => !(p.isSystemGenerated && p.completedAt))])
+    );
+    return specialProjectsVisible
+      ? withoutRestingHourly
+      : Object.fromEntries(Object.entries(withoutRestingHourly).map(([uid, ps]) => [uid, ps.filter((p) => !p.isSystemGenerated)]));
+  }, [rawProjectsByUser, specialProjectsVisible]);
 
   const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
   const listRefs = useRef<Map<string, ProjectTaskListHandle>>(new Map());

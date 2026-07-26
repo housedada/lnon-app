@@ -51,10 +51,12 @@ export default function PersonalBoard({
   canManageInvoices: boolean;
 }) {
   const specialProjectsVisible = useSpecialProjectsVisibilityStore((s) => s.visible);
-  const projects = useMemo(
-    () => (specialProjectsVisible ? rawProjects : rawProjects.filter((p) => !p.isSystemGenerated)),
-    [rawProjects, specialProjectsVisible]
-  );
+  const projects = useMemo(() => {
+    // Un progetto a conteggio orario "in riposo" (completato) sparisce dalla board:
+    // si riattiva da solo, ricomparendo, quando arriva una nuova lavorazione.
+    const withoutRestingHourly = rawProjects.filter((p) => !(p.isSystemGenerated && p.completedAt));
+    return specialProjectsVisible ? withoutRestingHourly : withoutRestingHourly.filter((p) => !p.isSystemGenerated);
+  }, [rawProjects, specialProjectsVisible]);
 
   const density = useTaskBoardViewStore((s) => s.density);
   const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
