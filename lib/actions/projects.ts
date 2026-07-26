@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { hasPermission, canDeleteResource } from '@/lib/permissions';
+import type { Project } from '@/lib/types';
 import {
   createDbProject,
   updateDbProject,
@@ -64,7 +65,7 @@ export async function createProjectAction(formData: FormData): Promise<{ success
 export async function createProjectFromJobAction(
   jobId: string,
   formData: FormData
-): Promise<{ success: boolean; message: string }> {
+): Promise<{ success: boolean; message: string; project?: Project }> {
   const session = await auth();
   const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role;
   const userId = (session?.user as { id?: string } | undefined)?.id;
@@ -81,7 +82,7 @@ export async function createProjectFromJobAction(
   const title = String(formData.get('title') || job.title);
   const assignedTo = String(formData.get('assignedTo') || '') || undefined;
 
-  await createDbProject({
+  const project = await createDbProject({
     title,
     jobId,
     assignedTo,
@@ -90,7 +91,7 @@ export async function createProjectFromJobAction(
 
   revalidatePath('/dashboard/tasks');
   revalidatePath('/dashboard/jobs');
-  return { success: true, message: `Progetto "${title}" creato da questo lavoro.` };
+  return { success: true, message: `Progetto "${title}" creato da questo lavoro.`, project };
 }
 
 export async function updateProjectAction(id: string, formData: FormData): Promise<{ success: boolean; message: string }> {
