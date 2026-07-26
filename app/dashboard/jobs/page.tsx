@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { Archive, Trash2 } from 'lucide-react';
 import { auth } from '@/lib/auth';
-import { getJobs, getAllClientNames, getAllContractOptions, getAllProductNames, getUsers } from '@/lib/db';
+import { getJobs, getJobById, getAllClientNames, getAllContractOptions, getAllProductNames, getUsers } from '@/lib/db';
 import { hasPermission, canDeleteResource, canViewAmounts } from '@/lib/permissions';
 import ListNavigator from '@/components/ListNavigator';
 import ListPlaceholder from '@/components/ListPlaceholder';
@@ -16,11 +16,12 @@ import NotifyFromQuery from '@/components/NotifyFromQuery';
 import JobsSystemGeneratedToggle from '@/components/JobsSystemGeneratedToggle';
 import RememberRoute from '@/components/RememberRoute';
 import LazyRevealRows from '@/components/LazyRevealRows';
+import JobCreateProjectFlow from '@/components/JobCreateProjectFlow';
 import { parsePageSize } from '@/lib/listPageSize';
 
 export const metadata = { title: 'Lavori' };
 
-type SearchParams = { q?: string; page?: string; pageSize?: string; clientId?: string; sync?: string; status?: string; system?: string };
+type SearchParams = { q?: string; page?: string; pageSize?: string; clientId?: string; sync?: string; status?: string; system?: string; createProject?: string };
 
 export default async function JobsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
@@ -42,10 +43,17 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   const canDelete = canDeleteResource(role, '', '', 'jobs');
   const isSuperadmin = role === 'superadmin';
   const showAmounts = canViewAmounts(role);
+  const canManageInvoices = role === 'superadmin' || role === 'admin';
+  const createProjectJob = params.createProject && canCreateProjects ? await getJobById(params.createProject) : null;
 
   return (
     <div>
       <NotifyFromQuery param="saved" message="Lavoro salvato." />
+      <JobCreateProjectFlow
+        job={createProjectJob ? { id: createProjectJob.id, title: createProjectJob.title } : null}
+        userOptions={userOptions}
+        canManageInvoices={canManageInvoices}
+      />
       <RememberRoute storageKey="jobs-tab" tabKey="list" />
       <div className="flex items-center justify-between p-6 pb-0">
         <div>
