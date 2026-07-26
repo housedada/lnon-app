@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Pencil, Trash2, Bug } from 'lucide-react';
+import { Pencil, Trash2, Bug, Eye } from 'lucide-react';
 import RowContextMenu from '@/components/RowContextMenu';
 import ContractLinkButton from '@/components/ContractLinkButton';
 import DoubleConfirmModal from '@/components/DoubleConfirmModal';
+import DetailModal, { type DetailSection } from '@/components/DetailModal';
 import MaskedAmount from '@/components/MaskedAmount';
 import { deleteContractFromListAction } from '@/lib/actions/contracts';
 import { notify } from '@/lib/notify';
@@ -89,6 +90,23 @@ function renderCell(contract: Contract, key: string, showAmounts: boolean): Reac
   }
 }
 
+const DETAIL_GROUPS: { title: string; keys: string[] }[] = [
+  { title: 'Cliente e stato', keys: ['client', 'linkStatus', 'site', 'status', 'billingMonth'] },
+  { title: 'Servizi', keys: ['maintenance', 'hosting', 'analytics', 'cookie', 'total'] },
+  { title: 'Dettagli', keys: ['serviceDescription', 'package', 'notes'] },
+  { title: 'Provider', keys: ['provider', 'providerPlan', 'providerExpiryDate', 'providerCost'] },
+];
+
+function buildDetailSections(contract: Contract, dataColumns: { key: string; label: string }[], showAmounts: boolean): DetailSection[] {
+  const labelByKey = Object.fromEntries(dataColumns.map((c) => [c.key, c.label]));
+  return DETAIL_GROUPS.map((group) => ({
+    title: group.title,
+    fields: group.keys
+      .filter((key) => labelByKey[key])
+      .map((key) => ({ label: labelByKey[key], value: renderCell(contract, key, showAmounts) })),
+  }));
+}
+
 const MENU_ROW_CLASS = 'flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-secondary transition hover:bg-row-hover hover:text-primary';
 
 export default function ContractRow({
@@ -111,6 +129,7 @@ export default function ContractRow({
   className?: string;
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   async function handleDeleteConfirm() {
     const res = await deleteContractFromListAction(contract.id);
@@ -128,6 +147,10 @@ export default function ContractRow({
       className={`group contents ${className ?? ''}`.trim()}
       menu={
         <>
+          <button type="button" onClick={() => setDetailOpen(true)} className={MENU_ROW_CLASS}>
+            <Eye size={15} strokeWidth={1.75} aria-hidden="true" />
+            Vedi dettaglio
+          </button>
           {canUpdate && (
             <Link href={`/dashboard/contracts/${contract.id}/edit`} className={MENU_ROW_CLASS}>
               <Pencil size={15} strokeWidth={1.75} aria-hidden="true" />
@@ -155,12 +178,22 @@ export default function ContractRow({
       {dataColumns.map((col) => (
         <div
           key={col.key}
-          className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border bg-card-bg px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary [&:first-child]:font-semibold [&:first-child]:tracking-[0.01em] [&:first-child]:text-primary"
+          onClick={() => setDetailOpen(true)}
+          className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border bg-card-bg px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary [&:first-child]:font-semibold [&:first-child]:tracking-[0.01em] [&:first-child]:text-primary"
         >
           {renderCell(contract, col.key, showAmounts)}
         </div>
       ))}
       <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 border-b border-l border-grid-border bg-card-bg px-4 group-hover:bg-row-hover">
+        <button
+          type="button"
+          onClick={() => setDetailOpen(true)}
+          aria-label="Vedi dettaglio contratto"
+          title="Vedi dettaglio contratto"
+          className="text-secondary transition hover:text-primary"
+        >
+          <Eye size={15} strokeWidth={1.75} />
+        </button>
         {canUpdate && !contract.clientId && (
           <ContractLinkButton contractId={contract.id} contractClientName={contract.clientNameRaw} clientOptions={clientOptions} />
         )}
@@ -175,6 +208,14 @@ export default function ContractRow({
           </Link>
         )}
       </div>
+
+      {detailOpen && (
+        <DetailModal
+          title={contract.clientName ?? contract.clientNameRaw ?? 'Contratto'}
+          sections={buildDetailSections(contract, dataColumns, showAmounts)}
+          onClose={() => setDetailOpen(false)}
+        />
+      )}
 
       {deleteOpen && (
         <DoubleConfirmModal

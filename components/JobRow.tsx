@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Pencil, FolderPlus, ListTodo, Trash2, Bug } from 'lucide-react';
+import { Pencil, FolderPlus, ListTodo, Trash2, Bug, Eye } from 'lucide-react';
 import RowContextMenu from '@/components/RowContextMenu';
 import JobRowSelectCheckbox from '@/components/JobRowSelectCheckbox';
 import CreateProjectFromJobButton from '@/components/CreateProjectFromJobButton';
@@ -13,6 +13,7 @@ import JobLinkButton from '@/components/JobLinkButton';
 import ApproveJobButton from '@/components/ApproveJobButton';
 import ArchiveJobButton from '@/components/ArchiveJobButton';
 import DoubleConfirmModal from '@/components/DoubleConfirmModal';
+import DetailModal, { type DetailSection } from '@/components/DetailModal';
 import MaskedAmount from '@/components/MaskedAmount';
 import { deleteJobFromListAction } from '@/lib/actions/jobs';
 import { notify } from '@/lib/notify';
@@ -44,9 +45,55 @@ function formatDate(value?: Date) {
   return value ? value.toLocaleDateString('it-IT') : '—';
 }
 
+function buildDetailSections(job: Job, showAmounts: boolean): DetailSection[] {
+  return [
+    {
+      title: 'Anagrafica',
+      fields: [
+        { label: 'Titolo', value: job.title },
+        { label: 'Cliente', value: job.clientName ?? job.clientNameRaw },
+        { label: 'Contratto collegato', value: job.contractLabel },
+        { label: 'Stato', value: STATUS_LABEL[job.status] },
+        { label: 'Assegnato a', value: job.assignedToName },
+        { label: 'Descrizione', value: job.description },
+      ],
+    },
+    {
+      title: 'Date',
+      fields: [
+        { label: 'Anno di competenza', value: job.fiscalYear },
+        { label: 'Data inizio', value: formatDate(job.startDate) },
+        { label: 'Scadenza', value: formatDate(job.endDate) },
+        { label: 'Approvato il', value: formatDate(job.approvedAt) },
+      ],
+    },
+    {
+      title: 'Economico',
+      fields: showAmounts
+        ? [
+            { label: 'Budget stimato', value: formatAmount(job.estimatedBudget) },
+            { label: 'Budget effettivo', value: formatAmount(job.actualBudget) },
+            { label: 'Spese fornitori', value: formatAmount(job.supplierCost) },
+            { label: 'Valuta', value: job.currency },
+          ]
+        : [{ label: 'Importi', value: 'Nascosti per il tuo ruolo' }],
+    },
+    {
+      title: 'Fattura',
+      fields: [
+        { label: 'Numero fattura', value: job.invoiceNumber },
+        { label: 'Data fattura', value: formatDate(job.invoiceDate) },
+        { label: 'Importo netto', value: showAmounts ? formatAmount(job.invoiceNetAmount) : undefined },
+        { label: 'Importo lordo', value: showAmounts ? formatAmount(job.invoiceGrossAmount) : undefined },
+        { label: 'Stato pagamento', value: job.invoicePaymentStatus },
+      ],
+    },
+  ];
+}
+
 const MENU_ROW_CLASS = 'flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-secondary transition hover:bg-row-hover hover:text-primary';
 
-type ModalKind = 'project' | 'delete' | null;
+type ModalKind = 'project' | 'delete' | 'detail' | null;
 
 export default function JobRow({
   job,
@@ -91,6 +138,10 @@ export default function JobRow({
       className={`group contents ${className ?? ''}`.trim()}
       menu={
         <>
+          <button type="button" onClick={() => setModal('detail')} className={MENU_ROW_CLASS}>
+            <Eye size={15} strokeWidth={1.75} aria-hidden="true" />
+            Vedi dettaglio
+          </button>
           {canCreateProjects && (
             <button type="button" onClick={() => setModal('project')} className={MENU_ROW_CLASS}>
               <FolderPlus size={15} strokeWidth={1.75} aria-hidden="true" />
@@ -123,7 +174,10 @@ export default function JobRow({
       <div className="list-cell-deco flex items-center justify-center border-b border-grid-border px-1 py-2 group-hover:bg-row-hover">
         <JobRowSelectCheckbox jobId={job.id} />
       </div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">
+      <div
+        onClick={() => setModal('detail')}
+        className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover"
+      >
         {job.title}
         {job.isSystemGenerated && (
           <span className="ml-1.5 rounded-full bg-sky-500/10 px-1.5 py-0.5 text-[9px] font-medium text-sky-700">
@@ -131,24 +185,36 @@ export default function JobRow({
           </span>
         )}
       </div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">
+      <div
+        onClick={() => setModal('detail')}
+        className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary"
+      >
         {job.clientName ?? job.clientNameRaw ?? '—'}
       </div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
+      <div onClick={() => setModal('detail')} className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
         {job.clientId ? (
           <span className="rounded-full bg-green-600/10 px-2 py-0.5 text-xs font-medium text-green-700">Sync</span>
         ) : (
           <span className="rounded-full bg-grid-header-bg px-2 py-0.5 text-xs font-medium text-secondary">No Sync</span>
         )}
       </div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
+      <div onClick={() => setModal('detail')} className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
         <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE[job.status]}`}>{STATUS_LABEL[job.status]}</span>
       </div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{job.assignedToName ?? '—'}</div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{showAmounts ? formatAmount(job.estimatedBudget) : <MaskedAmount />}</div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(job.endDate)}</div>
+      <div onClick={() => setModal('detail')} className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{job.assignedToName ?? '—'}</div>
+      <div onClick={() => setModal('detail')} className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{showAmounts ? formatAmount(job.estimatedBudget) : <MaskedAmount />}</div>
+      <div onClick={() => setModal('detail')} className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(job.endDate)}</div>
 
       <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-4 group-hover:bg-row-hover">
+        <button
+          type="button"
+          onClick={() => setModal('detail')}
+          aria-label="Vedi dettaglio lavoro"
+          title="Vedi dettaglio lavoro"
+          className="text-secondary transition hover:text-primary"
+        >
+          <Eye size={15} strokeWidth={1.75} />
+        </button>
         {canCreateProjects && <CreateProjectFromJobButton jobId={job.id} jobTitle={job.title} userOptions={userOptions} />}
         <CreateTaskButton />
         {canUpdate && !job.clientId && job.clientNameRaw && (
@@ -163,6 +229,9 @@ export default function JobRow({
         )}
       </div>
 
+      {modal === 'detail' && (
+        <DetailModal title={job.title} sections={buildDetailSections(job, showAmounts)} onClose={() => setModal(null)} />
+      )}
       {modal === 'project' && (
         <CreateProjectFromJobModal jobId={job.id} jobTitle={job.title} userOptions={userOptions} onClose={() => setModal(null)} />
       )}

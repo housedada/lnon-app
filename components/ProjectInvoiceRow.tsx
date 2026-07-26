@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Archive, Trash2, Bug, FileOutput } from 'lucide-react';
+import { Archive, Trash2, Bug, FileOutput, Eye } from 'lucide-react';
 import RowContextMenu from '@/components/RowContextMenu';
 import InvoiceRowSelectCheckbox from '@/components/InvoiceRowSelectCheckbox';
 import DoubleConfirmModal from '@/components/DoubleConfirmModal';
+import InvoicePreviewModal from '@/components/InvoicePreviewModal';
 import MaskedAmount from '@/components/MaskedAmount';
 import { archiveProjectInvoicesAction, deleteProjectInvoiceAction, generateFicInvoiceAction } from '@/lib/actions/projectInvoices';
 import { notify } from '@/lib/notify';
@@ -49,6 +50,7 @@ export default function ProjectInvoiceRow({
   className?: string;
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const router = useRouter();
 
   async function handleDeleteConfirm() {
@@ -81,27 +83,34 @@ export default function ProjectInvoiceRow({
           <InvoiceRowSelectCheckbox invoiceId={invoice.id} />
         </div>
       )}
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{invoice.clientName}</div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{invoice.projectTitle}</div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{invoice.jobTitle ?? '—'}</div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{showAmounts ? formatAmount(invoice.netAmount) : <MaskedAmount />}</div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{invoice.vatRate}%</div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 font-semibold text-primary group-hover:bg-row-hover">{showAmounts ? formatAmount(invoice.totalAmount) : <MaskedAmount />}</div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
+      <div onClick={() => setPreviewOpen(true)} className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{invoice.clientName}</div>
+      <div onClick={() => setPreviewOpen(true)} className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{invoice.projectTitle}</div>
+      <div onClick={() => setPreviewOpen(true)} className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{invoice.jobTitle ?? '—'}</div>
+      <div onClick={() => setPreviewOpen(true)} className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{showAmounts ? formatAmount(invoice.netAmount) : <MaskedAmount />}</div>
+      <div onClick={() => setPreviewOpen(true)} className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{invoice.vatRate}%</div>
+      <div onClick={() => setPreviewOpen(true)} className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 font-semibold text-primary group-hover:bg-row-hover">{showAmounts ? formatAmount(invoice.totalAmount) : <MaskedAmount />}</div>
+      <div onClick={() => setPreviewOpen(true)} className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
         <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE[invoice.status]}`}>{STATUS_LABEL[invoice.status]}</span>
       </div>
-      <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(invoice.createdAt)}</div>
+      <div onClick={() => setPreviewOpen(true)} className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(invoice.createdAt)}</div>
 
-      {canManage && (
-        <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-4 group-hover:bg-row-hover">
-          <button type="button" onClick={handleArchive} aria-label="Archivia fattura" title="Archivia fattura" className="text-secondary transition hover:text-primary">
-            <Archive size={15} strokeWidth={1.75} />
-          </button>
-          <button type="button" onClick={() => setDeleteOpen(true)} aria-label="Elimina fattura" title="Elimina fattura" className="text-secondary transition hover:text-red-600">
-            <Trash2 size={15} strokeWidth={1.75} />
-          </button>
-        </div>
-      )}
+      <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-4 group-hover:bg-row-hover">
+        <button type="button" onClick={() => setPreviewOpen(true)} aria-label="Vedi fattura" title="Vedi fattura" className="text-secondary transition hover:text-primary">
+          <Eye size={15} strokeWidth={1.75} />
+        </button>
+        {canManage && (
+          <>
+            <button type="button" onClick={handleArchive} aria-label="Archivia fattura" title="Archivia fattura" className="text-secondary transition hover:text-primary">
+              <Archive size={15} strokeWidth={1.75} />
+            </button>
+            <button type="button" onClick={() => setDeleteOpen(true)} aria-label="Elimina fattura" title="Elimina fattura" className="text-secondary transition hover:text-red-600">
+              <Trash2 size={15} strokeWidth={1.75} />
+            </button>
+          </>
+        )}
+      </div>
+
+      {previewOpen && <InvoicePreviewModal invoice={invoice} showAmounts={showAmounts} onClose={() => setPreviewOpen(false)} />}
 
       {deleteOpen && (
         <DoubleConfirmModal
@@ -123,6 +132,10 @@ export default function ProjectInvoiceRow({
       className={`group contents ${className ?? ''}`.trim()}
       menu={
         <>
+          <button type="button" onClick={() => setPreviewOpen(true)} className={MENU_ROW_CLASS}>
+            <Eye size={15} strokeWidth={1.75} aria-hidden="true" />
+            Vedi fattura
+          </button>
           <button type="button" onClick={handleGenerateFic} className={MENU_ROW_CLASS}>
             <FileOutput size={15} strokeWidth={1.75} aria-hidden="true" />
             Genera su FIC
