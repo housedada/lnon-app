@@ -14,6 +14,7 @@ import UserColorPicker from '@/components/UserColorPicker';
 import AudioPlayerToggle from '@/components/AudioPlayerToggle';
 import ZenNoiseToggle from '@/components/ZenNoiseToggle';
 import SpaceInvaderIcon from '@/components/SpaceInvaderIcon';
+import CrownIcon from '@/components/CrownIcon';
 import ChiptuneSelectModal from '@/components/ChiptuneSelectModal';
 import { TUNES, RANDOM_CHOICE, CHIPTUNE_CHOICE_STORAGE_KEY } from '@/lib/chiptunes';
 import { useContractsFilterStore } from '@/lib/store/contractsFilterStore';
@@ -47,6 +48,9 @@ export default function TopBar({
     setChiptuneChoice(localStorage.getItem(CHIPTUNE_CHOICE_STORAGE_KEY) ?? RANDOM_CHOICE);
   }, []);
   const chiptuneLabel = chiptuneChoice === RANDOM_CHOICE ? 'Casuale' : (TUNES.find((t) => t.id === chiptuneChoice)?.name ?? 'Casuale');
+  // getRoleLabel antepone un'emoji (usata altrove, es. Gestione Accessi); qui la
+  // sostituiamo con un'icona SVG dedicata (corona oro per il superadmin).
+  const roleLabelText = getRoleLabel(role).replace(/^\p{Emoji}\s*/u, '');
 
   return (
     <header className="fixed inset-x-0 top-0 z-40 flex h-[50px] items-center justify-between border-b border-neutral-800 bg-[var(--color-chrome-bg)] px-4">
@@ -150,8 +154,14 @@ export default function TopBar({
           )}
         >
           <div className="px-3 py-2">
-            <p className="text-sm font-medium text-primary">{userName}</p>
-            <p className="text-xs text-secondary">{getRoleLabel(role)}</p>
+            <p className="flex items-center gap-2 text-sm font-medium text-primary">
+              <span className="truncate">{userName}</span>
+              <span className="h-3 w-px shrink-0 bg-grid-border" aria-hidden="true" />
+              <span className="flex shrink-0 items-center gap-1 text-xs font-normal text-secondary">
+                {role === 'superadmin' && <CrownIcon size={12} />}
+                {roleLabelText}
+              </span>
+            </p>
           </div>
           <div className="my-1 border-t border-grid-border" />
           <p className="px-3 pt-1 text-[10px] font-medium uppercase tracking-wide text-secondary">Colore tag</p>
@@ -160,13 +170,10 @@ export default function TopBar({
           <button
             type="button"
             onClick={() => setChiptuneModalOpen(true)}
-            className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-secondary transition hover:bg-row-hover hover:text-primary"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-secondary transition hover:bg-row-hover hover:text-primary"
           >
-            <span className="flex items-center gap-2">
-              <SpaceInvaderIcon size={14} />
-              Motivetto intro
-            </span>
-            <span className="text-xs text-secondary">{chiptuneLabel}</span>
+            <SpaceInvaderIcon size={20} />
+            {chiptuneLabel}
           </button>
           <div className="my-1 border-t border-grid-border" />
           <button
