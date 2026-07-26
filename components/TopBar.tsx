@@ -37,7 +37,7 @@ export default function TopBar({
   const toggleJobsFilter = useJobsFilterStore((s) => s.toggle);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 flex h-[50px] items-center justify-between border-b border-neutral-800 bg-neutral-900 px-4">
+    <header className="fixed inset-x-0 top-0 z-40 flex h-[50px] items-center justify-between border-b border-neutral-800 bg-[var(--color-chrome-bg)] px-4">
       <Link href="/dashboard" className="flex items-center">
         <Image src="/logo.png" alt="Housedada" width={84} height={17} />
       </Link>

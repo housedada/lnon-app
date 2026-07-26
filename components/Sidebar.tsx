@@ -42,7 +42,7 @@ function SidebarContent({ role, onNavigate }: SidebarProps & { onNavigate?: () =
   }, []);
 
   return (
-    <nav className="sidebar-edge flex h-full flex-col bg-neutral-900 px-3 py-4 text-neutral-100">
+    <nav className="sidebar-edge flex h-full flex-col bg-[var(--color-chrome-bg)] px-3 py-4 text-neutral-100">
       {NAV_ITEMS.filter((item) => shouldShowNavItem(item.resource, permissions[item.resource] ?? [])).map((item) => {
         const isActive = pathname?.startsWith(item.href) ?? false;
         const savedValue = item.viewStorageKey ? savedViews[item.viewStorageKey] : undefined;
@@ -108,7 +108,7 @@ export default function Sidebar({ role }: SidebarProps) {
   return (
     <div className="md:contents">
       {/* Pulsante hamburger mobile (la topbar ospita già logo/utente) */}
-      <div className="flex items-center justify-between border-b border-neutral-800 bg-neutral-900 px-4 py-2 md:hidden">
+      <div className="flex items-center justify-between border-b border-neutral-800 bg-[var(--color-chrome-bg)] px-4 py-2 md:hidden">
         <span className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Menu</span>
         <button
           onClick={() => setMobileOpen(true)}
@@ -132,7 +132,7 @@ export default function Sidebar({ role }: SidebarProps) {
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} aria-hidden="true" />
           <div className="absolute inset-y-0 left-0 w-64 shadow-xl">
-            <div className="flex items-center justify-between border-b border-neutral-800 bg-neutral-900 px-4 py-3">
+            <div className="flex items-center justify-between border-b border-neutral-800 bg-[var(--color-chrome-bg)] px-4 py-3">
               <Image src="/logo.png" alt="Housedada" width={90} height={18} />
               <button
                 onClick={() => setMobileOpen(false)}
