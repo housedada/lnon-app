@@ -2,12 +2,13 @@
 // necessario), scelti a caso ad ogni riproduzione. Trascrizioni semplificate,
 // non fedeli nota per nota agli originali.
 
-// Tabella frequenze (Hz) per nome nota, ottave 3-6.
+// Tabella frequenze (Hz) per nome nota, ottave 3-6. 0 = pausa (nessun suono).
 const SEMITONES: Record<string, number> = { C: -9, CS: -8, D: -7, DS: -6, E: -5, F: -4, FS: -3, G: -2, GS: -1, A: 0, AS: 1, B: 2 };
 function freq(note: string, octave: number): number {
   const semitoneFromA4 = SEMITONES[note] + (octave - 4) * 12;
   return 440 * Math.pow(2, semitoneFromA4 / 12);
 }
+const REST = 0;
 
 export interface Tune {
   id: string;
@@ -16,9 +17,14 @@ export interface Tune {
   noteDurationS: number;
   noteGapS: number;
   volumeScale?: number;
+  // Seconda voce simultanea (semitoni di distanza da ogni nota, es. -12 =
+  // ottava sotto come basso): un accenno di polifonia per un suono più pieno,
+  // più vicino all'originale rispetto a un'unica linea monofonica.
+  harmonySemitones?: number;
+  harmonyVolumeScale?: number;
 }
 
-// Pac-Man: le due frasi dell'apertura, tonalità abbassata (~ottava e mezza).
+// Pac-Man: le due frasi dell'apertura.
 const PACMAN: Tune = {
   id: 'pacman',
   name: 'Pac-Man',
@@ -59,29 +65,111 @@ const TETRIS: Tune = {
   ],
   noteDurationS: 0.15,
   noteGapS: 0.015,
+  harmonySemitones: -12,
+  harmonyVolumeScale: 0.35,
 };
 
-// Super Mario Bros: motivo del tema sott'acqua (Koji Kondo).
-const MARIO_UNDERWATER: Tune = {
-  id: 'mario-underwater',
-  name: 'Super Mario Bros (sott’acqua)',
+// Super Mario Bros: il riff iniziale del tema principale (Overworld), molto
+// più riconoscibile del tema sott'acqua che sostituisce.
+const MARIO_OVERWORLD: Tune = {
+  id: 'mario-overworld',
+  name: 'Super Mario Bros',
   notes: [
-    freq('C', 4), freq('E', 4), freq('G', 4), freq('C', 5),
-    freq('E', 5), freq('D', 5), freq('C', 5), freq('G', 4),
-    freq('A', 4), freq('C', 5), freq('E', 5), freq('D', 5),
-    freq('C', 5), freq('B', 4), freq('A', 4), freq('G', 4),
+    freq('E', 5), freq('E', 5), REST, freq('E', 5), REST,
+    freq('C', 5), freq('E', 5), REST,
+    freq('G', 5), REST, REST, REST,
+    freq('G', 4), REST, REST, REST,
   ],
-  noteDurationS: 0.185,
-  noteGapS: 0.03,
-  volumeScale: 0.9,
+  noteDurationS: 0.14,
+  noteGapS: 0.02,
 };
 
-export const TUNES: Tune[] = [PACMAN, DONKEY_KONG, TETRIS, MARIO_UNDERWATER];
+// The Legend of Zelda: il jingle "segreto scoperto" (triade diminuita G/F#/D#
+// con la A a chiudere), ripetuto un'ottava sopra.
+const ZELDA_SECRET: Tune = {
+  id: 'zelda-secret',
+  name: 'The Legend of Zelda',
+  notes: [
+    freq('G', 4), freq('FS', 4), freq('DS', 4), freq('A', 4),
+    freq('G', 5), freq('FS', 5), freq('DS', 5), freq('A', 5),
+  ],
+  noteDurationS: 0.1,
+  noteGapS: 0.01,
+  volumeScale: 1.15,
+};
+
+// Final Fantasy: la Victory Fanfare, forse la fanfara di vittoria più
+// riconoscibile dei videogiochi.
+const FINAL_FANTASY_VICTORY: Tune = {
+  id: 'final-fantasy-victory',
+  name: 'Final Fantasy',
+  notes: [
+    freq('C', 5), freq('C', 5), freq('C', 5), freq('C', 5),
+    freq('GS', 4), freq('AS', 4), freq('C', 5), freq('C', 5),
+  ],
+  noteDurationS: 0.12,
+  noteGapS: 0.012,
+  harmonySemitones: -12,
+  harmonyVolumeScale: 0.4,
+};
+
+// Sonic the Hedgehog: l'incipit di Green Hill Zone.
+const SONIC_GREEN_HILL: Tune = {
+  id: 'sonic-green-hill',
+  name: 'Sonic the Hedgehog',
+  notes: [
+    freq('C', 5), freq('A', 4), freq('C', 5), freq('B', 4),
+    freq('C', 5), freq('B', 4), freq('G', 4), freq('G', 4),
+    freq('E', 4), freq('D', 4), freq('C', 4),
+  ],
+  noteDurationS: 0.115,
+  noteGapS: 0.012,
+};
+
+// Mega Man: fanfara eroica in stile "select/title", un arpeggio ascendente e
+// discendente su un accordo maggiore.
+const MEGA_MAN: Tune = {
+  id: 'mega-man',
+  name: 'Mega Man',
+  notes: [
+    freq('C', 5), freq('E', 5), freq('G', 5), freq('C', 6),
+    freq('G', 5), freq('E', 5), freq('C', 5),
+  ],
+  noteDurationS: 0.1,
+  noteGapS: 0.014,
+  volumeScale: 1.05,
+};
+
+export const TUNES: Tune[] = [PACMAN, DONKEY_KONG, TETRIS, MARIO_OVERWORLD, ZELDA_SECRET, FINAL_FANTASY_VICTORY, SONIC_GREEN_HILL, MEGA_MAN];
 export const RANDOM_CHOICE = 'random';
 export const CHIPTUNE_CHOICE_STORAGE_KEY = 'lnon-chiptune-choice';
 
-const BASE_VOLUME = 0.0064; // metà del volume precedente (0.0128)
-const GLOBAL_PITCH_SHIFT = Math.pow(2, -2 / 12); // un tono sotto, applicato a tutte le melodie
+const BASE_VOLUME = 0.0064;
+
+// Tonalità randomizzata ad ogni riproduzione, per varietà: si può scendere
+// parecchio ma si sale poco (evita che risulti troppo acuto/fastidioso).
+function randomPitchShift(): number {
+  const semitones = -9 + Math.random() * 11; // range [-9, +2]
+  return Math.pow(2, semitones / 12);
+}
+
+function scheduleNote(ctx: AudioContext, master: GainNode, noteFreq: number, gainScale: number, t: number, durationS: number) {
+  if (noteFreq <= 0) return; // pausa
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'square';
+  osc.frequency.value = noteFreq;
+  osc.connect(gain);
+  gain.connect(master);
+
+  gain.gain.setValueAtTime(0, t);
+  gain.gain.linearRampToValueAtTime(gainScale, t + 0.008);
+  gain.gain.setValueAtTime(gainScale, t + durationS - 0.02);
+  gain.gain.linearRampToValueAtTime(0, t + durationS);
+
+  osc.start(t);
+  osc.stop(t + durationS);
+}
 
 function playTune(tune: Tune): void {
   const AudioContextCtor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
@@ -92,22 +180,16 @@ function playTune(tune: Tune): void {
   master.gain.value = BASE_VOLUME * (tune.volumeScale ?? 1);
   master.connect(ctx.destination);
 
+  const pitchShift = randomPitchShift();
+  const harmonyRatio = tune.harmonySemitones !== undefined ? Math.pow(2, tune.harmonySemitones / 12) : undefined;
+
   let t = ctx.currentTime + 0.02;
   for (const noteFreq of tune.notes) {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'square';
-    osc.frequency.value = noteFreq * GLOBAL_PITCH_SHIFT;
-    osc.connect(gain);
-    gain.connect(master);
-
-    gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(1, t + 0.008);
-    gain.gain.setValueAtTime(1, t + tune.noteDurationS - 0.02);
-    gain.gain.linearRampToValueAtTime(0, t + tune.noteDurationS);
-
-    osc.start(t);
-    osc.stop(t + tune.noteDurationS);
+    const shifted = noteFreq * pitchShift;
+    scheduleNote(ctx, master, shifted, 1, t, tune.noteDurationS);
+    if (harmonyRatio !== undefined) {
+      scheduleNote(ctx, master, shifted * harmonyRatio, tune.harmonyVolumeScale ?? 0.4, t, tune.noteDurationS);
+    }
     t += tune.noteDurationS + tune.noteGapS;
   }
 
