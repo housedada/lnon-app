@@ -1901,6 +1901,22 @@ export async function markProjectCompleted(projectId: string): Promise<void> {
   if (restError) throw restError;
 }
 
+export async function getProjectInvoiceById(id: string): Promise<ProjectInvoice | null> {
+  const { data, error } = await supabaseServer
+    .from('project_invoices')
+    .select('*')
+    .eq('id', id)
+    .is('deleted_at', null)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw error;
+  }
+
+  return projectInvoiceRowToProjectInvoice(data);
+}
+
 /**
  * Elenco fatture progetto (visibile solo agli admin), con filtri per lista/archivio/cestino
  */
@@ -2055,6 +2071,32 @@ export async function getProjectInvoicesWithNumber(): Promise<{ id: string; invo
 export async function linkProjectInvoiceToFic(id: string, ficInvoiceId: number): Promise<void> {
   const { error } = await supabaseServer.from('project_invoices').update({ fic_invoice_id: ficInvoiceId }).eq('id', id);
   if (error) throw error;
+}
+
+/**
+ * Registra l'esito della generazione di un documento fattura reale su
+ * Fatture in Cloud (emesso e numerato, non una bozza): collega l'id FIC,
+ * aggiorna numero/data con quelli restituiti da FIC e porta lo stato a
+ * "fatturata". Distinta da linkProjectInvoiceToFic, che serve solo al
+ * match storico bulk e non tocca lo stato.
+ */
+export async function markProjectInvoiceIssuedOnFic(
+  id: string,
+  data: { ficInvoiceId: number; invoiceNumber: string; invoiceDate: string }
+): Promise<ProjectInvoice> {
+  const { data: row, error } = await supabaseServer
+    .from('project_invoices')
+    .update({
+      fic_invoice_id: data.ficInvoiceId,
+      invoice_number: data.invoiceNumber,
+      invoice_date: data.invoiceDate,
+      status: 'fatturata',
+    })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return projectInvoiceRowToProjectInvoice(row);
 }
 
 /**
