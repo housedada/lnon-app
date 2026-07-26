@@ -180,24 +180,32 @@ function playTune(tune: Tune): void {
   master.gain.value = BASE_VOLUME * (tune.volumeScale ?? 1);
   master.connect(ctx.destination);
 
-  const pitchShift = randomPitchShift();
-  const harmonyRatio = tune.harmonySemitones !== undefined ? Math.pow(2, tune.harmonySemitones / 12) : undefined;
+  // Schedulare le note PRIMA che il contesto sia davvero "running" le
+  // affida a un currentTime che con un contesto sospeso non avanza in modo
+  // affidabile — stesso bug già visto e corretto nel rumore bianco (la
+  // rampa collassava di colpo). Qui si programma tutto solo a resume avvenuto.
+  function schedule() {
+    const pitchShift = randomPitchShift();
+    const harmonyRatio = tune.harmonySemitones !== undefined ? Math.pow(2, tune.harmonySemitones / 12) : undefined;
 
-  let t = ctx.currentTime + 0.02;
-  for (const noteFreq of tune.notes) {
-    const shifted = noteFreq * pitchShift;
-    scheduleNote(ctx, master, shifted, 1, t, tune.noteDurationS);
-    if (harmonyRatio !== undefined) {
-      scheduleNote(ctx, master, shifted * harmonyRatio, tune.harmonyVolumeScale ?? 0.4, t, tune.noteDurationS);
+    let t = ctx.currentTime + 0.02;
+    for (const noteFreq of tune.notes) {
+      const shifted = noteFreq * pitchShift;
+      scheduleNote(ctx, master, shifted, 1, t, tune.noteDurationS);
+      if (harmonyRatio !== undefined) {
+        scheduleNote(ctx, master, shifted * harmonyRatio, tune.harmonyVolumeScale ?? 0.4, t, tune.noteDurationS);
+      }
+      t += tune.noteDurationS + tune.noteGapS;
     }
-    t += tune.noteDurationS + tune.noteGapS;
+
+    const totalMs = (t - ctx.currentTime + 0.1) * 1000;
+    setTimeout(() => ctx.close(), totalMs);
   }
 
-  const totalMs = (t - ctx.currentTime + 0.1) * 1000;
-  setTimeout(() => ctx.close(), totalMs);
-
   if (ctx.state === 'suspended') {
-    ctx.resume();
+    ctx.resume().then(schedule);
+  } else {
+    schedule();
   }
 }
 
