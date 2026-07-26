@@ -732,6 +732,14 @@ select:disabled {
   animation: audio-toggle-gradient 6s ease-in-out infinite;
 }
 
+/* Pulsante rumore bianco in topbar: stesso gradiente rosso/ambra pulsante
+   dell'icona del balloon HAL 9000 (.zen-noise-icon), per coerenza visiva. */
+.zen-toggle-active {
+  background: radial-gradient(circle at 35% 35%, #ffdca8, #ff6b4a, #b31217, #ff6b4a);
+  background-size: 220% 220%;
+  animation: zen-noise-pulse 2.2s ease-in-out infinite;
+}
+
 @keyframes audio-toggle-gradient {
   0% {
     background-position: 0% 50%;
