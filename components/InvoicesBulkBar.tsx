@@ -52,16 +52,14 @@ export default function InvoicesBulkBar({
     });
   }
 
-  function handleGenerateFic() {
-    startTransition(async () => {
-      const res = await generateFicInvoicesBulkAction(selected);
-      notify(res.message);
-      if (res.success) {
-        clear();
-        router.refresh();
-      }
-      setFicConfirmOpen(false);
-    });
+  async function handleGenerateFic() {
+    const res = await generateFicInvoicesBulkAction(selected);
+    notify(res.message);
+    if (res.success) {
+      clear();
+      router.refresh();
+    }
+    setFicConfirmOpen(false);
   }
 
   return (

@@ -100,18 +100,20 @@ export default function InvoicePreviewModal({
                 {invoice.jobTitle ? ` · ${invoice.jobTitle}` : ''}
               </p>
             </div>
-            <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE[invoice.status]}`}>{STATUS_LABEL[invoice.status]}</span>
-            {onGenerateFic && invoice.status === 'da_fatturare' && (
-              <button
-                type="button"
-                onClick={onGenerateFic}
-                title="Genera su Fatture in Cloud"
-                className="mt-1 flex items-center gap-1 text-[10px] font-medium text-secondary transition hover:text-primary"
-              >
-                <FileOutput size={12} strokeWidth={1.75} aria-hidden="true" />
-                Genera su FIC
-              </button>
-            )}
+            <div className="flex shrink-0 flex-col items-end gap-1">
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE[invoice.status]}`}>{STATUS_LABEL[invoice.status]}</span>
+              {onGenerateFic && invoice.status === 'da_fatturare' && (
+                <button
+                  type="button"
+                  onClick={onGenerateFic}
+                  title="Genera su Fatture in Cloud"
+                  className="flex items-center gap-1 text-[10px] font-medium text-secondary transition hover:text-primary"
+                >
+                  <FileOutput size={12} strokeWidth={1.75} aria-hidden="true" />
+                  Genera su FIC
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="mt-3 flex items-center justify-between text-xs text-secondary">

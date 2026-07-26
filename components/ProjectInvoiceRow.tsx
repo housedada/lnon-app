@@ -140,6 +140,7 @@ export default function ProjectInvoiceRow({
 
       {ficConfirmOpen && (
         <DoubleConfirmModal
+          key={ficOverwriteWarning ?? 'new'}
           title="Genera fattura su Fatture in Cloud"
           firstMessage={
             ficOverwriteWarning

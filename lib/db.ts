@@ -2100,6 +2100,39 @@ export async function markProjectInvoiceIssuedOnFic(
 }
 
 /**
+ * "Reclama" atomicamente una fattura per la generazione su FIC, impostando
+ * temporaneamente lo stato a 'fatturata' come guardia contro richieste
+ * concorrenti (due tab, un retry) che genererebbero due documenti FIC per
+ * la stessa fattura. Ritorna false se un'altra richiesta l'ha già reclamata
+ * (stato non più 'da_fatturare') nel frattempo.
+ */
+export async function claimProjectInvoiceForFicGeneration(id: string): Promise<boolean> {
+  const { data, error } = await supabaseServer
+    .from('project_invoices')
+    .update({ status: 'fatturata' })
+    .eq('id', id)
+    .eq('status', 'da_fatturare')
+    .select('id')
+    .maybeSingle();
+  if (error) throw error;
+  return !!data;
+}
+
+/**
+ * Annulla una claim di generazione FIC fallita, riportando la fattura a
+ * 'da_fatturare'. Non tocca fatture che nel frattempo hanno già ottenuto un
+ * fic_invoice_id reale (già generate con successo da un'altra chiamata).
+ */
+export async function releaseProjectInvoiceFicClaim(id: string): Promise<void> {
+  const { error } = await supabaseServer
+    .from('project_invoices')
+    .update({ status: 'da_fatturare' })
+    .eq('id', id)
+    .is('fic_invoice_id', null);
+  if (error) throw error;
+}
+
+/**
  * Ordine colonne preferito dall'utente per la board Team (array di user id)
  */
 export async function getTeamColumnOrder(userId: string): Promise<string[]> {

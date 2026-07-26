@@ -14,6 +14,8 @@ import {
   getClientById,
   linkClientToFic,
   markProjectInvoiceIssuedOnFic,
+  claimProjectInvoiceForFicGeneration,
+  releaseProjectInvoiceFicClaim,
 } from '@/lib/db';
 import { createFicClientFromLnonClient, resolveFicVatType, createFicInvoiceDocument } from '@/lib/fattureincloud';
 import type { ProjectInvoice } from '@/lib/types';
@@ -142,12 +144,18 @@ export async function generateFicInvoiceAction(
     const client = await getClientById(invoice.clientId);
     if (!client) return { success: false, message: 'Cliente non trovato.' };
 
+    const claimed = await claimProjectInvoiceForFicGeneration(invoice.id);
+    if (!claimed) {
+      return { success: false, message: 'Generazione già in corso o completata da un\'altra richiesta.' };
+    }
+
     let ficClientId = client.ficId;
     if (!ficClientId) {
       try {
         ficClientId = await createFicClientFromLnonClient(client);
         await linkClientToFic(client.id, ficClientId);
       } catch (err) {
+        await releaseProjectInvoiceFicClaim(invoice.id);
         return {
           success: false,
           message: `Impossibile sincronizzare il cliente su Fatture in Cloud: ${err instanceof Error ? err.message : 'errore sconosciuto'}.`,
@@ -155,22 +163,27 @@ export async function generateFicInvoiceAction(
       }
     }
 
-    const vatTypeId = await resolveFicVatType(invoice.vatRate);
+    try {
+      const vatTypeId = await resolveFicVatType(invoice.vatRate);
 
-    const created = await createFicInvoiceDocument({
-      ficClientId,
-      vatTypeId,
-      items: invoice.lineItems.map((item) => ({ label: item.label, netAmount: item.netAmount })),
-    });
+      const created = await createFicInvoiceDocument({
+        ficClientId,
+        vatTypeId,
+        items: invoice.lineItems.map((item) => ({ label: item.label, netAmount: item.netAmount })),
+      });
 
-    await markProjectInvoiceIssuedOnFic(invoice.id, {
-      ficInvoiceId: created.ficId,
-      invoiceNumber: created.number,
-      invoiceDate: created.date,
-    });
+      await markProjectInvoiceIssuedOnFic(invoice.id, {
+        ficInvoiceId: created.ficId,
+        invoiceNumber: created.number,
+        invoiceDate: created.date,
+      });
 
-    revalidatePath('/dashboard/invoices');
-    return { success: true, message: `Fattura generata su Fatture in Cloud (N. ${created.number}).` };
+      revalidatePath('/dashboard/invoices');
+      return { success: true, message: `Fattura generata su Fatture in Cloud (N. ${created.number}).` };
+    } catch (err) {
+      await releaseProjectInvoiceFicClaim(invoice.id);
+      throw err;
+    }
   } catch (err) {
     return { success: false, message: err instanceof Error ? err.message : 'Errore nella generazione della fattura su Fatture in Cloud.' };
   }
@@ -184,7 +197,7 @@ export async function generateFicInvoiceAction(
  */
 export async function generateFicInvoicesBulkAction(
   ids: string[]
-): Promise<{ success: boolean; message: string; results: { id: string; success: boolean; message: string }[] }> {
+): Promise<{ success: boolean; message: string; results: { id: string; success: boolean; skipped?: boolean; message: string }[] }> {
   try {
     await requireAdmin();
   } catch (err) {
@@ -195,12 +208,12 @@ export async function generateFicInvoicesBulkAction(
     };
   }
 
-  const results: { id: string; success: boolean; message: string }[] = [];
+  const results: { id: string; success: boolean; skipped?: boolean; message: string }[] = [];
 
   for (const id of ids) {
     const invoice = await getProjectInvoiceById(id);
     if (invoice?.ficInvoiceId) {
-      results.push({ id, success: false, message: 'Già generata, saltata (usa la generazione singola per sovrascrivere).' });
+      results.push({ id, success: false, skipped: true, message: 'Già generata, saltata (usa la generazione singola per sovrascrivere).' });
       continue;
     }
     const res = await generateFicInvoiceAction(id);
@@ -208,11 +221,17 @@ export async function generateFicInvoicesBulkAction(
   }
 
   const successCount = results.filter((r) => r.success).length;
-  const failCount = results.length - successCount;
+  const skippedCount = results.filter((r) => r.skipped).length;
+  const failCount = results.length - successCount - skippedCount;
   revalidatePath('/dashboard/invoices');
+
+  const parts = [`${successCount} generat${successCount === 1 ? 'a' : 'e'} su FIC`];
+  if (skippedCount > 0) parts.push(`${skippedCount} già generat${skippedCount === 1 ? 'a' : 'e'} (saltat${skippedCount === 1 ? 'a' : 'e'})`);
+  if (failCount > 0) parts.push(`${failCount} fallit${failCount === 1 ? 'a' : 'e'}`);
+
   return {
     success: successCount > 0,
-    message: `${successCount} generat${successCount === 1 ? 'a' : 'e'} su FIC, ${failCount} fallit${failCount === 1 ? 'a' : 'e'}.`,
+    message: parts.join(', ') + '.',
     results,
   };
 }
