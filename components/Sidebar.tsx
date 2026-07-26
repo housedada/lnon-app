@@ -27,11 +27,11 @@ function SidebarContent({ role, onNavigate }: SidebarProps & { onNavigate?: () =
   const searchParams = useSearchParams();
 
   return (
-    <nav className="sidebar-edge flex h-full flex-col gap-1 bg-neutral-900 px-3 py-4 text-neutral-100">
+    <nav className="sidebar-edge flex h-full flex-col bg-neutral-900 px-3 py-4 text-neutral-100">
       {NAV_ITEMS.filter((item) => shouldShowNavItem(item.resource, permissions[item.resource] ?? [])).map((item) => {
         const isActive = pathname?.startsWith(item.href) ?? false;
         return (
-          <div key={item.resource} className={item.subItems ? 'sidebar-nav-item relative' : undefined}>
+          <div key={item.resource} className={`mb-1 last:mb-0 ${item.subItems ? 'sidebar-nav-item relative' : ''}`}>
             <Link
               href={item.href}
               onClick={onNavigate}
@@ -52,7 +52,7 @@ function SidebarContent({ role, onNavigate }: SidebarProps & { onNavigate?: () =
             )}
             {item.subItems && (
               <div className={`sidebar-submenu ${isActive ? 'sidebar-submenu-open' : ''}`}>
-                <div className="flex flex-col gap-0.5 py-1 pl-3 pr-1">
+                <div className="flex flex-col pl-3 pr-1">
                   {item.subItems.map((sub) => {
                     const subActive = isSubItemActive(sub, pathname, searchParams);
                     return (
@@ -60,7 +60,7 @@ function SidebarContent({ role, onNavigate }: SidebarProps & { onNavigate?: () =
                         key={sub.href}
                         href={sub.href}
                         onClick={onNavigate}
-                        className={`sidebar-submenu-link rounded px-2 py-1 text-[11px] font-medium transition-colors ${
+                        className={`sidebar-submenu-link block w-full px-2 py-2 text-[11px] font-medium transition-colors ${
                           subActive ? 'text-neutral-100' : 'text-neutral-400 hover:text-neutral-100'
                         }`}
                       >

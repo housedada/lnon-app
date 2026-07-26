@@ -814,8 +814,8 @@ select:disabled {
 .sidebar-submenu {
   display: grid;
   grid-template-rows: 0fr;
-  opacity: 0;
-  transition: grid-template-rows 320ms ease, opacity 280ms ease;
+  margin: 0;
+  transition: grid-template-rows 320ms ease;
 }
 
 .sidebar-submenu > div {
@@ -823,10 +823,12 @@ select:disabled {
   min-height: 0;
 }
 
-.sidebar-nav-item:has(.sidebar-chevron-trigger:hover) .sidebar-submenu,
+/* Una volta aperta (hover sul trigger), resta aperta anche muovendo il
+   mouse dentro la tendina stessa: senza questo, spostarsi dal quadratino
+   verso le sottovoci la richiudeva prima di poterle cliccare. */
+.sidebar-nav-item:has(.sidebar-chevron-trigger:hover, .sidebar-submenu:hover) .sidebar-submenu,
 .sidebar-submenu-open {
   grid-template-rows: 1fr;
-  opacity: 1;
 }
 
 /* Ogni sottovoce compare con un leggero ritardo scalare rispetto alla
@@ -850,25 +852,25 @@ select:disabled {
   background: rgba(255, 255, 255, 0.16);
 }
 
-.sidebar-nav-item:has(.sidebar-chevron-trigger:hover) .sidebar-submenu-link,
+.sidebar-nav-item:has(.sidebar-chevron-trigger:hover, .sidebar-submenu:hover) .sidebar-submenu-link,
 .sidebar-submenu-open .sidebar-submenu-link {
   opacity: 1;
   transform: translateX(0);
 }
 
-.sidebar-nav-item:has(.sidebar-chevron-trigger:hover) .sidebar-submenu-link:nth-child(1),
+.sidebar-nav-item:has(.sidebar-chevron-trigger:hover, .sidebar-submenu:hover) .sidebar-submenu-link:nth-child(1),
 .sidebar-submenu-open .sidebar-submenu-link:nth-child(1) {
   transition-delay: 30ms;
 }
-.sidebar-nav-item:has(.sidebar-chevron-trigger:hover) .sidebar-submenu-link:nth-child(2),
+.sidebar-nav-item:has(.sidebar-chevron-trigger:hover, .sidebar-submenu:hover) .sidebar-submenu-link:nth-child(2),
 .sidebar-submenu-open .sidebar-submenu-link:nth-child(2) {
   transition-delay: 90ms;
 }
-.sidebar-nav-item:has(.sidebar-chevron-trigger:hover) .sidebar-submenu-link:nth-child(3),
+.sidebar-nav-item:has(.sidebar-chevron-trigger:hover, .sidebar-submenu:hover) .sidebar-submenu-link:nth-child(3),
 .sidebar-submenu-open .sidebar-submenu-link:nth-child(3) {
   transition-delay: 150ms;
 }
-.sidebar-nav-item:has(.sidebar-chevron-trigger:hover) .sidebar-submenu-link:nth-child(4),
+.sidebar-nav-item:has(.sidebar-chevron-trigger:hover, .sidebar-submenu:hover) .sidebar-submenu-link:nth-child(4),
 .sidebar-submenu-open .sidebar-submenu-link:nth-child(4) {
   transition-delay: 210ms;
 }
@@ -885,7 +887,7 @@ select:disabled {
   transition: transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.sidebar-nav-item:has(.sidebar-chevron-trigger:hover) .sidebar-chevron,
+.sidebar-nav-item:has(.sidebar-chevron-trigger:hover, .sidebar-submenu:hover) .sidebar-chevron,
 .sidebar-nav-item:has(.sidebar-submenu-open) .sidebar-chevron {
   transform: rotate(0deg) scale(1.2);
   transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
