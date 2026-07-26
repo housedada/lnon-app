@@ -13,7 +13,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, horizontalListSortingStrategy, rectSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { Briefcase, CheckCircle2, ChevronDown, GripVertical, Plus, Trash2 } from 'lucide-react';
+import { Briefcase, CheckCircle2, ChevronDown, Clock, GripVertical, Plus, Trash2 } from 'lucide-react';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
 import { useTaskBoardScrollStore } from '@/lib/store/taskBoardScrollStore';
 import { useTaskBoardExpandStore } from '@/lib/store/taskBoardExpandStore';
@@ -162,9 +162,10 @@ export default function PersonalBoard({
         <div className={containerClass}>
           <SortableContext items={order} strategy={rectSortingStrategy}>
             {orderedProjects.map((project) => {
+              const isSpecial = project.isSystemGenerated;
               const background = projectHeaderBackground(project, productColorsByJob);
-              const headerStyle = background ? { background } : undefined;
-              const headerTextClass = headerStyle ? 'text-neutral-800' : 'text-primary';
+              const headerStyle = !isSpecial && background ? { background } : undefined;
+              const headerTextClass = isSpecial || headerStyle ? 'text-neutral-800' : 'text-primary';
               const tasks = tasksByProject[project.id] ?? [];
               const total = tasks.length;
               const completed = tasks.filter((t) => t.status === 'completed').length;
@@ -177,7 +178,9 @@ export default function PersonalBoard({
                       ref={setNodeRef}
                       style={style}
                       onClick={() => setDetailProjectId(project.id)}
-                      className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border border-grid-border bg-card-bg text-left transition-[opacity,border-color] duration-150 hover:border-secondary ${isDragging ? 'opacity-40' : 'opacity-100'}`}
+                      className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border bg-card-bg text-left transition-[opacity,border-color] duration-150 ${
+                        isSpecial ? 'special-project-border' : 'border-grid-border hover:border-secondary'
+                      } ${isDragging ? 'opacity-40' : 'opacity-100'}`}
                     >
                       <span
                         ref={setActivatorNodeRef}
@@ -189,16 +192,34 @@ export default function PersonalBoard({
                       >
                         <GripVertical size={14} strokeWidth={1.75} className={headerTextClass} aria-hidden="true" />
                       </span>
-                      <span
-                        className="pointer-events-none absolute right-4 top-4 z-10 opacity-0 -translate-x-1.5 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:translate-x-0"
-                        aria-hidden="true"
-                      >
-                        <Plus size={14} strokeWidth={2} className={headerTextClass} />
-                      </span>
-                      <div className="shrink-0 p-3" style={headerStyle}>
-                        <p className={`truncate px-6 text-center text-sm font-semibold ${headerTextClass}`}>{project.title}</p>
+                      {isSpecial ? (
+                        <span className="absolute right-4 top-4 z-10 flex items-center gap-1.5">
+                          <span title="Progetto a conteggio orario" className="text-neutral-800">
+                            <Clock size={13} strokeWidth={1.75} aria-hidden="true" />
+                          </span>
+                          {project.jobId &&
+                            (project.completedAt ? (
+                              <span title="Progetto completato" className="text-neutral-800">
+                                <CheckCircle2 size={13} strokeWidth={1.75} aria-label="Progetto completato" />
+                              </span>
+                            ) : (
+                              <span onClick={(e) => e.stopPropagation()}>
+                                <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} isHourlyContract />
+                              </span>
+                            ))}
+                        </span>
+                      ) : (
+                        <span
+                          className="pointer-events-none absolute right-4 top-4 z-10 opacity-0 -translate-x-1.5 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:translate-x-0"
+                          aria-hidden="true"
+                        >
+                          <Plus size={14} strokeWidth={2} className={headerTextClass} />
+                        </span>
+                      )}
+                      <div className={`shrink-0 p-3 ${isSpecial ? 'special-project-header' : ''}`} style={headerStyle}>
+                        <p className={`relative truncate pl-7 pr-7 text-left text-sm font-semibold ${headerTextClass}`}>{project.title}</p>
                         {project.jobTitle && (
-                          <p className={`mt-1 flex items-center justify-center gap-1 truncate text-xs ${headerStyle ? 'text-neutral-700/70' : 'text-secondary'}`}>
+                          <p className={`relative mt-1 flex items-center gap-1 truncate pl-7 pr-7 text-xs ${isSpecial ? 'text-neutral-700/70' : headerStyle ? 'text-neutral-700/70' : 'text-secondary'}`}>
                             <Briefcase size={11} strokeWidth={1.75} aria-hidden="true" />
                             {project.jobTitle}
                           </p>
@@ -275,10 +296,11 @@ export default function PersonalBoard({
       <div className={containerClass} ref={(el) => setScrollContainer(el)}>
         <SortableContext items={order} strategy={horizontalListSortingStrategy}>
           {orderedProjects.map((project) => {
+            const isSpecial = project.isSystemGenerated;
             const background = projectHeaderBackground(project, productColorsByJob);
-            const headerStyle = background ? { background } : undefined;
-            const headerTextClass = headerStyle ? 'text-neutral-800' : 'text-primary';
-            const headerSubTextClass = headerStyle ? 'text-neutral-700/70' : 'text-secondary';
+            const headerStyle = !isSpecial && background ? { background } : undefined;
+            const headerTextClass = isSpecial || headerStyle ? 'text-neutral-800' : 'text-primary';
+            const headerSubTextClass = isSpecial || headerStyle ? 'text-neutral-700/70' : 'text-secondary';
             const isCollapsed = collapsedProjects.has(project.id);
 
             return (
@@ -290,21 +312,23 @@ export default function PersonalBoard({
                       registerColumnRef(project.id, el);
                     }}
                     style={style}
-                    className={`group flex shrink-0 flex-col self-start rounded-xl border border-grid-border bg-grid-header-bg transition-opacity duration-150 ${cardWidthClass} ${isDragging ? 'opacity-40' : 'opacity-100'}`}
+                    className={`group flex shrink-0 flex-col self-start rounded-xl border bg-grid-header-bg transition-opacity duration-150 ${
+                      isSpecial ? 'special-project-border' : 'border-grid-border'
+                    } ${cardWidthClass} ${isDragging ? 'opacity-40' : 'opacity-100'}`}
                   >
                     <div
-                      className="flex w-full items-center justify-between gap-2 rounded-t-xl border-b border-grid-border px-3 py-2"
+                      className={`flex w-full items-center justify-between gap-2 rounded-t-xl border-b border-grid-border px-3 py-2 ${isSpecial ? 'special-project-header' : ''}`}
                       style={headerStyle}
                     >
                       <span
                         ref={setActivatorNodeRef}
                         {...attributes}
                         {...listeners}
-                        className={`shrink-0 cursor-grab touch-none active:cursor-grabbing ${headerSubTextClass}`}
+                        className={`relative shrink-0 cursor-grab touch-none active:cursor-grabbing ${headerSubTextClass}`}
                       >
                         <GripVertical size={13} strokeWidth={1.75} aria-hidden="true" />
                       </span>
-                      <button type="button" onClick={() => toggleProject(project.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                      <button type="button" onClick={() => toggleProject(project.id)} className="relative flex min-w-0 flex-1 items-center gap-2 text-left">
                         <div className="min-w-0">
                           <p className={`truncate text-sm font-semibold ${headerTextClass}`}>{project.title}</p>
                           {project.jobTitle && (
@@ -315,25 +339,32 @@ export default function PersonalBoard({
                           )}
                         </div>
                       </button>
-                      {project.jobId && canManageInvoices && (
-                        project.completedAt ? (
-                          <span title="Progetto completato" className="shrink-0">
-                            <CheckCircle2 size={13} strokeWidth={1.75} className={headerTextClass} aria-label="Progetto completato" />
-                          </span>
-                        ) : (
-                          <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} isHourlyContract={project.isSystemGenerated} />
-                        )
+                      {isSpecial && (
+                        <span title="Progetto a conteggio orario" className="relative shrink-0 text-neutral-800">
+                          <Clock size={13} strokeWidth={1.75} aria-hidden="true" />
+                        </span>
+                      )}
+                      {project.jobId && (canManageInvoices || isSpecial) && (
+                        <span className="relative shrink-0">
+                          {project.completedAt ? (
+                            <span title="Progetto completato">
+                              <CheckCircle2 size={13} strokeWidth={1.75} className={headerTextClass} aria-label="Progetto completato" />
+                            </span>
+                          ) : (
+                            <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} isHourlyContract={isSpecial} />
+                          )}
+                        </span>
                       )}
                       <button
                         type="button"
                         onClick={() => listRefs.current.get(project.id)?.openTrash()}
                         aria-label="Cestino task"
                         title="Cestino task"
-                        className={`shrink-0 opacity-0 transition-opacity group-hover:opacity-100 ${headerTextClass}`}
+                        className={`relative shrink-0 opacity-0 transition-opacity group-hover:opacity-100 ${headerTextClass}`}
                       >
                         <Trash2 size={13} strokeWidth={1.75} aria-hidden="true" />
                       </button>
-                      <button type="button" onClick={() => toggleProject(project.id)} className="shrink-0" aria-label={isCollapsed ? 'Espandi progetto' : 'Comprimi progetto'}>
+                      <button type="button" onClick={() => toggleProject(project.id)} className="relative shrink-0" aria-label={isCollapsed ? 'Espandi progetto' : 'Comprimi progetto'}>
                         <ChevronDown
                           size={14}
                           strokeWidth={2}

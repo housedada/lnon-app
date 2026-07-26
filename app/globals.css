@@ -827,3 +827,40 @@ select:disabled {
   grid-template-rows: 1fr;
   opacity: 1;
 }
+
+/* Card progetto generata da un contratto a conteggio orario: bordo e header
+   ocra riconoscibili a colpo d'occhio, con una texture a righe diagonali
+   bianche di larghezza/opacità variabile, sovrapposta al 23% sul gradiente
+   di base. */
+.special-project-border {
+  border-color: #d97706 !important;
+}
+
+.special-project-border:hover {
+  border-color: #b45309 !important;
+}
+
+.special-project-header {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f8b84e, #dc8c0a);
+}
+
+.special-project-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.23;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    65deg,
+    rgba(255, 255, 255, 0.95) 0px,
+    rgba(255, 255, 255, 0.95) 8px,
+    rgba(255, 255, 255, 0.12) 8px,
+    rgba(255, 255, 255, 0.12) 18px,
+    rgba(255, 255, 255, 0.6) 18px,
+    rgba(255, 255, 255, 0.6) 24px,
+    rgba(255, 255, 255, 0.02) 24px,
+    rgba(255, 255, 255, 0.02) 38px
+  );
+}

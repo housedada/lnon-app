@@ -14,7 +14,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, horizontalListSortingStrategy, rectSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { GripVertical, Briefcase, CheckCircle2, ChevronDown, Trash2, Plus } from 'lucide-react';
+import { GripVertical, Briefcase, CheckCircle2, ChevronDown, Trash2, Plus, Clock } from 'lucide-react';
 import { saveTeamColumnOrderAction } from '@/lib/actions/projects';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
 import { useTaskBoardScrollStore } from '@/lib/store/taskBoardScrollStore';
@@ -326,43 +326,54 @@ export default function TeamBoard({
                       {projects.length === 0 && <p className="px-2 py-4 text-center text-[11px] text-secondary">Nessun progetto</p>}
                       {projects.map((project) => {
                         const isCollapsed = collapsedProjects.has(project.id);
+                        const isSpecial = project.isSystemGenerated;
                         return (
-                          <div key={project.id} className="card-shadow group rounded-lg border border-grid-border bg-card-bg">
-                            <div className="flex w-full items-center justify-between gap-2 p-3">
-                              <button type="button" onClick={() => toggleProject(project.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                          <div
+                            key={project.id}
+                            className={`card-shadow group rounded-lg border bg-card-bg ${isSpecial ? 'special-project-border' : 'border-grid-border'}`}
+                          >
+                            <div className={`flex w-full items-center justify-between gap-2 rounded-t-lg p-3 ${isSpecial ? 'special-project-header' : ''}`}>
+                              <button type="button" onClick={() => toggleProject(project.id)} className="relative flex min-w-0 flex-1 items-center gap-2 text-left">
                                 <div className="min-w-0">
-                                  <p className="truncate text-sm font-medium text-primary">{project.title}</p>
+                                  <p className={`truncate text-sm font-medium ${isSpecial ? 'text-neutral-800' : 'text-primary'}`}>{project.title}</p>
                                   {project.jobTitle && (
-                                    <p className="mt-1 flex items-center gap-1 truncate text-[11px] text-secondary">
+                                    <p className={`mt-1 flex items-center gap-1 truncate text-[11px] ${isSpecial ? 'text-neutral-700/70' : 'text-secondary'}`}>
                                       <Briefcase size={11} strokeWidth={1.75} aria-hidden="true" />
                                       {project.jobTitle}
                                     </p>
                                   )}
                                 </div>
                               </button>
-                              {project.jobId && canManageInvoices && (
-                                project.completedAt ? (
-                                  <span title="Progetto completato" className="shrink-0">
-                                    <CheckCircle2 size={13} strokeWidth={1.75} className="text-secondary" aria-label="Progetto completato" />
-                                  </span>
-                                ) : (
-                                  <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} isHourlyContract={project.isSystemGenerated} />
-                                )
+                              {isSpecial && (
+                                <span title="Progetto a conteggio orario" className="relative shrink-0 text-neutral-800">
+                                  <Clock size={13} strokeWidth={1.75} aria-hidden="true" />
+                                </span>
+                              )}
+                              {project.jobId && (canManageInvoices || isSpecial) && (
+                                <span className="relative shrink-0">
+                                  {project.completedAt ? (
+                                    <span title="Progetto completato">
+                                      <CheckCircle2 size={13} strokeWidth={1.75} className={isSpecial ? 'text-neutral-800' : 'text-secondary'} aria-label="Progetto completato" />
+                                    </span>
+                                  ) : (
+                                    <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} isHourlyContract={isSpecial} />
+                                  )}
+                                </span>
                               )}
                               <button
                                 type="button"
                                 onClick={() => listRefs.current.get(project.id)?.openTrash()}
                                 aria-label="Cestino task"
                                 title="Cestino task"
-                                className="shrink-0 text-secondary opacity-0 transition-opacity group-hover:opacity-100 hover:text-primary"
+                                className={`relative shrink-0 opacity-0 transition-opacity group-hover:opacity-100 ${isSpecial ? 'text-neutral-800' : 'text-secondary hover:text-primary'}`}
                               >
                                 <Trash2 size={13} strokeWidth={1.75} aria-hidden="true" />
                               </button>
-                              <button type="button" onClick={() => toggleProject(project.id)} className="shrink-0" aria-label={isCollapsed ? 'Espandi progetto' : 'Comprimi progetto'}>
+                              <button type="button" onClick={() => toggleProject(project.id)} className="relative shrink-0" aria-label={isCollapsed ? 'Espandi progetto' : 'Comprimi progetto'}>
                                 <ChevronDown
                                   size={14}
                                   strokeWidth={2}
-                                  className={`text-secondary transition-transform ${isCollapsed ? '-rotate-90' : ''}`}
+                                  className={`${isSpecial ? 'text-neutral-800' : 'text-secondary'} transition-transform ${isCollapsed ? '-rotate-90' : ''}`}
                                   aria-hidden="true"
                                 />
                               </button>
