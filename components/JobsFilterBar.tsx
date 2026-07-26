@@ -2,9 +2,9 @@
 
 import { useTransition } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 import type { JobStatus } from '@/lib/types';
 import { useJobsFilterStore } from '@/lib/store/jobsFilterStore';
+import { useListPendingStore } from '@/lib/store/listPendingStore';
 import AnimatedVisibility from '@/components/AnimatedVisibility';
 
 const STATUS_OPTIONS: { value: JobStatus | ''; label: string }[] = [
@@ -28,7 +28,8 @@ export default function JobsFilterBar({ clientOptions }: { clientOptions: { id: 
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
+  const setListPending = useListPendingStore((s) => s.setPending);
 
   const clientId = searchParams.get('clientId') ?? '';
   const sync = searchParams.get('sync') ?? '';
@@ -41,6 +42,7 @@ export default function JobsFilterBar({ clientOptions }: { clientOptions: { id: 
     params.delete('page');
 
     const query = params.toString();
+    setListPending(true);
     startTransition(() => {
       router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
     });
@@ -89,7 +91,6 @@ export default function JobsFilterBar({ clientOptions }: { clientOptions: { id: 
           ))}
         </select>
 
-        {isPending && <Loader2 size={15} strokeWidth={1.75} className="animate-spin text-secondary" aria-hidden="true" />}
       </div>
     </AnimatedVisibility>
   );

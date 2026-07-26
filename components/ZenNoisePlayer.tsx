@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useZenNoiseStore } from '@/lib/store/zenNoiseStore';
 
-const VOLUME = 0.69;
+const VOLUME = 0.06;
 const BUFFER_SECONDS = 2;
 
 /**

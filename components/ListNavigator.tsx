@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { LIST_PAGE_SIZE_OPTIONS, LIST_PAGE_SIZE_STORAGE_KEY, DEFAULT_LIST_PAGE_SIZE } from '@/lib/listPageSize';
+import { useListPendingStore } from '@/lib/store/listPendingStore';
 import PacmanLoader from '@/components/PacmanLoader';
 
 const OVERLAY_FADE_MS = 100;
@@ -70,7 +71,18 @@ export default function ListNavigator({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [query, setQuery] = useState(q ?? '');
-  const overlay = useFadeOverlay(isPending);
+  const sharedPending = useListPendingStore((s) => s.pending);
+  const setSharedPending = useListPendingStore((s) => s.setPending);
+  const pending = isPending || sharedPending;
+  const overlay = useFadeOverlay(pending);
+
+  // Un widget esterno (filtri) può aver impostato lo stato condiviso a true
+  // prima di navigare: appena i searchParams riflettono la nuova query, il
+  // nuovo contenuto è già arrivato, quindi lo ripuliamo qui.
+  useEffect(() => {
+    setSharedPending(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.toString()]);
 
   // Riparte sempre dai searchParams correnti per non perdere eventuali filtri
   // extra gestiti da altri componenti sulla stessa pagina (es. ContractsFilterWidget).
@@ -213,7 +225,7 @@ export default function ListNavigator({
       <div className="list-fade-in relative">
         <div
           className="transition-opacity"
-          style={{ opacity: isPending ? 0 : 1, transitionDuration: `${CONTENT_FADE_MS}ms` }}
+          style={{ opacity: pending ? 0 : 1, transitionDuration: `${CONTENT_FADE_MS}ms` }}
         >
           {children}
         </div>

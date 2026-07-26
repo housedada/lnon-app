@@ -2,8 +2,8 @@
 
 import { useTransition } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 import { useContractsFilterStore } from '@/lib/store/contractsFilterStore';
+import { useListPendingStore } from '@/lib/store/listPendingStore';
 import AnimatedVisibility from '@/components/AnimatedVisibility';
 
 const CATEGORIES: { value: string; label: string }[] = [
@@ -25,7 +25,8 @@ export default function ContractsFilterWidget() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
+  const setListPending = useListPendingStore((s) => s.setPending);
 
   const activeCategories = searchParams.get('categories')?.split(',').filter(Boolean) ?? [];
   const activeStatus = searchParams.get('status') ?? '';
@@ -44,6 +45,7 @@ export default function ContractsFilterWidget() {
     }
 
     const query = params.toString();
+    setListPending(true);
     startTransition(() => {
       router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
     });
@@ -92,7 +94,6 @@ export default function ContractsFilterWidget() {
           ))}
         </select>
 
-        {isPending && <Loader2 size={15} strokeWidth={1.75} className="animate-spin text-secondary" aria-hidden="true" />}
       </div>
     </AnimatedVisibility>
   );
