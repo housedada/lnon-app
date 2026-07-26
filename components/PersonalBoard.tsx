@@ -321,7 +321,7 @@ export default function PersonalBoard({
   if (density === 'list') {
     return (
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className="flex h-full flex-col gap-3 overflow-y-auto px-4 pb-4 pt-3">
+        <div className="flex h-full flex-col gap-3 overflow-y-auto px-4 pb-4 pt-3" ref={(el) => setScrollContainer(el)}>
           <SortableContext items={order} strategy={verticalListSortingStrategy}>
             {orderedProjects.map((project) => {
               const isSpecial = project.isSystemGenerated;

@@ -13,8 +13,15 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
-import { SortableContext, arrayMove, horizontalListSortingStrategy, rectSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { GripVertical, Briefcase, CheckCircle2, ChevronDown, Trash2, Plus, Clock } from 'lucide-react';
+import {
+  SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
+  rectSortingStrategy,
+  verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable';
+import { GripVertical, Briefcase, CheckCircle2, ChevronDown, CircleDot, Clock, ListChecks, Trash2, Plus } from 'lucide-react';
 import { saveTeamColumnOrderAction } from '@/lib/actions/projects';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
 import { useTaskBoardScrollStore } from '@/lib/store/taskBoardScrollStore';
@@ -58,6 +65,7 @@ export default function TeamBoard({
   }, [rawProjectsByUser, specialProjectsVisible]);
 
   const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
+  const [collapsedMembers, setCollapsedMembers] = useState<Set<string>>(new Set());
   const listRefs = useRef<Map<string, ProjectTaskListHandle>>(new Map());
   const [detailMemberId, setDetailMemberId] = useState<string | null>(null);
 
@@ -66,6 +74,15 @@ export default function TeamBoard({
       const next = new Set(prev);
       if (next.has(projectId)) next.delete(projectId);
       else next.add(projectId);
+      return next;
+    });
+  }
+
+  function toggleMember(userId: string) {
+    setCollapsedMembers((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
       return next;
     });
   }
@@ -278,6 +295,187 @@ export default function TeamBoard({
             <div className="rounded-xl border border-grid-border bg-card-bg shadow-lg" style={{ width: 200, height: 300 }}>
               <div className="rounded-t-xl p-3" style={activeMember.color ? { background: activeMember.color } : undefined}>
                 <p className={`truncate text-center text-sm font-semibold ${activeMember.color ? 'text-neutral-800' : 'text-primary'}`}>{activeMember.name}</p>
+              </div>
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
+    );
+  }
+
+  if (density === 'list') {
+    return (
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div className="flex h-full flex-col gap-3 overflow-y-auto px-4 pb-4 pt-3" ref={(el) => setScrollContainer(el)}>
+          <SortableContext items={order} strategy={verticalListSortingStrategy}>
+            {order.map((userId) => {
+              const member = membersById.get(userId);
+              if (!member) return null;
+              const memberProjects = projectsByUser[userId] ?? [];
+              const headerStyle = member.color ? { background: member.color } : undefined;
+              const headerTextClass = member.color ? 'text-neutral-800' : 'text-primary';
+              const headerSubTextClass = member.color ? 'text-neutral-700/70' : 'text-secondary';
+              const stats = memberStats(userId);
+              const isMemberCollapsed = collapsedMembers.has(userId);
+
+              return (
+                <SortableColumn key={userId} id={userId}>
+                  {({ setNodeRef, setActivatorNodeRef, style, attributes, listeners, isDragging }) => (
+                    <div
+                      ref={(el) => {
+                        setNodeRef(el);
+                        registerColumnRef(userId, el);
+                      }}
+                      style={style}
+                      className={`flex w-full flex-col rounded-xl border border-grid-border bg-grid-header-bg transition-opacity duration-150 ${isDragging ? 'opacity-40' : 'opacity-100'}`}
+                    >
+                      <div className="flex w-full items-center gap-4 rounded-t-xl border-b border-grid-border px-5 py-4" style={headerStyle}>
+                        <span
+                          ref={setActivatorNodeRef}
+                          {...attributes}
+                          {...listeners}
+                          className={`shrink-0 cursor-grab touch-none active:cursor-grabbing ${headerSubTextClass}`}
+                        >
+                          <GripVertical size={22} strokeWidth={1.75} aria-hidden="true" />
+                        </span>
+                        <button type="button" onClick={() => toggleMember(userId)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                          <p className={`truncate font-medium ${headerTextClass}`} style={{ fontSize: '26px', lineHeight: 1.25 }}>
+                            {member.name}
+                          </p>
+                        </button>
+                        <div className={`hidden shrink-0 items-center gap-4 md:flex ${headerTextClass}`}>
+                          <span title="Progetti" className="flex items-center gap-1.5 text-sm font-medium">
+                            <Briefcase size={17} strokeWidth={1.75} aria-hidden="true" />
+                            {stats.projectCount}
+                          </span>
+                          <span title="Task totali" className="flex items-center gap-1.5 text-sm font-medium">
+                            <ListChecks size={17} strokeWidth={1.75} aria-hidden="true" />
+                            {stats.total}
+                          </span>
+                          <span title="Task aperti" className="flex items-center gap-1.5 text-sm font-medium">
+                            <CircleDot size={17} strokeWidth={1.75} aria-hidden="true" />
+                            {stats.toResolve}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => toggleMember(userId)}
+                          className="shrink-0"
+                          aria-label={isMemberCollapsed ? 'Espandi membro' : 'Comprimi membro'}
+                        >
+                          <ChevronDown
+                            size={22}
+                            strokeWidth={2}
+                            className={`transition-transform ${headerTextClass} ${isMemberCollapsed ? '-rotate-90' : ''}`}
+                            aria-hidden="true"
+                          />
+                        </button>
+                      </div>
+
+                      <div className={`flex flex-col gap-2 p-3 ${isMemberCollapsed ? 'hidden' : ''}`}>
+                        {memberProjects.length === 0 && <p className="px-2 py-4 text-center text-xs text-secondary">Nessun progetto</p>}
+                        {memberProjects.map((project) => {
+                          const isCollapsed = collapsedProjects.has(project.id);
+                          const isSpecial = project.isSystemGenerated;
+                          const counts = projectTaskCounts(project.id);
+                          return (
+                            <div key={project.id} className={`rounded-lg border bg-card-bg ${isSpecial ? 'special-project-border' : 'border-grid-border'}`}>
+                              <div className={`flex w-full items-center gap-3 rounded-t-lg px-4 py-3 ${isSpecial ? 'special-project-header' : ''}`}>
+                                <button type="button" onClick={() => toggleProject(project.id)} className="relative flex min-w-0 flex-1 items-center gap-2 text-left">
+                                  <div className="min-w-0">
+                                    <p className={`truncate text-base font-medium ${isSpecial ? 'text-neutral-800' : 'text-primary'}`}>{project.title}</p>
+                                    {project.jobTitle && (
+                                      <p className={`mt-1 flex items-center gap-1.5 truncate text-xs ${isSpecial ? 'text-neutral-700/70' : 'text-secondary'}`}>
+                                        <Briefcase size={12} strokeWidth={1.75} aria-hidden="true" />
+                                        {project.jobTitle}
+                                      </p>
+                                    )}
+                                  </div>
+                                </button>
+                                <div className={`relative hidden shrink-0 items-center gap-3 md:flex ${isSpecial ? 'text-neutral-800' : 'text-secondary'}`}>
+                                  <span title="Task totali" className="flex items-center gap-1 text-xs font-medium">
+                                    <ListChecks size={14} strokeWidth={1.75} aria-hidden="true" />
+                                    {counts.total}
+                                  </span>
+                                  <span title="Task aperti" className="flex items-center gap-1 text-xs font-medium">
+                                    <CircleDot size={14} strokeWidth={1.75} aria-hidden="true" />
+                                    {counts.total - counts.resolved}
+                                  </span>
+                                </div>
+                                {isSpecial && (
+                                  <span title="Progetto a conteggio orario" className="relative shrink-0 text-neutral-800">
+                                    <Clock size={15} strokeWidth={1.75} aria-hidden="true" />
+                                  </span>
+                                )}
+                                {project.jobId && (canManageInvoices || isSpecial) && (
+                                  <span className="relative shrink-0">
+                                    {project.completedAt ? (
+                                      <span title="Progetto completato">
+                                        <CheckCircle2 size={15} strokeWidth={1.75} className={isSpecial ? 'text-neutral-800' : 'text-secondary'} aria-label="Progetto completato" />
+                                      </span>
+                                    ) : (
+                                      <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} isHourlyContract={isSpecial} />
+                                    )}
+                                  </span>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => listRefs.current.get(project.id)?.openTrash()}
+                                  aria-label="Cestino task"
+                                  title="Cestino task"
+                                  className={`relative shrink-0 opacity-0 transition-opacity group-hover:opacity-100 ${isSpecial ? 'text-neutral-800' : 'text-secondary hover:text-primary'}`}
+                                >
+                                  <Trash2 size={15} strokeWidth={1.75} aria-hidden="true" />
+                                </button>
+                                <button type="button" onClick={() => toggleProject(project.id)} className="relative shrink-0" aria-label={isCollapsed ? 'Espandi progetto' : 'Comprimi progetto'}>
+                                  <ChevronDown
+                                    size={18}
+                                    strokeWidth={2}
+                                    className={`${isSpecial ? 'text-neutral-800' : 'text-secondary'} transition-transform ${isCollapsed ? '-rotate-90' : ''}`}
+                                    aria-hidden="true"
+                                  />
+                                </button>
+                              </div>
+                              <div className={`border-t border-grid-border p-2 ${isCollapsed ? 'hidden' : ''}`}>
+                                <ProjectTaskList
+                                  ref={(el) => {
+                                    if (el) listRefs.current.set(project.id, el);
+                                    else listRefs.current.delete(project.id);
+                                  }}
+                                  projectId={project.id}
+                                  initialTasks={tasksByProject[project.id] ?? []}
+                                  userOptions={userOptions}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </SortableColumn>
+              );
+            })}
+          </SortableContext>
+
+          {order.length === 0 && (
+            <p className="px-6 py-12 text-sm text-secondary">
+              Nessun membro del team attivo.{' '}
+              <Link href="/dashboard/users" className="underline">
+                Gestisci utenti
+              </Link>
+            </p>
+          )}
+        </div>
+
+        <DragOverlay>
+          {activeMember && (
+            <div className="w-full rounded-xl border border-grid-border bg-grid-header-bg shadow-lg" style={activeMember.color ? { background: activeMember.color } : undefined}>
+              <div className="flex items-center gap-3 rounded-xl px-5 py-4">
+                <GripVertical size={22} strokeWidth={1.75} className={activeMember.color ? 'text-neutral-700/70' : 'text-secondary'} aria-hidden="true" />
+                <p className={`truncate font-medium ${activeMember.color ? 'text-neutral-800' : 'text-primary'}`} style={{ fontSize: '26px' }}>
+                  {activeMember.name}
+                </p>
               </div>
             </div>
           )}
