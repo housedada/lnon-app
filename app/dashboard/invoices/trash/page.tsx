@@ -6,12 +6,10 @@ import ListNavigator from '@/components/ListNavigator';
 import RestoreInvoiceButton from '@/components/RestoreInvoiceButton';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import RememberRoute from '@/components/RememberRoute';
-
-const INVOICES_TABS = { list: '/dashboard/invoices', archive: '/dashboard/invoices/archive', trash: '/dashboard/invoices/trash' };
+import LazyRevealRows from '@/components/LazyRevealRows';
+import { parsePageSize } from '@/lib/listPageSize';
 
 export const metadata = { title: 'Cestino Fatture' };
-
-const PAGE_SIZE = 25;
 
 function formatAmount(value: number) {
   return `€ ${value.toFixed(2)}`;
@@ -24,11 +22,12 @@ function formatDate(value?: Date) {
 export default async function InvoicesTrashPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; pageSize?: string }>;
 }) {
-  const { q, page } = await searchParams;
+  const { q, page, pageSize: pageSizeParam } = await searchParams;
+  const pageSize = parsePageSize(pageSizeParam);
   const currentPage = Math.max(1, Number(page) || 1);
-  const offset = (currentPage - 1) * PAGE_SIZE;
+  const offset = (currentPage - 1) * pageSize;
 
   const session = await auth();
   const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role;
@@ -36,13 +35,13 @@ export default async function InvoicesTrashPage({
     redirect('/dashboard');
   }
 
-  const { data: invoices, total } = await getProjectInvoices({ search: q, trashed: true, limit: PAGE_SIZE, offset });
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const { data: invoices, total } = await getProjectInvoices({ search: q, trashed: true, limit: pageSize, offset });
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
     <div>
       <NotifyFromQuery param="saved" message="Fattura aggiornata." />
-      <RememberRoute storageKey="invoices-tab" tabKey="trash" entryHref="/dashboard/invoices" tabs={INVOICES_TABS} />
+      <RememberRoute storageKey="invoices-tab" tabKey="trash" />
       <div className="flex items-center justify-between p-6 pb-0">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-semibold text-primary">
@@ -58,6 +57,7 @@ export default async function InvoicesTrashPage({
         q={q}
         currentPage={currentPage}
         totalPages={totalPages}
+        pageSize={pageSize}
         showSyncFilter={false}
         totalCount={total}
         totalLabel="fatture nel cestino"
@@ -76,20 +76,22 @@ export default async function InvoicesTrashPage({
             </div>
           )}
 
-          {invoices.map((invoice) => (
-            <div key={invoice.id} className="group contents">
-              <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{invoice.clientName}</div>
-              <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{invoice.projectTitle}</div>
-              <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 font-semibold text-primary group-hover:bg-row-hover">{formatAmount(invoice.totalAmount)}</div>
-              <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
-                <span className="rounded-full bg-grid-header-bg px-2 py-0.5 text-[10px] font-medium text-secondary">{invoice.status}</span>
+          <LazyRevealRows total={invoices.length} enabled={pageSize > 25}>
+            {invoices.map((invoice) => (
+              <div key={invoice.id} className="group contents">
+                <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{invoice.clientName}</div>
+                <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{invoice.projectTitle}</div>
+                <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 font-semibold text-primary group-hover:bg-row-hover">{formatAmount(invoice.totalAmount)}</div>
+                <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
+                  <span className="rounded-full bg-grid-header-bg px-2 py-0.5 text-[10px] font-medium text-secondary">{invoice.status}</span>
+                </div>
+                <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(invoice.createdAt)}</div>
+                <div className="flex aspect-square items-center justify-center border-b border-grid-border group-hover:bg-row-hover">
+                  <RestoreInvoiceButton invoiceId={invoice.id} />
+                </div>
               </div>
-              <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(invoice.createdAt)}</div>
-              <div className="flex aspect-square items-center justify-center border-b border-grid-border group-hover:bg-row-hover">
-                <RestoreInvoiceButton invoiceId={invoice.id} />
-              </div>
-            </div>
-          ))}
+            ))}
+          </LazyRevealRows>
         </div>
       </ListNavigator>
     </div>

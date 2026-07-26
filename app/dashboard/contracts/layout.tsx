@@ -7,7 +7,7 @@ export default function ContractsLayout({ children }: { children: React.ReactNod
       <SectionTabs
         storageKey="contracts-tab"
         tabs={[
-          { key: 'manutenzioni', label: 'Manutenzioni Web', href: '/dashboard/contracts' },
+          { key: 'manutenzioni', label: 'Web', href: '/dashboard/contracts' },
           { key: 'orario', label: 'Conteggio Orario', href: '/dashboard/contracts/hourly' },
         ]}
       />

@@ -10,10 +10,10 @@ import SyncContractsClientsButton from '@/components/SyncContractsClientsButton'
 import NewContractButton from '@/components/NewContractButton';
 import ContractRow from '@/components/ContractRow';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
+import LazyRevealRows from '@/components/LazyRevealRows';
+import { parsePageSize } from '@/lib/listPageSize';
 
 export const metadata = { title: 'Contratti' };
-
-const PAGE_SIZE = 25;
 
 // Colonne dati (tutte tranne "Azioni", che resta fissa a destra).
 // grid-template-columns usa max-content per adattarsi al contenuto: la
@@ -41,7 +41,7 @@ const DATA_COLUMNS: { key: string; label: string }[] = [
 
 const GRID_TEMPLATE = `repeat(${DATA_COLUMNS.length}, minmax(max-content, 1fr)) max-content`;
 
-type SearchParams = { q?: string; page?: string; status?: string; categories?: string };
+type SearchParams = { q?: string; page?: string; pageSize?: string; status?: string; categories?: string };
 
 export default async function ContractsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
@@ -101,12 +101,13 @@ async function ContractsListSection({
   showAmounts: boolean;
 }) {
   const { q, page, status, categories } = params;
+  const pageSize = parsePageSize(params.pageSize);
   const currentPage = Math.max(1, Number(page) || 1);
-  const offset = (currentPage - 1) * PAGE_SIZE;
+  const offset = (currentPage - 1) * pageSize;
   const categoryList = categories ? categories.split(',').filter(Boolean) : undefined;
 
-  const { data: contracts, total } = await getContracts({ search: q, status, categories: categoryList, limit: PAGE_SIZE, offset });
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const { data: contracts, total } = await getContracts({ search: q, status, categories: categoryList, limit: pageSize, offset });
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
     <ListNavigator
@@ -115,6 +116,7 @@ async function ContractsListSection({
       q={q}
       currentPage={currentPage}
       totalPages={totalPages}
+      pageSize={pageSize}
       showSyncFilter={false}
       totalCount={total}
       totalLabel="contratti"
@@ -137,18 +139,20 @@ async function ContractsListSection({
             </div>
           )}
 
-          {contracts.map((contract) => (
-            <ContractRow
-              key={contract.id}
-              contract={contract}
-              dataColumns={DATA_COLUMNS}
-              canUpdate={canUpdate}
-              canDelete={canDelete}
-              isSuperadmin={isSuperadmin}
-              clientOptions={clientOptions}
-              showAmounts={showAmounts}
-            />
-          ))}
+          <LazyRevealRows total={contracts.length} enabled={pageSize > 25}>
+            {contracts.map((contract) => (
+              <ContractRow
+                key={contract.id}
+                contract={contract}
+                dataColumns={DATA_COLUMNS}
+                canUpdate={canUpdate}
+                canDelete={canDelete}
+                isSuperadmin={isSuperadmin}
+                clientOptions={clientOptions}
+                showAmounts={showAmounts}
+              />
+            ))}
+          </LazyRevealRows>
         </div>
       </div>
     </ListNavigator>

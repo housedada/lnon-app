@@ -58,6 +58,7 @@ export default function JobRow({
   clientOptions,
   userOptions,
   showAmounts,
+  className,
 }: {
   job: Job;
   canCreateProjects: boolean;
@@ -68,6 +69,7 @@ export default function JobRow({
   clientOptions: { id: string; name: string }[];
   userOptions: { id: string; name: string; color?: string }[];
   showAmounts: boolean;
+  className?: string;
 }) {
   const [modal, setModal] = useState<ModalKind>(null);
   const router = useRouter();
@@ -86,7 +88,7 @@ export default function JobRow({
 
   return (
     <RowContextMenu
-      className="group contents"
+      className={`group contents ${className ?? ''}`.trim()}
       menu={
         <>
           {canCreateProjects && (

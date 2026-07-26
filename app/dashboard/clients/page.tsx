@@ -8,12 +8,12 @@ import NewClientButton from '@/components/NewClientButton';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import ListNavigator from '@/components/ListNavigator';
 import ListPlaceholder from '@/components/ListPlaceholder';
+import LazyRevealRows from '@/components/LazyRevealRows';
+import { parsePageSize } from '@/lib/listPageSize';
 
 export const metadata = { title: 'Clienti' };
 
-const PAGE_SIZE = 21;
-
-type SearchParams = { q?: string; page?: string; sync?: string };
+type SearchParams = { q?: string; page?: string; pageSize?: string; sync?: string };
 
 export default async function ClientsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
@@ -91,16 +91,17 @@ async function ClientsListSection({
   userOptions: { id: string; name: string; color?: string }[];
 }) {
   const { q, page, sync } = params;
+  const pageSize = parsePageSize(params.pageSize);
   const currentPage = Math.max(1, Number(page) || 1);
-  const offset = (currentPage - 1) * PAGE_SIZE;
+  const offset = (currentPage - 1) * pageSize;
 
   const { data: clients, total } = await getClients({
     search: q,
     ficSyncStatus: sync,
-    limit: PAGE_SIZE,
+    limit: pageSize,
     offset,
   });
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
     <ListNavigator
@@ -110,6 +111,7 @@ async function ClientsListSection({
       sync={sync}
       currentPage={currentPage}
       totalPages={totalPages}
+      pageSize={pageSize}
       showSyncFilter={ficConnection}
       totalCount={total}
       totalLabel="clienti"
@@ -137,22 +139,24 @@ async function ClientsListSection({
             </div>
           )}
 
-          {clients.map((client) => (
-            <ClientRow
-              key={client.id}
-              client={client}
-              canUpdate={canUpdate}
-              canDelete={canDelete}
-              isSuperadmin={isSuperadmin}
-              ficConnection={ficConnection}
-              canSyncFic={isSuperadmin}
-              canCreateJobs={canCreateJobs}
-              clientOptions={clientOptions}
-              contractOptions={contractOptions}
-              productOptions={productOptions}
-              userOptions={userOptions}
-            />
-          ))}
+          <LazyRevealRows total={clients.length} enabled={pageSize > 25}>
+            {clients.map((client) => (
+              <ClientRow
+                key={client.id}
+                client={client}
+                canUpdate={canUpdate}
+                canDelete={canDelete}
+                isSuperadmin={isSuperadmin}
+                ficConnection={ficConnection}
+                canSyncFic={isSuperadmin}
+                canCreateJobs={canCreateJobs}
+                clientOptions={clientOptions}
+                contractOptions={contractOptions}
+                productOptions={productOptions}
+                userOptions={userOptions}
+              />
+            ))}
+          </LazyRevealRows>
         </div>
       </div>
     </ListNavigator>

@@ -33,6 +33,7 @@ export default function ProductRow({
   canUpdate,
   canDelete,
   isSuperadmin,
+  className,
 }: {
   product: Product;
   color: string;
@@ -40,6 +41,7 @@ export default function ProductRow({
   canUpdate: boolean;
   canDelete: boolean;
   isSuperadmin: boolean;
+  className?: string;
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -56,7 +58,7 @@ export default function ProductRow({
 
   return (
     <RowContextMenu
-      className="group contents"
+      className={`group contents ${className ?? ''}`.trim()}
       menu={
         <>
           {canUpdate && (

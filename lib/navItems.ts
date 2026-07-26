@@ -17,6 +17,13 @@ export interface NavSubItem {
   // Confronto extra oltre al pathname, per sotto-voci che si distinguono
   // via query string (es. Task Team/Personale sulla stessa route).
   matchQuery?: { key: string; value: string; default: string };
+  // Valore scritto/letto in localStorage (item.viewStorageKey) quando questa
+  // sotto-voce è quella attiva: la Sidebar lo usa per far puntare il link di
+  // primo livello già alla sotto-vista giusta, invece di affidarsi a un
+  // redirect lato pagina — che landing sulla route della prima sotto-voce
+  // (indistinguibile da "nessuna scelta esplicita") applicava sempre, anche
+  // quando l'utente aveva appena cliccato proprio quella sotto-voce.
+  storageValue?: string;
 }
 
 export interface NavItem {
@@ -26,6 +33,7 @@ export interface NavItem {
   icon: LucideIcon;
   description: string;
   subItems?: NavSubItem[];
+  viewStorageKey?: string;
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -42,9 +50,10 @@ export const NAV_ITEMS: NavItem[] = [
     href: '/dashboard/contracts',
     icon: FileSignature,
     description: 'Gestione contratti e scadenze',
+    viewStorageKey: 'contracts-tab',
     subItems: [
-      { label: 'Manutenzioni Web', href: '/dashboard/contracts' },
-      { label: 'Conteggio Orario', href: '/dashboard/contracts/hourly' },
+      { label: 'Web', href: '/dashboard/contracts', storageValue: 'manutenzioni' },
+      { label: 'Conteggio Orario', href: '/dashboard/contracts/hourly', storageValue: 'orario' },
     ],
   },
   {
@@ -53,10 +62,11 @@ export const NAV_ITEMS: NavItem[] = [
     href: '/dashboard/jobs',
     icon: Briefcase,
     description: 'Pianificazione e avanzamento dei lavori',
+    viewStorageKey: 'jobs-tab',
     subItems: [
-      { label: 'Lista', href: '/dashboard/jobs' },
-      { label: 'Archivio', href: '/dashboard/jobs/archive' },
-      { label: 'Cestino', href: '/dashboard/jobs/trash' },
+      { label: 'Lista', href: '/dashboard/jobs', storageValue: 'list' },
+      { label: 'Archivio', href: '/dashboard/jobs/archive', storageValue: 'archive' },
+      { label: 'Cestino', href: '/dashboard/jobs/trash', storageValue: 'trash' },
     ],
   },
   {
@@ -65,9 +75,10 @@ export const NAV_ITEMS: NavItem[] = [
     href: '/dashboard/tasks',
     icon: CheckSquare,
     description: 'Attività e assegnazioni del team',
+    viewStorageKey: 'taskBoardView',
     subItems: [
-      { label: 'Team', href: '/dashboard/tasks?view=team', matchQuery: { key: 'view', value: 'team', default: 'team' } },
-      { label: 'Personale', href: '/dashboard/tasks?view=personal', matchQuery: { key: 'view', value: 'personal', default: 'team' } },
+      { label: 'Team', href: '/dashboard/tasks?view=team', matchQuery: { key: 'view', value: 'team', default: 'team' }, storageValue: 'team' },
+      { label: 'Personale', href: '/dashboard/tasks?view=personal', matchQuery: { key: 'view', value: 'personal', default: 'team' }, storageValue: 'personal' },
     ],
   },
   {
@@ -76,10 +87,11 @@ export const NAV_ITEMS: NavItem[] = [
     href: '/dashboard/invoices',
     icon: FileText,
     description: 'Fatturazione e sincronizzazione con Fatture in Cloud',
+    viewStorageKey: 'invoices-tab',
     subItems: [
-      { label: 'Lista', href: '/dashboard/invoices' },
-      { label: 'Archivio', href: '/dashboard/invoices/archive' },
-      { label: 'Cestino', href: '/dashboard/invoices/trash' },
+      { label: 'Lista', href: '/dashboard/invoices', storageValue: 'list' },
+      { label: 'Archivio', href: '/dashboard/invoices/archive', storageValue: 'archive' },
+      { label: 'Cestino', href: '/dashboard/invoices/trash', storageValue: 'trash' },
     ],
   },
   {

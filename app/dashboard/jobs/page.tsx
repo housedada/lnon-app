@@ -15,14 +15,12 @@ import JobRow from '@/components/JobRow';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import JobsSystemGeneratedToggle from '@/components/JobsSystemGeneratedToggle';
 import RememberRoute from '@/components/RememberRoute';
-
-const JOBS_TABS = { list: '/dashboard/jobs', archive: '/dashboard/jobs/archive', trash: '/dashboard/jobs/trash' };
+import LazyRevealRows from '@/components/LazyRevealRows';
+import { parsePageSize } from '@/lib/listPageSize';
 
 export const metadata = { title: 'Lavori' };
 
-const PAGE_SIZE = 21;
-
-type SearchParams = { q?: string; page?: string; clientId?: string; sync?: string; status?: string; system?: string };
+type SearchParams = { q?: string; page?: string; pageSize?: string; clientId?: string; sync?: string; status?: string; system?: string };
 
 export default async function JobsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
@@ -48,7 +46,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   return (
     <div>
       <NotifyFromQuery param="saved" message="Lavoro salvato." />
-      <RememberRoute storageKey="jobs-tab" tabKey="list" entryHref="/dashboard/jobs" tabs={JOBS_TABS} />
+      <RememberRoute storageKey="jobs-tab" tabKey="list" />
       <div className="flex items-center justify-between p-6 pb-0">
         <div>
           <h1 className="text-2xl font-semibold text-primary">Lavori</h1>
@@ -129,8 +127,9 @@ async function JobsListSection({
   showAmounts: boolean;
 }) {
   const { q, page, clientId, sync, status, system } = params;
+  const pageSize = parsePageSize(params.pageSize);
   const currentPage = Math.max(1, Number(page) || 1);
-  const offset = (currentPage - 1) * PAGE_SIZE;
+  const offset = (currentPage - 1) * pageSize;
   const systemGenerated = system === '1';
 
   const { data: jobs, total } = await getJobs({
@@ -140,10 +139,10 @@ async function JobsListSection({
     status,
     systemGenerated,
     assignedTo: role === 'dipendente' ? userId : undefined,
-    limit: PAGE_SIZE,
+    limit: pageSize,
     offset,
   });
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
     <ListNavigator
@@ -152,6 +151,7 @@ async function JobsListSection({
       q={q}
       currentPage={currentPage}
       totalPages={totalPages}
+      pageSize={pageSize}
       showSyncFilter={false}
       totalCount={total}
       totalLabel="lavori"
@@ -181,20 +181,22 @@ async function JobsListSection({
             </div>
           )}
 
-          {jobs.map((job) => (
-            <JobRow
-              key={job.id}
-              job={job}
-              canCreateProjects={canCreateProjects}
-              canUpdate={canUpdate}
-              canApprove={canApprove}
-              canDelete={canDelete}
-              isSuperadmin={isSuperadmin}
-              clientOptions={clientOptions}
-              userOptions={userOptions}
-              showAmounts={showAmounts}
-            />
-          ))}
+          <LazyRevealRows total={jobs.length} enabled={pageSize > 25}>
+            {jobs.map((job) => (
+              <JobRow
+                key={job.id}
+                job={job}
+                canCreateProjects={canCreateProjects}
+                canUpdate={canUpdate}
+                canApprove={canApprove}
+                canDelete={canDelete}
+                isSuperadmin={isSuperadmin}
+                clientOptions={clientOptions}
+                userOptions={userOptions}
+                showAmounts={showAmounts}
+              />
+            ))}
+          </LazyRevealRows>
         </div>
       </div>
     </ListNavigator>

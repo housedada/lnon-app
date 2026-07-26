@@ -1,39 +1,20 @@
 'use client';
 
 import { useEffect } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
 
 /**
  * Ricorda l'ultima sotto-pagina visitata all'interno di un gruppo (es. Lista/
- * Archivio/Cestino di Lavori o Fatture) e, quando si atterra sulla route
- * "di ingresso" del gruppo (entryHref), ci riporta lì automaticamente.
- * Va montato una volta per pagina, con il proprio tabKey.
+ * Archivio/Cestino di Lavori o Fatture): va montato una volta per pagina, con
+ * il proprio tabKey. Il ritorno automatico alla sotto-vista salvata vive
+ * nella Sidebar (che non si smonta mai passando da una sezione all'altra) —
+ * un redirect qui, basato sul pathname della route "di ingresso" del gruppo,
+ * scattava anche quando l'utente aveva appena cliccato proprio quella
+ * sotto-voce, perché le due situazioni sono indistinguibili dal solo pathname.
  */
-export default function RememberRoute({
-  storageKey,
-  tabKey,
-  entryHref,
-  tabs,
-}: {
-  storageKey: string;
-  tabKey: string;
-  entryHref: string;
-  tabs: Record<string, string>;
-}) {
-  const pathname = usePathname();
-  const router = useRouter();
-
+export default function RememberRoute({ storageKey, tabKey }: { storageKey: string; tabKey: string }) {
   useEffect(() => {
     localStorage.setItem(storageKey, tabKey);
   }, [storageKey, tabKey]);
-
-  useEffect(() => {
-    if (pathname !== entryHref) return;
-    const saved = localStorage.getItem(storageKey);
-    const savedHref = saved ? tabs[saved] : undefined;
-    if (savedHref && savedHref !== pathname) router.replace(savedHref);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return null;
 }

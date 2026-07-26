@@ -26,22 +26,28 @@ function SidebarContent({ role, onNavigate }: SidebarProps & { onNavigate?: () =
   const pathname = usePathname();
   const searchParams = useSearchParams();
   // La Sidebar vive nel layout e non si smonta mai passando da una sezione
-  // all'altra: legge qui la vista Task salvata così il link di primo livello
-  // porta già alla sotto-vista giusta, senza fare affidamento su un redirect
-  // lato pagina che dipende da un remount.
-  const [savedTaskView, setSavedTaskView] = useState<string | null>(null);
+  // all'altra: legge qui la sotto-vista salvata di ogni sezione (Task,
+  // Contratti, Lavori, Fatture, ...) così il link di primo livello porta già
+  // alla sotto-vista giusta, invece di affidarsi a un redirect lato pagina
+  // che, atterrando sulla route della prima sotto-voce — indistinguibile da
+  // "nessuna scelta esplicita" — scattava anche quando l'utente aveva
+  // appena cliccato proprio quella sotto-voce.
+  const [savedViews, setSavedViews] = useState<Record<string, string | null>>({});
   useEffect(() => {
-    setSavedTaskView(localStorage.getItem('taskBoardView'));
+    const next: Record<string, string | null> = {};
+    for (const item of NAV_ITEMS) {
+      if (item.viewStorageKey) next[item.viewStorageKey] = localStorage.getItem(item.viewStorageKey);
+    }
+    setSavedViews(next);
   }, []);
 
   return (
     <nav className="sidebar-edge flex h-full flex-col bg-neutral-900 px-3 py-4 text-neutral-100">
       {NAV_ITEMS.filter((item) => shouldShowNavItem(item.resource, permissions[item.resource] ?? [])).map((item) => {
         const isActive = pathname?.startsWith(item.href) ?? false;
-        const topHref =
-          item.resource === 'tasks' && (savedTaskView === 'team' || savedTaskView === 'personal')
-            ? `${item.href}?view=${savedTaskView}`
-            : item.href;
+        const savedValue = item.viewStorageKey ? savedViews[item.viewStorageKey] : undefined;
+        const savedSub = savedValue ? item.subItems?.find((s) => s.storageValue === savedValue) : undefined;
+        const topHref = savedSub?.href ?? item.href;
         return (
           <div key={item.resource} className={`mb-1 last:mb-0 ${item.subItems ? 'sidebar-nav-item relative' : ''}`}>
             <Link
@@ -72,9 +78,9 @@ function SidebarContent({ role, onNavigate }: SidebarProps & { onNavigate?: () =
                         key={sub.href}
                         href={sub.href}
                         onClick={() => {
-                          if (item.resource === 'tasks' && sub.matchQuery) {
-                            localStorage.setItem('taskBoardView', sub.matchQuery.value);
-                            setSavedTaskView(sub.matchQuery.value);
+                          if (item.viewStorageKey && sub.storageValue) {
+                            localStorage.setItem(item.viewStorageKey, sub.storageValue);
+                            setSavedViews((prev) => ({ ...prev, [item.viewStorageKey!]: sub.storageValue! }));
                           }
                           onNavigate?.();
                         }}

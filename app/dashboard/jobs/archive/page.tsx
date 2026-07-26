@@ -6,13 +6,11 @@ import ListNavigator from '@/components/ListNavigator';
 import UnarchiveJobButton from '@/components/UnarchiveJobButton';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import RememberRoute from '@/components/RememberRoute';
+import LazyRevealRows from '@/components/LazyRevealRows';
+import { parsePageSize } from '@/lib/listPageSize';
 import type { JobStatus } from '@/lib/types';
 
-const JOBS_TABS = { list: '/dashboard/jobs', archive: '/dashboard/jobs/archive', trash: '/dashboard/jobs/trash' };
-
 export const metadata = { title: 'Archivio Lavori' };
-
-const PAGE_SIZE = 25;
 
 const STATUS_LABEL: Record<JobStatus, string> = {
   draft: 'Bozza',
@@ -30,11 +28,12 @@ function formatDate(value?: Date) {
 export default async function JobsArchivePage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string; year?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; pageSize?: string; year?: string }>;
 }) {
-  const { q, page, year } = await searchParams;
+  const { q, page, pageSize: pageSizeParam, year } = await searchParams;
+  const pageSize = parsePageSize(pageSizeParam);
   const currentPage = Math.max(1, Number(page) || 1);
-  const offset = (currentPage - 1) * PAGE_SIZE;
+  const offset = (currentPage - 1) * pageSize;
   const archivedYear = year ? Number(year) : undefined;
 
   const session = await auth();
@@ -42,15 +41,15 @@ export default async function JobsArchivePage({
   const canUpdate = hasPermission(role, 'jobs', 'update');
 
   const [{ data: jobs, total }, years] = await Promise.all([
-    getJobs({ search: q, archived: true, archivedYear, limit: PAGE_SIZE, offset }),
+    getJobs({ search: q, archived: true, archivedYear, limit: pageSize, offset }),
     getArchivedJobYears(),
   ]);
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
     <div>
       <NotifyFromQuery param="saved" message="Lavoro aggiornato." />
-      <RememberRoute storageKey="jobs-tab" tabKey="archive" entryHref="/dashboard/jobs" tabs={JOBS_TABS} />
+      <RememberRoute storageKey="jobs-tab" tabKey="archive" />
       <div className="flex items-center justify-between p-6 pb-0">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-semibold text-primary">
@@ -88,6 +87,7 @@ export default async function JobsArchivePage({
         q={q}
         currentPage={currentPage}
         totalPages={totalPages}
+        pageSize={pageSize}
         showSyncFilter={false}
         totalCount={total}
         totalLabel="lavori archiviati"
@@ -106,22 +106,24 @@ export default async function JobsArchivePage({
             </div>
           )}
 
-          {jobs.map((job) => (
-            <div key={job.id} className="group contents">
-              <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{job.title}</div>
-              <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">
-                {job.clientName ?? job.clientNameRaw ?? '—'}
+          <LazyRevealRows total={jobs.length} enabled={pageSize > 25}>
+            {jobs.map((job) => (
+              <div key={job.id} className="group contents">
+                <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{job.title}</div>
+                <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">
+                  {job.clientName ?? job.clientNameRaw ?? '—'}
+                </div>
+                <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
+                  <span className="rounded-full bg-green-600/10 px-2 py-0.5 text-[10px] font-medium text-green-700">{STATUS_LABEL[job.status]}</span>
+                </div>
+                <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{job.assignedToName ?? '—'}</div>
+                <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(job.archivedAt)}</div>
+                <div className="flex aspect-square items-center justify-center border-b border-grid-border group-hover:bg-row-hover">
+                  {canUpdate && <UnarchiveJobButton jobId={job.id} />}
+                </div>
               </div>
-              <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
-                <span className="rounded-full bg-green-600/10 px-2 py-0.5 text-[10px] font-medium text-green-700">{STATUS_LABEL[job.status]}</span>
-              </div>
-              <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{job.assignedToName ?? '—'}</div>
-              <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(job.archivedAt)}</div>
-              <div className="flex aspect-square items-center justify-center border-b border-grid-border group-hover:bg-row-hover">
-                {canUpdate && <UnarchiveJobButton jobId={job.id} />}
-              </div>
-            </div>
-          ))}
+            ))}
+          </LazyRevealRows>
         </div>
       </ListNavigator>
     </div>

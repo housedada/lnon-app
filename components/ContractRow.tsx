@@ -99,6 +99,7 @@ export default function ContractRow({
   isSuperadmin,
   clientOptions,
   showAmounts,
+  className,
 }: {
   contract: Contract;
   dataColumns: { key: string; label: string }[];
@@ -107,6 +108,7 @@ export default function ContractRow({
   isSuperadmin: boolean;
   clientOptions: { id: string; name: string }[];
   showAmounts: boolean;
+  className?: string;
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -123,7 +125,7 @@ export default function ContractRow({
 
   return (
     <RowContextMenu
-      className="group contents"
+      className={`group contents ${className ?? ''}`.trim()}
       menu={
         <>
           {canUpdate && (

@@ -663,6 +663,15 @@ input[type='radio']:focus-visible {
   animation: list-fade-in 220ms ease-out;
 }
 
+/* Righe di lista caricate lazy (batch successivi al primo, oltre le prime 25):
+   la riga stessa è quasi sempre display:contents per allinearsi alla grid,
+   quindi non ha una propria box da animare — l'animazione va sulle sue celle
+   dirette, verso cui i selettori CSS "vedono" comunque anche attraverso
+   display:contents (solo il layout/box è soppresso, non il cascading). */
+.list-row-fade-in > * {
+  animation: list-fade-in 280ms ease-out backwards;
+}
+
 /* Cursor: manina nativa del browser (cursor: pointer), dimensione
    default, nessuna immagine custom. */
 button:not(:disabled),

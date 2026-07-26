@@ -40,11 +40,13 @@ export default function ProjectInvoiceRow({
   isSuperadmin,
   canManage,
   showAmounts,
+  className,
 }: {
   invoice: ProjectInvoice;
   isSuperadmin: boolean;
   canManage: boolean;
   showAmounts: boolean;
+  className?: string;
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const router = useRouter();
@@ -113,12 +115,12 @@ export default function ProjectInvoiceRow({
   );
 
   if (!canManage) {
-    return <div className="group contents">{cells}</div>;
+    return <div className={`group contents ${className ?? ''}`.trim()}>{cells}</div>;
   }
 
   return (
     <RowContextMenu
-      className="group contents"
+      className={`group contents ${className ?? ''}`.trim()}
       menu={
         <>
           <button type="button" onClick={handleGenerateFic} className={MENU_ROW_CLASS}>

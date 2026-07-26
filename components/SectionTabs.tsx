@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 export default function SectionTabs({
   tabs,
@@ -12,20 +11,13 @@ export default function SectionTabs({
   storageKey?: string;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
 
-  useEffect(() => {
-    if (!storageKey) return;
-    // Solo sulla route "di ingresso" (il primo tab) verifichiamo se l'utente aveva
-    // scelto un'altra sotto-sezione l'ultima volta, per riportarcelo lì.
-    if (pathname !== tabs[0].href) return;
-    const savedKey = localStorage.getItem(storageKey);
-    const savedTab = tabs.find((t) => t.key === savedKey);
-    if (savedTab && savedTab.href !== pathname) {
-      router.replace(savedTab.href);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Nessun redirect-al-mount qui: landing sulla route del primo tab è
+  // indistinguibile da "nessuna scelta esplicita", quindi un redirect
+  // basato solo sul pathname scattava anche cliccando proprio quel tab.
+  // Il "ricorda l'ultima sotto-sezione" vive ora nella Sidebar (che non si
+  // smonta mai passando da una sezione all'altra); qui restiamo a scrivere
+  // la scelta in localStorage per tenerla sincronizzata.
 
   return (
     <div className="mx-6 mt-6 flex items-center gap-1 border-b border-grid-border">

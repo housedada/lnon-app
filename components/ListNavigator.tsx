@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { LIST_PAGE_SIZE_OPTIONS, LIST_PAGE_SIZE_STORAGE_KEY, DEFAULT_LIST_PAGE_SIZE } from '@/lib/listPageSize';
 
 const SYNC_OPTIONS: { value: string; label: string }[] = [
   { value: '', label: 'Tutti gli stati' },
@@ -18,6 +19,7 @@ export default function ListNavigator({
   sync,
   currentPage,
   totalPages,
+  pageSize,
   showSyncFilter,
   totalCount,
   totalLabel,
@@ -31,6 +33,7 @@ export default function ListNavigator({
   sync?: string;
   currentPage: number;
   totalPages: number;
+  pageSize?: number;
   showSyncFilter: boolean;
   totalCount?: number;
   totalLabel?: string;
@@ -45,11 +48,12 @@ export default function ListNavigator({
 
   // Riparte sempre dai searchParams correnti per non perdere eventuali filtri
   // extra gestiti da altri componenti sulla stessa pagina (es. ContractsFilterWidget).
-  function navigate(next: { q?: string; page?: number; sync?: string }) {
+  function navigate(next: { q?: string; page?: number; sync?: string; pageSize?: number }) {
     const params = new URLSearchParams(searchParams.toString());
     const nextQ = next.q !== undefined ? next.q : q;
     const nextSync = next.sync !== undefined ? next.sync : sync;
     const nextPage = next.page ?? 1;
+    const nextPageSize = next.pageSize !== undefined ? next.pageSize : pageSize;
 
     if (nextQ) params.set('q', nextQ);
     else params.delete('q');
@@ -60,11 +64,27 @@ export default function ListNavigator({
     if (nextPage > 1) params.set('page', String(nextPage));
     else params.delete('page');
 
+    if (nextPageSize && nextPageSize !== DEFAULT_LIST_PAGE_SIZE) params.set('pageSize', String(nextPageSize));
+    else params.delete('pageSize');
+
     const target = params.toString() ? `${basePath}?${params.toString()}` : basePath;
     startTransition(() => {
       router.push(target, { scroll: false });
     });
   }
+
+  // La preferenza sul numero di righe per pagina è globale (vale per tutte le
+  // liste): se l'URL non la specifica esplicitamente, la ripristiniamo da
+  // localStorage al mount.
+  useEffect(() => {
+    if (pageSize === undefined) return;
+    if (searchParams.get('pageSize')) return;
+    const saved = Number(localStorage.getItem(LIST_PAGE_SIZE_STORAGE_KEY));
+    if (LIST_PAGE_SIZE_OPTIONS.includes(saved as (typeof LIST_PAGE_SIZE_OPTIONS)[number]) && saved !== pageSize) {
+      navigate({ pageSize: saved, page: currentPage });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const paginationControls = (
     <div className="flex items-center gap-2">
@@ -87,6 +107,26 @@ export default function ListNavigator({
         <ChevronRight size={16} strokeWidth={1.75} />
       </button>
     </div>
+  );
+
+  const pageSizeControl = pageSize !== undefined && (
+    <select
+      value={pageSize}
+      onChange={(e) => {
+        const nextSize = Number(e.target.value);
+        localStorage.setItem(LIST_PAGE_SIZE_STORAGE_KEY, String(nextSize));
+        navigate({ pageSize: nextSize, page: 1 });
+      }}
+      aria-label="Righe per pagina"
+      title="Righe per pagina"
+      className="rounded-lg border border-grid-border bg-card-bg py-1.5 px-2 text-[11px] text-primary"
+    >
+      {LIST_PAGE_SIZE_OPTIONS.map((size) => (
+        <option key={size} value={size}>
+          {size} righe
+        </option>
+      ))}
+    </select>
   );
 
   return (
@@ -122,6 +162,7 @@ export default function ListNavigator({
 
         <div className="ml-auto flex items-center gap-3">
           {extraTopControls}
+          {pageSizeControl}
           <span className="text-[9px] text-secondary whitespace-nowrap">
             Pagina {currentPage} di {totalPages}
           </span>

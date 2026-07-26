@@ -11,14 +11,12 @@ import InvoicesBulkBar from '@/components/InvoicesBulkBar';
 import ProjectInvoiceRow from '@/components/ProjectInvoiceRow';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import RememberRoute from '@/components/RememberRoute';
-
-const INVOICES_TABS = { list: '/dashboard/invoices', archive: '/dashboard/invoices/archive', trash: '/dashboard/invoices/trash' };
+import LazyRevealRows from '@/components/LazyRevealRows';
+import { parsePageSize } from '@/lib/listPageSize';
 
 export const metadata = { title: 'Fatture' };
 
-const PAGE_SIZE = 25;
-
-type SearchParams = { q?: string; page?: string };
+type SearchParams = { q?: string; page?: string; pageSize?: string };
 
 export default async function InvoicesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
@@ -32,7 +30,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   return (
     <div>
       <NotifyFromQuery param="saved" message="Fattura aggiornata." />
-      <RememberRoute storageKey="invoices-tab" tabKey="list" entryHref="/dashboard/invoices" tabs={INVOICES_TABS} />
+      <RememberRoute storageKey="invoices-tab" tabKey="list" />
       <div className="flex items-center justify-between p-6 pb-0">
         <div>
           <h1 className="text-2xl font-semibold text-primary">Fatture</h1>
@@ -78,11 +76,12 @@ async function InvoicesListSection({
   showAmounts: boolean;
 }) {
   const { q, page } = params;
+  const pageSize = parsePageSize(params.pageSize);
   const currentPage = Math.max(1, Number(page) || 1);
-  const offset = (currentPage - 1) * PAGE_SIZE;
+  const offset = (currentPage - 1) * pageSize;
 
-  const { data: invoices, total } = await getProjectInvoices({ search: q, limit: PAGE_SIZE, offset });
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const { data: invoices, total } = await getProjectInvoices({ search: q, limit: pageSize, offset });
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const invoiceGroupKeys = Object.fromEntries(invoices.map((i) => [i.id, i.clientId ?? i.clientName]));
 
   const gridCols = canManage
@@ -96,6 +95,7 @@ async function InvoicesListSection({
       q={q}
       currentPage={currentPage}
       totalPages={totalPages}
+      pageSize={pageSize}
       showSyncFilter={false}
       totalCount={total}
       totalLabel="fatture"
@@ -124,9 +124,11 @@ async function InvoicesListSection({
             </div>
           )}
 
-          {invoices.map((invoice) => (
-            <ProjectInvoiceRow key={invoice.id} invoice={invoice} isSuperadmin={isSuperadmin} canManage={canManage} showAmounts={showAmounts} />
-          ))}
+          <LazyRevealRows total={invoices.length} enabled={pageSize > 25}>
+            {invoices.map((invoice) => (
+              <ProjectInvoiceRow key={invoice.id} invoice={invoice} isSuperadmin={isSuperadmin} canManage={canManage} showAmounts={showAmounts} />
+            ))}
+          </LazyRevealRows>
         </div>
       </div>
     </ListNavigator>

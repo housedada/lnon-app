@@ -9,12 +9,12 @@ import ProductRow from '@/components/ProductRow';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import ListNavigator from '@/components/ListNavigator';
 import ListPlaceholder from '@/components/ListPlaceholder';
+import LazyRevealRows from '@/components/LazyRevealRows';
+import { parsePageSize } from '@/lib/listPageSize';
 
 export const metadata = { title: 'Prodotti' };
 
-const PAGE_SIZE = 25;
-
-type SearchParams = { q?: string; page?: string; sync?: string };
+type SearchParams = { q?: string; page?: string; pageSize?: string; sync?: string };
 
 export default async function ProductsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
@@ -69,14 +69,15 @@ async function ProductsListSection({
   isSuperadmin: boolean;
 }) {
   const { q, page, sync } = params;
+  const pageSize = parsePageSize(params.pageSize);
   const currentPage = Math.max(1, Number(page) || 1);
-  const offset = (currentPage - 1) * PAGE_SIZE;
+  const offset = (currentPage - 1) * pageSize;
 
   const [{ data: products, total }, allProductNames] = await Promise.all([
-    getProducts({ search: q, ficSyncStatus: sync, limit: PAGE_SIZE, offset }),
+    getProducts({ search: q, ficSyncStatus: sync, limit: pageSize, offset }),
     getAllProductNames(),
   ]);
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const colorMap = buildProductColorMap(allProductNames);
 
   const gridCols = ficConnection
@@ -91,6 +92,7 @@ async function ProductsListSection({
       sync={sync}
       currentPage={currentPage}
       totalPages={totalPages}
+      pageSize={pageSize}
       showSyncFilter={ficConnection}
       totalCount={total}
       totalLabel="prodotti"
@@ -113,17 +115,19 @@ async function ProductsListSection({
             </div>
           )}
 
-          {products.map((product) => (
-            <ProductRow
-              key={product.id}
-              product={product}
-              color={colorMap.get(product.id) ?? '#e5e5e5'}
-              ficConnection={ficConnection}
-              canUpdate={canUpdate}
-              canDelete={canDelete}
-              isSuperadmin={isSuperadmin}
-            />
-          ))}
+          <LazyRevealRows total={products.length} enabled={pageSize > 25}>
+            {products.map((product) => (
+              <ProductRow
+                key={product.id}
+                product={product}
+                color={colorMap.get(product.id) ?? '#e5e5e5'}
+                ficConnection={ficConnection}
+                canUpdate={canUpdate}
+                canDelete={canDelete}
+                isSuperadmin={isSuperadmin}
+              />
+            ))}
+          </LazyRevealRows>
         </div>
       </div>
     </ListNavigator>

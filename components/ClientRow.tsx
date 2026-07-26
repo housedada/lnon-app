@@ -91,6 +91,7 @@ export default function ClientRow({
   contractOptions,
   productOptions,
   userOptions,
+  className,
 }: {
   client: Client;
   canUpdate: boolean;
@@ -103,6 +104,7 @@ export default function ClientRow({
   contractOptions: { id: string; label: string }[];
   productOptions: { id: string; name: string }[];
   userOptions: { id: string; name: string; color?: string }[];
+  className?: string;
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [modal, setModal] = useState<ModalKind>(null);
@@ -120,7 +122,7 @@ export default function ClientRow({
 
   return (
     <RowContextMenu
-      className="group contents"
+      className={`group contents ${className ?? ''}`.trim()}
       menu={
         <>
           {canCreateJobs && (
