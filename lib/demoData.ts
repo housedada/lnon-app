@@ -26,41 +26,71 @@ function pick<T>(arr: T[]): T {
 function randInt(min: number, max: number): number {
   return min + Math.floor(rand() * (max - min + 1));
 }
+function shuffled<T>(arr: T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+function randomColor(): string {
+  return pick([...USER_TAG_COLORS]);
+}
 
-const FIRST_NAMES = ['Giulia', 'Marco', 'Sara', 'Luca', 'Elena', 'Davide', 'Chiara', 'Matteo', 'Francesca'];
-const LAST_NAMES = ['Bianchi', 'Rossi', 'Ferrari', 'Colombo', 'Ricci', 'Marino', 'Greco', 'Bruno', 'Conti'];
+// Utenti umani reali di HouseDada (niente account tecnici/gruppo), colori assegnati random.
+const REAL_USERS = [
+  { first: 'Alessandro', last: 'Carella', email: 'alessandrocarella@housedada.com' },
+  { first: 'Aldo', last: 'Goccione', email: 'aldogoccione@housedada.com' },
+  { first: 'Michele', last: 'Canevese', email: 'michelecanevese@housedada.com' },
+  { first: 'Valentina', last: 'Quagliotto', email: 'valentinaquagliotto@housedada.com' },
+  { first: 'Marco', last: 'Candrian', email: 'marcocandrian@housedada.com' },
+  { first: 'Lorena', last: 'Lauran', email: 'lorenalauran@housedada.com' },
+  { first: 'Cosimo', last: 'Scatigno', email: 'cosimoscatigno@housedada.com' },
+  { first: 'Stage', last: 'Housedada', email: 'stage@housedada.com' },
+];
+
 const PROJECT_WORDS = ['Restyling sito', 'Landing page', 'Campagna social', 'SEO audit', 'Shop online', 'App mobile', 'Rebranding', 'Newsletter', 'Migrazione CMS', 'Portale clienti'];
 const TASK_TITLES = ['Bozza contenuti', 'Revisione grafica', 'Setup ambiente', 'Test funzionale', 'Consegna al cliente', 'Ottimizzazione performance', 'Correzione bug', 'Meeting kickoff'];
 const STATUSES: ProjectTaskStatus[] = ['todo', 'in_progress', 'completed'];
+// Prodotti fittizi, per colorare l'header delle card progetto come nella board reale
+// (dove il colore arriva dai prodotti associati al Job collegato).
+const PRODUCT_NAMES = ['Sito Web', 'SEO', 'Social Media', 'Hosting', 'App Mobile', 'Email Marketing', 'Grafica', 'Advertising'];
 
-const DEMO_USER_COUNT = 9;
+export const DEMO_USERS: User[] = REAL_USERS.map((u, i) => ({
+  id: `demo-user-${i + 1}`,
+  email: u.email,
+  name: `${u.first} ${u.last}`,
+  role: 'dipendente',
+  isActive: true,
+  color: randomColor(),
+  isDemo: true,
+  createdAt: new Date('2026-01-01'),
+  updatedAt: new Date('2026-01-01'),
+}));
 
-export const DEMO_USERS: User[] = Array.from({ length: DEMO_USER_COUNT }, (_, i) => {
-  const name = `${FIRST_NAMES[i % FIRST_NAMES.length]} ${LAST_NAMES[i % LAST_NAMES.length]}`;
-  return {
-    id: `demo-user-${i + 1}`,
-    email: `demo-user-${i + 1}@example.invalid`,
-    name,
-    role: 'dipendente',
-    isActive: true,
-    color: USER_TAG_COLORS[i % USER_TAG_COLORS.length],
-    isDemo: true,
-    createdAt: new Date('2026-01-01'),
-    updatedAt: new Date('2026-01-01'),
-  };
-});
+// Colore random per ogni prodotto fittizio (una volta sola, stabile per tutta la demo)
+const DEMO_PRODUCT_COLORS = Object.fromEntries(PRODUCT_NAMES.map((name) => [name, randomColor()]));
 
-const PROJECTS_PER_USER = [3, 2, 5, 4, 3, 2, 5, 3, 4];
+const PROJECTS_PER_USER = [3, 2, 5, 4, 3, 2, 5, 3];
 
 export const DEMO_PROJECTS: Project[] = [];
 export const DEMO_TASKS_BY_PROJECT: Record<string, ProjectTask[]> = {};
+// jobId fittizio -> colori dei prodotti associati (stessa shape di getProductColorsForJobs)
+export const DEMO_PRODUCT_COLORS_BY_JOB: Record<string, string[]> = {};
 
 DEMO_USERS.forEach((user, userIndex) => {
   const count = PROJECTS_PER_USER[userIndex % PROJECTS_PER_USER.length];
   for (let p = 0; p < count; p++) {
     const projectId = `demo-project-${userIndex + 1}-${p + 1}`;
+    const jobId = `demo-job-${userIndex + 1}-${p + 1}`;
+    const productCount = randInt(1, 2);
+    const products = shuffled(PRODUCT_NAMES).slice(0, productCount);
+    DEMO_PRODUCT_COLORS_BY_JOB[jobId] = products.map((name) => DEMO_PRODUCT_COLORS[name]);
+
     DEMO_PROJECTS.push({
       id: projectId,
+      jobId,
       title: `${pick(PROJECT_WORDS)} — ${user.name.split(' ')[0]}`,
       assignedTo: user.id,
       isDemo: true,

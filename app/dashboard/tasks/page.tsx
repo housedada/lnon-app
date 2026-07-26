@@ -12,7 +12,7 @@ import {
   getOpenHourlyWorkEntriesCount,
 } from '@/lib/db';
 import { hasPermission } from '@/lib/permissions';
-import { DEMO_USERS, DEMO_PROJECTS, DEMO_TASKS_BY_PROJECT } from '@/lib/demoData';
+import { DEMO_USERS, DEMO_PROJECTS, DEMO_TASKS_BY_PROJECT, DEMO_PRODUCT_COLORS_BY_JOB } from '@/lib/demoData';
 import TeamBoard from '@/components/TeamBoard';
 import PersonalBoard from '@/components/PersonalBoard';
 import TaskBoardViewToggle from '@/components/TaskBoardViewToggle';
@@ -157,7 +157,7 @@ async function PersonalView({
     Promise.all(realProjects.map((p) => getProjectTasks(p.id))),
     userId ? getPersonalColumnOrder(userId) : Promise.resolve([]),
   ]);
-  const productColorsByJob = Object.fromEntries(productColorsMap);
+  const productColorsByJob = { ...Object.fromEntries(productColorsMap), ...(includeDemo ? DEMO_PRODUCT_COLORS_BY_JOB : {}) };
   const userOptions = includeDemo
     ? [...allUsers.filter((u) => u.isActive), ...DEMO_USERS].map((u) => ({ id: u.id, name: u.name, color: u.color }))
     : allUsers.filter((u) => u.isActive).map((u) => ({ id: u.id, name: u.name, color: u.color }));

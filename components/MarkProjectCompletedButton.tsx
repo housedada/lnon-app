@@ -24,7 +24,12 @@ export default function MarkProjectCompletedButton({
   function handleConfirm() {
     startTransition(async () => {
       const res = await markProjectCompletedAction(projectId);
-      notify(res.message);
+      notify(
+        res.message,
+        isHourlyContract && res.success
+          ? { durationMs: 6000, href: '/dashboard/contracts/hourly', linkLabel: 'Vai a Conteggio Orario' }
+          : undefined
+      );
       setOpen(false);
       if (res.success) router.refresh();
     });
