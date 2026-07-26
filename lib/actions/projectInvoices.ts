@@ -185,6 +185,16 @@ export async function generateFicInvoiceAction(
 export async function generateFicInvoicesBulkAction(
   ids: string[]
 ): Promise<{ success: boolean; message: string; results: { id: string; success: boolean; message: string }[] }> {
+  try {
+    await requireAdmin();
+  } catch (err) {
+    return {
+      success: false,
+      message: err instanceof Error ? err.message : 'Errore nella generazione delle fatture su Fatture in Cloud.',
+      results: [],
+    };
+  }
+
   const results: { id: string; success: boolean; message: string }[] = [];
 
   for (const id of ids) {
