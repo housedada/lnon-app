@@ -508,6 +508,7 @@ export interface JobsForecastResult {
     preventivato: number;
     confermato: number;
     fatturato: number;
+    fatturatoNonRiscosso: number;
     speseFornitori: number;
   };
 }
@@ -529,10 +530,11 @@ export async function getJobsForecast(fiscalYear: number): Promise<JobsForecastR
   const jobIds = jobs.map((j) => j.id);
 
   let invoicedByJobId = new Map<string, number>();
+  let unpaidByJobId = new Map<string, number>();
   if (jobIds.length > 0) {
     const { data: invoiceRows, error: invoicesError } = await supabaseServer
       .from('project_invoices')
-      .select('job_id, net_amount')
+      .select('job_id, net_amount, paid_at')
       .in('job_id', jobIds)
       .eq('status', 'fatturata');
     if (invoicesError) throw invoicesError;
@@ -542,9 +544,15 @@ export async function getJobsForecast(fiscalYear: number): Promise<JobsForecastR
       map.set(row.job_id, (map.get(row.job_id) ?? 0) + Number(row.net_amount ?? 0));
       return map;
     }, new Map<string, number>());
+
+    unpaidByJobId = (invoiceRows ?? []).reduce((map, row: any) => {
+      if (!row.job_id || row.paid_at) return map;
+      map.set(row.job_id, (map.get(row.job_id) ?? 0) + Number(row.net_amount ?? 0));
+      return map;
+    }, new Map<string, number>());
   }
 
-  const totals = { potenziale: 0, preventivato: 0, confermato: 0, fatturato: 0, speseFornitori: 0 };
+  const totals = { potenziale: 0, preventivato: 0, confermato: 0, fatturato: 0, fatturatoNonRiscosso: 0, speseFornitori: 0 };
   const rows: JobForecastRow[] = [];
 
   for (const job of jobs) {
@@ -554,9 +562,11 @@ export async function getJobsForecast(fiscalYear: number): Promise<JobsForecastR
     const estimatedBudget = job.estimatedBudget ?? 0;
     const supplierCost = job.supplierCost ?? 0;
     const invoicedAmount = invoicedByJobId.get(job.id) ?? 0;
+    const unpaidAmount = unpaidByJobId.get(job.id) ?? 0;
 
     totals[category] += estimatedBudget;
     totals.fatturato += invoicedAmount;
+    totals.fatturatoNonRiscosso += unpaidAmount;
     totals.speseFornitori += supplierCost;
 
     rows.push({

@@ -84,7 +84,13 @@ export default function EconomicOverviewWidget({
           Entrate attuali {fiscalYear} — contratti web e conteggio orario sono dettaglio, già inclusi nel fatturato
         </p>
         <div className="card-shadow grid grid-cols-2 overflow-hidden rounded-lg border border-grid-border bg-card-bg sm:grid-cols-3">
-          <Tile label={`Fatturato lavori ${fiscalYear}`} value={jobsForecastTotals.fatturato} color={FATTURATO_COLOR} icon={Receipt} />
+          <Tile
+            label={`Fatturato lavori ${fiscalYear}`}
+            value={jobsForecastTotals.fatturato}
+            sub={jobsForecastTotals.fatturatoNonRiscosso > 0 ? `Non riscosso: ${formatExact(jobsForecastTotals.fatturatoNonRiscosso)}` : undefined}
+            color={FATTURATO_COLOR}
+            icon={Receipt}
+          />
           <Tile
             label="Contratti Web"
             value={contractsStats.generalTotal}
