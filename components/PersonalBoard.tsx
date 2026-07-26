@@ -217,7 +217,7 @@ export default function PersonalBoard({
                         </span>
                       ) : (
                         <span
-                          style={{ top: 'calc(var(--spacing) * 3.2)', left: 'calc(var(--spacing) * 3)' }}
+                          style={{ top: 'calc(var(--spacing) * 3.2)', right: 'calc(var(--spacing) * 3)' }}
                           className="pointer-events-none absolute z-10 opacity-0 -translate-x-1.5 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:translate-x-0"
                           aria-hidden="true"
                         >
