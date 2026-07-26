@@ -188,7 +188,8 @@ export default function PersonalBoard({
                         {...listeners}
                         onClick={(e) => e.stopPropagation()}
                         aria-label="Trascina per riordinare"
-                        className="absolute left-4 top-4 z-10 flex h-5 w-5 shrink-0 cursor-grab touch-none items-center justify-center opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100 active:cursor-grabbing"
+                        style={{ top: 'calc(var(--spacing) * 2.9)', left: 'calc(var(--spacing) * 2.5)' }}
+                        className="absolute z-10 flex h-5 w-5 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
                       >
                         <GripVertical size={14} strokeWidth={1.75} className={headerTextClass} aria-hidden="true" />
                       </span>
@@ -210,7 +211,8 @@ export default function PersonalBoard({
                         </span>
                       ) : (
                         <span
-                          className="pointer-events-none absolute right-4 top-4 z-10 opacity-0 -translate-x-1.5 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:translate-x-0"
+                          style={{ top: 'calc(var(--spacing) * 3.2)', left: 'calc(var(--spacing) * 3)' }}
+                          className="pointer-events-none absolute z-10 opacity-0 -translate-x-1.5 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:translate-x-0"
                           aria-hidden="true"
                         >
                           <Plus size={14} strokeWidth={2} className={headerTextClass} />
