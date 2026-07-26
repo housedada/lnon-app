@@ -32,6 +32,9 @@ function JobCreateProjectFlowInner({
   useEffect(() => {
     setStep(job ? 'confirm' : null);
     setProject(null);
+    if (!job && searchParams.has('createProject')) {
+      clearParam();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [job?.id]);
 

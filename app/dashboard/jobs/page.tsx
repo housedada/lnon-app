@@ -44,7 +44,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   const isSuperadmin = role === 'superadmin';
   const showAmounts = canViewAmounts(role);
   const canManageInvoices = role === 'superadmin' || role === 'admin';
-  const createProjectJob = params.createProject && canCreateProjects ? await getJobById(params.createProject) : null;
+  const createProjectJob = params.createProject && canCreateProjects ? await getJobById(params.createProject).catch(() => null) : null;
 
   return (
     <div>
