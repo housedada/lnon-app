@@ -225,9 +225,9 @@ export default function PersonalBoard({
                         </span>
                       )}
                       <div className={`shrink-0 p-3 ${isSpecial ? 'special-project-header' : ''}`} style={headerStyle}>
-                        <p className={`relative truncate pl-7 pr-7 text-left text-sm font-semibold ${headerTextClass}`}>{project.title}</p>
+                        <p className={`relative truncate pl-7 text-left text-sm font-semibold ${headerTextClass} ${isSpecial ? 'pr-14' : 'pr-7'}`}>{project.title}</p>
                         {project.jobTitle && (
-                          <p className={`relative mt-1 flex items-center gap-1 truncate pl-7 pr-7 text-xs ${isSpecial ? 'text-neutral-700/70' : headerStyle ? 'text-neutral-700/70' : 'text-secondary'}`}>
+                          <p className={`relative mt-1 flex items-center gap-1 truncate pl-7 text-xs ${isSpecial ? 'pr-14 text-neutral-700/70' : headerStyle ? 'pr-7 text-neutral-700/70' : 'pr-7 text-secondary'}`}>
                             <Briefcase size={11} strokeWidth={1.75} aria-hidden="true" />
                             {project.jobTitle}
                           </p>
