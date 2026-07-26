@@ -2,8 +2,32 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { LIST_PAGE_SIZE_OPTIONS, LIST_PAGE_SIZE_STORAGE_KEY, DEFAULT_LIST_PAGE_SIZE } from '@/lib/listPageSize';
+import PacmanLoader from '@/components/PacmanLoader';
+
+const OVERLAY_FADE_MS = 140;
+
+// Fade in/out rapido per l'overlay di caricamento: montato finché `active`
+// è true, e per altri OVERLAY_FADE_MS dopo essere tornato false (giusto il
+// tempo di far scomparire l'opacità invece di sparire di colpo).
+function useFadeOverlay(active: boolean) {
+  const [mounted, setMounted] = useState(active);
+  const [visible, setVisible] = useState(active);
+
+  useEffect(() => {
+    if (active) {
+      setMounted(true);
+      const raf = requestAnimationFrame(() => setVisible(true));
+      return () => cancelAnimationFrame(raf);
+    }
+    setVisible(false);
+    const t = setTimeout(() => setMounted(false), OVERLAY_FADE_MS);
+    return () => clearTimeout(t);
+  }, [active]);
+
+  return { mounted, visible };
+}
 
 const SYNC_OPTIONS: { value: string; label: string }[] = [
   { value: '', label: 'Tutti gli stati' },
@@ -45,6 +69,7 @@ export default function ListNavigator({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [query, setQuery] = useState(q ?? '');
+  const overlay = useFadeOverlay(isPending);
 
   // Riparte sempre dai searchParams correnti per non perdere eventuali filtri
   // extra gestiti da altri componenti sulla stessa pagina (es. ContractsFilterWidget).
@@ -186,12 +211,12 @@ export default function ListNavigator({
 
       <div className="list-fade-in relative">
         {children}
-        {isPending && (
+        {overlay.mounted && (
           <div
-            className="absolute inset-0 z-10 flex items-start justify-center pt-16"
-            style={{ backgroundColor: 'rgba(255,255,255,0.16)' }}
+            className="absolute inset-0 z-10 flex items-start justify-center pt-16 transition-opacity"
+            style={{ backgroundColor: 'rgba(255,255,255,0.16)', opacity: overlay.visible ? 1 : 0, transitionDuration: `${OVERLAY_FADE_MS}ms` }}
           >
-            <Loader2 size={20} strokeWidth={1.75} className="animate-spin text-secondary" aria-hidden="true" />
+            <PacmanLoader />
           </div>
         )}
       </div>

@@ -943,3 +943,32 @@ select:disabled {
     rgba(255, 255, 255, 0.02) 38px
   );
 }
+
+/* Preloader liste (ricerca/paginazione/filtri): il pacman.svg (mouth/dots
+   già animati via CSS interno all'SVG) è usato come mask, con dietro un
+   gradiente "acceso" giallo-viola in movimento invece di un colore piatto. */
+@keyframes pacman-glow {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.pacman-loader {
+  width: 52px;
+  height: 32px;
+  -webkit-mask-image: url('/pacman.svg');
+  mask-image: url('/pacman.svg');
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  mask-position: center;
+  background: linear-gradient(120deg, #ffd93d, #ffb703, var(--accent-to), #ffd93d);
+  background-size: 300% 300%;
+  animation: pacman-glow 1.6s ease-in-out infinite;
+}
