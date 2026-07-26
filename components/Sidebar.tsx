@@ -44,7 +44,7 @@ function SidebarContent({ role, onNavigate }: SidebarProps & { onNavigate?: () =
             </Link>
             {item.subItems && (
               <div className={`sidebar-submenu ${isActive ? 'sidebar-submenu-open' : ''}`}>
-                <div className="flex flex-col gap-0.5 py-1 pl-8 pr-1">
+                <div className="flex flex-col gap-0.5 py-1 pl-3 pr-1">
                   {item.subItems.map((sub) => {
                     const subActive = isSubItemActive(sub, pathname, searchParams);
                     return (
@@ -52,7 +52,7 @@ function SidebarContent({ role, onNavigate }: SidebarProps & { onNavigate?: () =
                         key={sub.href}
                         href={sub.href}
                         onClick={onNavigate}
-                        className={`rounded px-2 py-1 text-[11px] font-medium transition ${
+                        className={`sidebar-submenu-link rounded px-2 py-1 text-[11px] font-medium transition-colors ${
                           subActive ? 'text-neutral-100' : 'text-neutral-400 hover:text-neutral-100'
                         }`}
                       >

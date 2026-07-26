@@ -814,7 +814,7 @@ select:disabled {
   display: grid;
   grid-template-rows: 0fr;
   opacity: 0;
-  transition: grid-template-rows 140ms ease, opacity 120ms ease;
+  transition: grid-template-rows 320ms ease, opacity 280ms ease;
 }
 
 .sidebar-submenu > div {
@@ -826,6 +826,50 @@ select:disabled {
 .sidebar-submenu-open {
   grid-template-rows: 1fr;
   opacity: 1;
+}
+
+/* Ogni sottovoce compare con un leggero ritardo scalare rispetto alla
+   precedente, e con un trattino che parte dal bordo sinistro del viewport
+   (la sidebar è sempre a filo con esso) e si ferma 8px prima della parola. */
+.sidebar-submenu-link {
+  position: relative;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 260ms ease, transform 260ms ease;
+}
+
+.sidebar-submenu-link::before {
+  content: '';
+  position: absolute;
+  left: -24px;
+  top: 50%;
+  width: 24px;
+  height: 1px;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.group:hover .sidebar-submenu-link,
+.sidebar-submenu-open .sidebar-submenu-link {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.group:hover .sidebar-submenu-link:nth-child(1),
+.sidebar-submenu-open .sidebar-submenu-link:nth-child(1) {
+  transition-delay: 30ms;
+}
+.group:hover .sidebar-submenu-link:nth-child(2),
+.sidebar-submenu-open .sidebar-submenu-link:nth-child(2) {
+  transition-delay: 90ms;
+}
+.group:hover .sidebar-submenu-link:nth-child(3),
+.sidebar-submenu-open .sidebar-submenu-link:nth-child(3) {
+  transition-delay: 150ms;
+}
+.group:hover .sidebar-submenu-link:nth-child(4),
+.sidebar-submenu-open .sidebar-submenu-link:nth-child(4) {
+  transition-delay: 210ms;
 }
 
 /* Card progetto generata da un contratto a conteggio orario: bordo e header
