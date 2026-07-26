@@ -11,6 +11,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import Popover from '@/components/Popover';
 import UserColorPicker from '@/components/UserColorPicker';
 import AudioPlayerToggle from '@/components/AudioPlayerToggle';
+import ZenNoiseToggle from '@/components/ZenNoiseToggle';
 import { useContractsFilterStore } from '@/lib/store/contractsFilterStore';
 import { useContractsStatsStore } from '@/lib/store/contractsStatsStore';
 import { useJobsFilterStore } from '@/lib/store/jobsFilterStore';
@@ -85,6 +86,7 @@ export default function TopBar({
         )}
 
         <AudioPlayerToggle />
+        <ZenNoiseToggle />
 
         <Popover
           trigger={({ toggle }) => (

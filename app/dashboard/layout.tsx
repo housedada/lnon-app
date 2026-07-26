@@ -8,6 +8,7 @@ import NotificationStack from '@/components/NotificationStack';
 import ClickPulseEffect from '@/components/ClickPulseEffect';
 import GlobalAudioPlayer from '@/components/GlobalAudioPlayer';
 import PacmanIntroPlayer from '@/components/PacmanIntroPlayer';
+import ZenNoisePlayer from '@/components/ZenNoisePlayer';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -41,6 +42,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <ClickPulseEffect color={dbUser?.color} />
       <GlobalAudioPlayer />
       <PacmanIntroPlayer />
+      <ZenNoisePlayer />
     </div>
   );
 }
