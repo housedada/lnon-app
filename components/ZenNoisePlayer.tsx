@@ -5,12 +5,12 @@ import { useZenNoiseStore } from '@/lib/store/zenNoiseStore';
 
 const VOLUME = 0.018;
 const BUFFER_SECONDS = 2;
-const FADE_S = 6;
+const FADE_S = 0.69;
 
 /**
  * Rumore bianco calmante generato via Web Audio API (nessun file audio),
  * stesso principio del motivetto intro di Pac-Man: un buffer di rumore
- * casuale in loop, ammorbidito da un filtro passa-basso. Fade in/out di 6s
+ * casuale in loop, ammorbidito da un filtro passa-basso. Fade in/out di 0.69s
  * (si alterna con la musica di sottofondo, mai in contemporanea).
  */
 export default function ZenNoisePlayer() {

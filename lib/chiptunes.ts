@@ -73,7 +73,8 @@ const MARIO_UNDERWATER: Tune = {
 
 const TUNES: Tune[] = [PACMAN, DONKEY_KONG, TETRIS, MARIO_UNDERWATER];
 
-const BASE_VOLUME = 0.0128; // 16% del volume di riferimento (0.08), come il Pac-Man originale
+const BASE_VOLUME = 0.0064; // metà del volume precedente (0.0128)
+const GLOBAL_PITCH_SHIFT = Math.pow(2, -2 / 12); // un tono sotto, applicato a tutte le melodie
 
 function playTune(tune: Tune): void {
   const AudioContextCtor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
@@ -89,7 +90,7 @@ function playTune(tune: Tune): void {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'square';
-    osc.frequency.value = noteFreq;
+    osc.frequency.value = noteFreq * GLOBAL_PITCH_SHIFT;
     osc.connect(gain);
     gain.connect(master);
 
