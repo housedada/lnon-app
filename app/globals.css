@@ -176,6 +176,43 @@ textarea::placeholder {
   color: #cfc8e6;
 }
 
+/* Bottone "segna completato" nelle card progetto: verde pieno a riposo,
+   gradiente animato verde -> verde scuro + pulse solo in hover. */
+.project-completed-btn {
+  background: linear-gradient(135deg, #22c55e, #14532d);
+}
+
+.project-completed-btn:hover,
+.project-completed-btn:focus-visible {
+  background: linear-gradient(135deg, #22c55e, #16a34a, #14532d, #16a34a);
+  background-size: 300% 300%;
+  animation: project-completed-gradient 2.4s ease-in-out infinite, project-completed-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes project-completed-gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes project-completed-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(22, 163, 74, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
+  }
+}
+
 /* Talloncino "risolti/totale" nelle righe progetto/task delle card griglia Task:
    stesso principio dell'icona speciale, colore chiaro in notte per restare leggibile. */
 .task-count-badge {

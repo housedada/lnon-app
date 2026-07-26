@@ -76,9 +76,6 @@ export default function TeamMemberDetailModal({
                       )}
                     </div>
                   </button>
-                  {project.jobId && canManageInvoices && !project.completedAt && (
-                    <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} isHourlyContract={project.isSystemGenerated} />
-                  )}
                   <button
                     type="button"
                     onClick={() => listRefs.current.get(project.id)?.openTrash()}
@@ -88,6 +85,9 @@ export default function TeamMemberDetailModal({
                   >
                     <Trash2 size={13} strokeWidth={1.75} aria-hidden="true" />
                   </button>
+                  {project.jobId && canManageInvoices && !project.completedAt && (
+                    <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} isHourlyContract={project.isSystemGenerated} />
+                  )}
                   <button type="button" onClick={() => toggle(project.id)} className="shrink-0" aria-label={isCollapsed ? 'Espandi progetto' : 'Comprimi progetto'}>
                     <ChevronDown
                       size={14}

@@ -416,6 +416,15 @@ export default function TeamBoard({
                                     <Clock size={15} strokeWidth={1.75} aria-hidden="true" />
                                   </span>
                                 )}
+                                <button
+                                  type="button"
+                                  onClick={() => listRefs.current.get(project.id)?.openTrash()}
+                                  aria-label="Cestino task"
+                                  title="Cestino task"
+                                  className={`relative shrink-0 opacity-0 transition-opacity group-hover:opacity-100 ${isSpecial ? 'text-neutral-800' : 'text-secondary hover:text-primary'}`}
+                                >
+                                  <Trash2 size={15} strokeWidth={1.75} aria-hidden="true" />
+                                </button>
                                 {project.jobId && (canManageInvoices || isSpecial) && (
                                   <span className="relative shrink-0">
                                     {project.completedAt ? (
@@ -427,15 +436,6 @@ export default function TeamBoard({
                                     )}
                                   </span>
                                 )}
-                                <button
-                                  type="button"
-                                  onClick={() => listRefs.current.get(project.id)?.openTrash()}
-                                  aria-label="Cestino task"
-                                  title="Cestino task"
-                                  className={`relative shrink-0 opacity-0 transition-opacity group-hover:opacity-100 ${isSpecial ? 'text-neutral-800' : 'text-secondary hover:text-primary'}`}
-                                >
-                                  <Trash2 size={15} strokeWidth={1.75} aria-hidden="true" />
-                                </button>
                                 <button type="button" onClick={() => toggleProject(project.id)} className="relative shrink-0" aria-label={isCollapsed ? 'Espandi progetto' : 'Comprimi progetto'}>
                                   <ChevronDown
                                     size={18}
@@ -562,6 +562,15 @@ export default function TeamBoard({
                                   <Clock size={13} strokeWidth={1.75} aria-hidden="true" />
                                 </span>
                               )}
+                              <button
+                                type="button"
+                                onClick={() => listRefs.current.get(project.id)?.openTrash()}
+                                aria-label="Cestino task"
+                                title="Cestino task"
+                                className={`relative shrink-0 opacity-0 transition-opacity group-hover:opacity-100 ${isSpecial ? 'text-neutral-800' : 'text-secondary hover:text-primary'}`}
+                              >
+                                <Trash2 size={13} strokeWidth={1.75} aria-hidden="true" />
+                              </button>
                               {project.jobId && (canManageInvoices || isSpecial) && (
                                 <span className="relative shrink-0">
                                   {project.completedAt ? (
@@ -573,15 +582,6 @@ export default function TeamBoard({
                                   )}
                                 </span>
                               )}
-                              <button
-                                type="button"
-                                onClick={() => listRefs.current.get(project.id)?.openTrash()}
-                                aria-label="Cestino task"
-                                title="Cestino task"
-                                className={`relative shrink-0 opacity-0 transition-opacity group-hover:opacity-100 ${isSpecial ? 'text-neutral-800' : 'text-secondary hover:text-primary'}`}
-                              >
-                                <Trash2 size={13} strokeWidth={1.75} aria-hidden="true" />
-                              </button>
                               <button type="button" onClick={() => toggleProject(project.id)} className="relative shrink-0" aria-label={isCollapsed ? 'Espandi progetto' : 'Comprimi progetto'}>
                                 <ChevronDown
                                   size={14}

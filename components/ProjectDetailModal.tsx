@@ -53,9 +53,6 @@ export default function ProjectDetailModal({
             )}
           </div>
           <div className="relative z-10 flex shrink-0 items-center gap-2.5">
-            {project.jobId && canManageInvoices && !project.completedAt && (
-              <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} isHourlyContract={project.isSystemGenerated} />
-            )}
             <button
               type="button"
               onClick={() => listRef.current?.openTrash()}
@@ -65,6 +62,9 @@ export default function ProjectDetailModal({
             >
               <Trash2 size={15} strokeWidth={1.75} />
             </button>
+            {project.jobId && canManageInvoices && !project.completedAt && (
+              <MarkProjectCompletedButton projectId={project.id} projectTitle={project.title} isHourlyContract={project.isSystemGenerated} />
+            )}
             <button
               type="button"
               onClick={onClose}

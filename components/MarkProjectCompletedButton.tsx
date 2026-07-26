@@ -46,9 +46,9 @@ export default function MarkProjectCompletedButton({
         disabled={isPending}
         aria-label="Segna progetto come completato"
         title="Segna progetto come completato"
-        className="special-action-btn flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-neutral-500/10 transition hover:bg-neutral-500/20"
+        className="project-completed-btn flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition disabled:opacity-60"
       >
-        <CheckCircle2 size={12} strokeWidth={2} className="special-action-icon" aria-hidden="true" />
+        <CheckCircle2 size={12} strokeWidth={2.25} className="text-white" aria-hidden="true" />
       </button>
       {open && isHourlyContract && (
         <SimpleConfirmModal

@@ -392,6 +392,15 @@ export default function PersonalBoard({
                             <Clock size={18} strokeWidth={1.75} aria-hidden="true" />
                           </span>
                         )}
+                        <button
+                          type="button"
+                          onClick={() => listRefs.current.get(project.id)?.openTrash()}
+                          aria-label="Cestino task"
+                          title="Cestino task"
+                          className={`relative shrink-0 opacity-0 transition-opacity group-hover:opacity-100 ${headerTextClass}`}
+                        >
+                          <Trash2 size={18} strokeWidth={1.75} aria-hidden="true" />
+                        </button>
                         {project.jobId && (canManageInvoices || isSpecial) && (
                           <span className="relative shrink-0">
                             {project.completedAt ? (
@@ -403,15 +412,6 @@ export default function PersonalBoard({
                             )}
                           </span>
                         )}
-                        <button
-                          type="button"
-                          onClick={() => listRefs.current.get(project.id)?.openTrash()}
-                          aria-label="Cestino task"
-                          title="Cestino task"
-                          className={`relative shrink-0 opacity-0 transition-opacity group-hover:opacity-100 ${headerTextClass}`}
-                        >
-                          <Trash2 size={18} strokeWidth={1.75} aria-hidden="true" />
-                        </button>
                         <button type="button" onClick={() => toggleProject(project.id)} className="relative shrink-0" aria-label={isCollapsed ? 'Espandi progetto' : 'Comprimi progetto'}>
                           <ChevronDown
                             size={22}
@@ -510,6 +510,15 @@ export default function PersonalBoard({
                           <Clock size={13} strokeWidth={1.75} aria-hidden="true" />
                         </span>
                       )}
+                      <button
+                        type="button"
+                        onClick={() => listRefs.current.get(project.id)?.openTrash()}
+                        aria-label="Cestino task"
+                        title="Cestino task"
+                        className={`relative shrink-0 opacity-0 transition-opacity group-hover:opacity-100 ${headerTextClass}`}
+                      >
+                        <Trash2 size={13} strokeWidth={1.75} aria-hidden="true" />
+                      </button>
                       {project.jobId && (canManageInvoices || isSpecial) && (
                         <span className="relative shrink-0">
                           {project.completedAt ? (
@@ -521,15 +530,6 @@ export default function PersonalBoard({
                           )}
                         </span>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => listRefs.current.get(project.id)?.openTrash()}
-                        aria-label="Cestino task"
-                        title="Cestino task"
-                        className={`relative shrink-0 opacity-0 transition-opacity group-hover:opacity-100 ${headerTextClass}`}
-                      >
-                        <Trash2 size={13} strokeWidth={1.75} aria-hidden="true" />
-                      </button>
                       <button type="button" onClick={() => toggleProject(project.id)} className="relative shrink-0" aria-label={isCollapsed ? 'Espandi progetto' : 'Comprimi progetto'}>
                         <ChevronDown
                           size={14}
