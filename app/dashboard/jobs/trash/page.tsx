@@ -5,7 +5,10 @@ import { canDeleteResource } from '@/lib/permissions';
 import ListNavigator from '@/components/ListNavigator';
 import RestoreJobButton from '@/components/RestoreJobButton';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
+import RememberRoute from '@/components/RememberRoute';
 import type { JobStatus } from '@/lib/types';
+
+const JOBS_TABS = { list: '/dashboard/jobs', archive: '/dashboard/jobs/archive', trash: '/dashboard/jobs/trash' };
 
 export const metadata = { title: 'Cestino Lavori' };
 
@@ -43,6 +46,7 @@ export default async function JobsTrashPage({
   return (
     <div>
       <NotifyFromQuery param="saved" message="Lavoro aggiornato." />
+      <RememberRoute storageKey="jobs-tab" tabKey="trash" entryHref="/dashboard/jobs" tabs={JOBS_TABS} />
       <div className="flex items-center justify-between p-6 pb-0">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-semibold text-primary">

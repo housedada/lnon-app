@@ -10,6 +10,9 @@ import InvoicesSelectAllCheckbox from '@/components/InvoicesSelectAllCheckbox';
 import InvoicesBulkBar from '@/components/InvoicesBulkBar';
 import ProjectInvoiceRow from '@/components/ProjectInvoiceRow';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
+import RememberRoute from '@/components/RememberRoute';
+
+const INVOICES_TABS = { list: '/dashboard/invoices', archive: '/dashboard/invoices/archive', trash: '/dashboard/invoices/trash' };
 
 export const metadata = { title: 'Fatture' };
 
@@ -29,6 +32,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   return (
     <div>
       <NotifyFromQuery param="saved" message="Fattura aggiornata." />
+      <RememberRoute storageKey="invoices-tab" tabKey="list" entryHref="/dashboard/invoices" tabs={INVOICES_TABS} />
       <div className="flex items-center justify-between p-6 pb-0">
         <div>
           <h1 className="text-2xl font-semibold text-primary">Fatture</h1>

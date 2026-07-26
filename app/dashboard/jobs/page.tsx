@@ -14,6 +14,9 @@ import JobsBulkArchiveButton from '@/components/JobsBulkArchiveButton';
 import JobRow from '@/components/JobRow';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import JobsSystemGeneratedToggle from '@/components/JobsSystemGeneratedToggle';
+import RememberRoute from '@/components/RememberRoute';
+
+const JOBS_TABS = { list: '/dashboard/jobs', archive: '/dashboard/jobs/archive', trash: '/dashboard/jobs/trash' };
 
 export const metadata = { title: 'Lavori' };
 
@@ -45,6 +48,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   return (
     <div>
       <NotifyFromQuery param="saved" message="Lavoro salvato." />
+      <RememberRoute storageKey="jobs-tab" tabKey="list" entryHref="/dashboard/jobs" tabs={JOBS_TABS} />
       <div className="flex items-center justify-between p-6 pb-0">
         <div>
           <h1 className="text-2xl font-semibold text-primary">Lavori</h1>

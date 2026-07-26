@@ -806,3 +806,24 @@ select:disabled {
   background-size: 260% 260%;
   animation: demo-data-glow 2.6s ease-in-out infinite;
 }
+
+/* Sottovoci sidebar: nascoste di default, si aprono velocemente in hover
+   sul gruppo (icona + label), e restano aperte fisse quando si è già
+   dentro quella sezione (classe sidebar-submenu-open, dal pathname attivo). */
+.sidebar-submenu {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 140ms ease, opacity 120ms ease;
+}
+
+.sidebar-submenu > div {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.group:hover .sidebar-submenu,
+.sidebar-submenu-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}

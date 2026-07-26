@@ -5,6 +5,9 @@ import { getProjectInvoices, getArchivedProjectInvoiceYears } from '@/lib/db';
 import ListNavigator from '@/components/ListNavigator';
 import UnarchiveInvoiceButton from '@/components/UnarchiveInvoiceButton';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
+import RememberRoute from '@/components/RememberRoute';
+
+const INVOICES_TABS = { list: '/dashboard/invoices', archive: '/dashboard/invoices/archive', trash: '/dashboard/invoices/trash' };
 
 export const metadata = { title: 'Archivio Fatture' };
 
@@ -43,6 +46,7 @@ export default async function InvoicesArchivePage({
   return (
     <div>
       <NotifyFromQuery param="saved" message="Fattura aggiornata." />
+      <RememberRoute storageKey="invoices-tab" tabKey="archive" entryHref="/dashboard/invoices" tabs={INVOICES_TABS} />
       <div className="flex items-center justify-between p-6 pb-0">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-semibold text-primary">

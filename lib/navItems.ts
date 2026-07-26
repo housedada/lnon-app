@@ -11,12 +11,21 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
+export interface NavSubItem {
+  label: string;
+  href: string;
+  // Confronto extra oltre al pathname, per sotto-voci che si distinguono
+  // via query string (es. Task Team/Personale sulla stessa route).
+  matchQuery?: { key: string; value: string; default: string };
+}
+
 export interface NavItem {
   resource: string;
   label: string;
   href: string;
   icon: LucideIcon;
   description: string;
+  subItems?: NavSubItem[];
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -33,6 +42,10 @@ export const NAV_ITEMS: NavItem[] = [
     href: '/dashboard/contracts',
     icon: FileSignature,
     description: 'Gestione contratti e scadenze',
+    subItems: [
+      { label: 'Manutenzioni Web', href: '/dashboard/contracts' },
+      { label: 'Conteggio Orario', href: '/dashboard/contracts/hourly' },
+    ],
   },
   {
     resource: 'jobs',
@@ -40,6 +53,11 @@ export const NAV_ITEMS: NavItem[] = [
     href: '/dashboard/jobs',
     icon: Briefcase,
     description: 'Pianificazione e avanzamento dei lavori',
+    subItems: [
+      { label: 'Lista', href: '/dashboard/jobs' },
+      { label: 'Archivio', href: '/dashboard/jobs/archive' },
+      { label: 'Cestino', href: '/dashboard/jobs/trash' },
+    ],
   },
   {
     resource: 'tasks',
@@ -47,6 +65,10 @@ export const NAV_ITEMS: NavItem[] = [
     href: '/dashboard/tasks',
     icon: CheckSquare,
     description: 'Attività e assegnazioni del team',
+    subItems: [
+      { label: 'Team', href: '/dashboard/tasks?view=team', matchQuery: { key: 'view', value: 'team', default: 'team' } },
+      { label: 'Personale', href: '/dashboard/tasks?view=personal', matchQuery: { key: 'view', value: 'personal', default: 'team' } },
+    ],
   },
   {
     resource: 'invoices',
@@ -54,6 +76,11 @@ export const NAV_ITEMS: NavItem[] = [
     href: '/dashboard/invoices',
     icon: FileText,
     description: 'Fatturazione e sincronizzazione con Fatture in Cloud',
+    subItems: [
+      { label: 'Lista', href: '/dashboard/invoices' },
+      { label: 'Archivio', href: '/dashboard/invoices/archive' },
+      { label: 'Cestino', href: '/dashboard/invoices/trash' },
+    ],
   },
   {
     resource: 'users',
@@ -68,6 +95,10 @@ export const NAV_ITEMS: NavItem[] = [
     href: '/dashboard/reports',
     icon: BarChart2,
     description: 'Statistiche e reportistica',
+    subItems: [
+      { label: 'Overview Lavori', href: '/dashboard/reports/lavori' },
+      { label: 'Spese Fisse', href: '/dashboard/reports/spese-fisse' },
+    ],
   },
   {
     resource: 'audit_logs',
@@ -82,6 +113,11 @@ export const NAV_ITEMS: NavItem[] = [
     href: '/dashboard/settings',
     icon: Settings,
     description: 'Integrazioni, catalogo prodotti e gestione accessi',
+    subItems: [
+      { label: 'Fatture in Cloud', href: '/dashboard/settings/fic' },
+      { label: 'Prodotti', href: '/dashboard/settings/products' },
+      { label: 'Gestione Accessi', href: '/dashboard/settings/access' },
+    ],
   },
 ];
 
