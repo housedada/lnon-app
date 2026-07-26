@@ -4,6 +4,9 @@ import { useEffect } from 'react';
 import { playPacmanIntro } from '@/lib/pacmanTune';
 
 const STORAGE_KEY = 'pacman-intro-last-played';
+// TEMP: per testare la melodia aggiornata, riproduce ad ogni refresh invece
+// che una volta al giorno. Rimettere a false a test finiti.
+const ALWAYS_PLAY_FOR_TESTING = true;
 
 function todayKey(): string {
   const now = new Date();
@@ -19,7 +22,7 @@ function todayKey(): string {
 export default function PacmanIntroPlayer() {
   useEffect(() => {
     const today = todayKey();
-    if (localStorage.getItem(STORAGE_KEY) === today) return;
+    if (!ALWAYS_PLAY_FOR_TESTING && localStorage.getItem(STORAGE_KEY) === today) return;
 
     function markPlayedAndPlay() {
       localStorage.setItem(STORAGE_KEY, today);
