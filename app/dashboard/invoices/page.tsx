@@ -83,6 +83,9 @@ async function InvoicesListSection({
   const { data: invoices, total } = await getProjectInvoices({ search: q, limit: pageSize, offset });
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const invoiceGroupKeys = Object.fromEntries(invoices.map((i) => [i.id, i.clientId ?? i.clientName]));
+  const invoiceStatuses = Object.fromEntries(
+    invoices.map((i) => [i.id, { status: i.status, ficInvoiceId: i.ficInvoiceId }])
+  );
 
   const gridCols = canManage
     ? '32px repeat(8, minmax(max-content, 1fr)) max-content'
@@ -99,7 +102,7 @@ async function InvoicesListSection({
       showSyncFilter={false}
       totalCount={total}
       totalLabel="fatture"
-      extraTopControls={canManage ? <InvoicesBulkBar invoiceGroupKeys={invoiceGroupKeys} /> : undefined}
+      extraTopControls={canManage ? <InvoicesBulkBar invoiceGroupKeys={invoiceGroupKeys} invoiceStatuses={invoiceStatuses} /> : undefined}
     >
       <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
         <div className="grid w-full text-[12px]" style={{ gridTemplateColumns: gridCols }}>
