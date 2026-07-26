@@ -154,13 +154,11 @@ export default function TopBar({
           )}
         >
           <div className="px-3 py-2">
-            <p className="flex items-center gap-2 text-sm font-medium text-primary">
-              <span className="truncate">{userName}</span>
-              <span className="h-3 w-px shrink-0 bg-grid-border" aria-hidden="true" />
-              <span className="flex shrink-0 items-center gap-1 text-xs font-normal text-secondary">
-                {role === 'superadmin' && <CrownIcon size={12} />}
-                {roleLabelText}
-              </span>
+            <p className="truncate text-sm font-medium text-primary">{userName}</p>
+            <div className="my-1.5 border-t border-grid-border" />
+            <p className="flex items-center gap-1 text-xs font-normal text-secondary">
+              {role === 'superadmin' && <CrownIcon size={12} />}
+              {roleLabelText}
             </p>
           </div>
           <div className="my-1 border-t border-grid-border" />
@@ -172,7 +170,7 @@ export default function TopBar({
             onClick={() => setChiptuneModalOpen(true)}
             className="flex w-full items-center gap-2 px-3 py-2 text-left text-secondary transition hover:bg-row-hover hover:text-primary"
           >
-            <SpaceInvaderIcon size={20} />
+            <SpaceInvaderIcon size={17} />
             {chiptuneLabel}
           </button>
           <div className="my-1 border-t border-grid-border" />

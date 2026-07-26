@@ -266,6 +266,7 @@ export default function GlobalAudioPlayer() {
             onMouseEnter={() => setHoveredAvatar(true)}
             onMouseLeave={() => setHoveredAvatar(false)}
             className="relative h-[66px] w-[66px] shrink-0 p-[6px]"
+            style={{ left: '-1px' }}
           >
             <div
               className={`h-full w-full rounded-full bg-cover bg-center ${playing ? 'audio-disc-spin' : ''}`}

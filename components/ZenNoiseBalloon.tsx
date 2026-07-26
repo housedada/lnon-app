@@ -179,7 +179,7 @@ export default function ZenNoiseBalloon() {
         }}
       >
         {/* onPointerDown qui si ferma: l'area dell'icona non trascina il balloon */}
-        <div onPointerDown={(e) => e.stopPropagation()} className="relative h-[66px] w-[66px] shrink-0 p-[6px]">
+        <div onPointerDown={(e) => e.stopPropagation()} className="relative h-[66px] w-[66px] shrink-0 p-[6px]" style={{ left: '-1px' }}>
           <div className="zen-noise-icon h-full w-full rounded-full" aria-hidden="true" />
         </div>
 
