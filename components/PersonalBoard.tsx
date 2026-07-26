@@ -80,7 +80,14 @@ export default function PersonalBoard({
   const projectsById = new Map(projects.map((p) => [p.id, p]));
 
   useEffect(() => {
-    setColumns(projects.map((p) => ({ id: p.id, label: p.title, background: projectHeaderBackground(p, productColorsByJob) })));
+    setColumns(
+      projects.map((p) => ({
+        id: p.id,
+        label: p.title,
+        background: p.isSystemGenerated ? undefined : projectHeaderBackground(p, productColorsByJob),
+        isSpecial: p.isSystemGenerated,
+      }))
+    );
   }, [projects, productColorsByJob, setColumns]);
 
   useEffect(() => {

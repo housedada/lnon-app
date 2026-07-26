@@ -27,9 +27,11 @@ export default function TaskBoardBottomNav() {
               title={col.label}
               style={hasBackground ? { background: col.background } : undefined}
               className={`relative z-10 shrink-0 whitespace-nowrap rounded-full border px-4 py-2.5 text-xs font-medium transition ${
-                hasBackground
-                  ? 'border-transparent text-neutral-800 hover:brightness-95'
-                  : 'border-grid-border text-secondary hover:border-primary hover:text-primary'
+                col.isSpecial
+                  ? 'special-project-header special-project-border text-neutral-800 hover:brightness-95'
+                  : hasBackground
+                    ? 'border-transparent text-neutral-800 hover:brightness-95'
+                    : 'border-grid-border text-secondary hover:border-primary hover:text-primary'
               }`}
             >
               {col.label}

@@ -5,6 +5,8 @@ export interface TaskBoardScrollColumn {
   label: string;
   /** Sfondo coerente col colore del progetto/membro collegato (plain o gradient) */
   background?: string;
+  /** Progetto generato da un contratto a conteggio orario: stesso trattamento ocra della card */
+  isSpecial?: boolean;
 }
 
 interface TaskBoardScrollState {
