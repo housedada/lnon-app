@@ -807,9 +807,10 @@ select:disabled {
   animation: demo-data-glow 2.6s ease-in-out infinite;
 }
 
-/* Sottovoci sidebar: nascoste di default, si aprono velocemente in hover
-   sul gruppo (icona + label), e restano aperte fisse quando si è già
-   dentro quella sezione (classe sidebar-submenu-open, dal pathname attivo). */
+/* Sottovoci sidebar: nascoste di default, si aprono solo passando il mouse
+   sull'area quadrata a destra della riga (sidebar-chevron-trigger, via
+   :has()), e restano aperte fisse quando si è già dentro quella sezione
+   (classe sidebar-submenu-open, dal pathname attivo). */
 .sidebar-submenu {
   display: grid;
   grid-template-rows: 0fr;
@@ -822,7 +823,7 @@ select:disabled {
   min-height: 0;
 }
 
-.group:hover .sidebar-submenu,
+.sidebar-nav-item:has(.sidebar-chevron-trigger:hover) .sidebar-submenu,
 .sidebar-submenu-open {
   grid-template-rows: 1fr;
   opacity: 1;
@@ -849,27 +850,45 @@ select:disabled {
   background: rgba(255, 255, 255, 0.16);
 }
 
-.group:hover .sidebar-submenu-link,
+.sidebar-nav-item:has(.sidebar-chevron-trigger:hover) .sidebar-submenu-link,
 .sidebar-submenu-open .sidebar-submenu-link {
   opacity: 1;
   transform: translateX(0);
 }
 
-.group:hover .sidebar-submenu-link:nth-child(1),
+.sidebar-nav-item:has(.sidebar-chevron-trigger:hover) .sidebar-submenu-link:nth-child(1),
 .sidebar-submenu-open .sidebar-submenu-link:nth-child(1) {
   transition-delay: 30ms;
 }
-.group:hover .sidebar-submenu-link:nth-child(2),
+.sidebar-nav-item:has(.sidebar-chevron-trigger:hover) .sidebar-submenu-link:nth-child(2),
 .sidebar-submenu-open .sidebar-submenu-link:nth-child(2) {
   transition-delay: 90ms;
 }
-.group:hover .sidebar-submenu-link:nth-child(3),
+.sidebar-nav-item:has(.sidebar-chevron-trigger:hover) .sidebar-submenu-link:nth-child(3),
 .sidebar-submenu-open .sidebar-submenu-link:nth-child(3) {
   transition-delay: 150ms;
 }
-.group:hover .sidebar-submenu-link:nth-child(4),
+.sidebar-nav-item:has(.sidebar-chevron-trigger:hover) .sidebar-submenu-link:nth-child(4),
 .sidebar-submenu-open .sidebar-submenu-link:nth-child(4) {
   transition-delay: 210ms;
+}
+
+/* Chevron della sottovoce: ruota aprendosi/chiudendosi con un leggero
+   rimbalzo (pulse) in entrambe le direzioni, come feedback dell'hover
+   sull'area quadrata a destra della riga. */
+.sidebar-chevron-trigger {
+  cursor: default;
+}
+
+.sidebar-chevron {
+  transform: rotate(-90deg) scale(1);
+  transition: transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.sidebar-nav-item:has(.sidebar-chevron-trigger:hover) .sidebar-chevron,
+.sidebar-nav-item:has(.sidebar-submenu-open) .sidebar-chevron {
+  transform: rotate(0deg) scale(1.2);
+  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* Card progetto generata da un contratto a conteggio orario: bordo e header

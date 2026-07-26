@@ -4,7 +4,7 @@ import { Suspense, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
+import { ChevronDown, Menu, X } from 'lucide-react';
 import type { UserRole } from '@/lib/types';
 import { getUserPermissions } from '@/lib/permissions';
 import { NAV_ITEMS, shouldShowNavItem, type NavSubItem } from '@/lib/navItems';
@@ -31,7 +31,7 @@ function SidebarContent({ role, onNavigate }: SidebarProps & { onNavigate?: () =
       {NAV_ITEMS.filter((item) => shouldShowNavItem(item.resource, permissions[item.resource] ?? [])).map((item) => {
         const isActive = pathname?.startsWith(item.href) ?? false;
         return (
-          <div key={item.resource} className={item.subItems ? 'group' : undefined}>
+          <div key={item.resource} className={item.subItems ? 'sidebar-nav-item relative' : undefined}>
             <Link
               href={item.href}
               onClick={onNavigate}
@@ -42,6 +42,14 @@ function SidebarContent({ role, onNavigate }: SidebarProps & { onNavigate?: () =
               <item.icon size={16} strokeWidth={1.75} aria-hidden="true" />
               {item.label}
             </Link>
+            {item.subItems && (
+              <span
+                aria-hidden="true"
+                className="sidebar-chevron-trigger absolute right-0 top-0 flex h-9 w-9 items-center justify-center"
+              >
+                <ChevronDown size={13} strokeWidth={2} className="sidebar-chevron text-neutral-400" aria-hidden="true" />
+              </span>
+            )}
             {item.subItems && (
               <div className={`sidebar-submenu ${isActive ? 'sidebar-submenu-open' : ''}`}>
                 <div className="flex flex-col gap-0.5 py-1 pl-3 pr-1">
@@ -88,12 +96,12 @@ export default function Sidebar({ role }: SidebarProps) {
       </div>
 
       {/* Sidebar fissa desktop: position fixed, non scrolla mai con la pagina */}
-      <aside className="hidden md:fixed md:left-0 md:top-[50px] md:block md:h-[calc(100vh-50px)] md:w-44 md:shrink-0 md:z-30">
+      <aside className="hidden md:fixed md:left-0 md:top-[50px] md:block md:h-[calc(100vh-50px)] md:w-[188px] md:shrink-0 md:z-30">
         <Suspense fallback={null}>
           <SidebarContent role={role} />
         </Suspense>
       </aside>
-      <div className="hidden md:block md:w-44 md:shrink-0" aria-hidden="true" />
+      <div className="hidden md:block md:w-[188px] md:shrink-0" aria-hidden="true" />
 
       {/* Drawer overlay mobile */}
       {mobileOpen && (
