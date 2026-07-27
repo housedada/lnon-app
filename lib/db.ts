@@ -535,6 +535,12 @@ export interface JobsForecastProductBreakdown {
   amount: number;
 }
 
+export interface JobsForecastUncategorizedInvoice {
+  id: string;
+  clientName: string;
+  amount: number;
+}
+
 export interface JobsForecastResult {
   rows: JobForecastRow[];
   totals: {
@@ -552,6 +558,7 @@ export interface JobsForecastResult {
   topClients: JobsForecastTopClient[];
   funnel: JobsForecastFunnel;
   productBreakdown: JobsForecastProductBreakdown[];
+  uncategorizedInvoices: JobsForecastUncategorizedInvoice[];
 }
 
 /**
@@ -629,6 +636,7 @@ export async function getJobsForecast(fiscalYear: number): Promise<JobsForecastR
   const productNames = await getAllProductNames();
   const productNameById = new Map(productNames.map((p) => [p.id, p.name]));
   const amountByProduct = new Map<string, number>();
+  const uncategorizedByInvoice = new Map<string, JobsForecastUncategorizedInvoice>();
   let nonCategorizzato = 0;
 
   for (const row of invoiceRows) {
@@ -638,6 +646,12 @@ export async function getJobsForecast(fiscalYear: number): Promise<JobsForecastR
         amountByProduct.set(item.productId, (amountByProduct.get(item.productId) ?? 0) + amount);
       } else {
         nonCategorizzato += amount;
+        const existing = uncategorizedByInvoice.get(row.id);
+        uncategorizedByInvoice.set(row.id, {
+          id: row.id,
+          clientName: row.client_name,
+          amount: (existing?.amount ?? 0) + amount,
+        });
       }
     }
   }
@@ -648,6 +662,7 @@ export async function getJobsForecast(fiscalYear: number): Promise<JobsForecastR
   if (nonCategorizzato > 0) {
     productBreakdown.push({ productId: null, productName: 'Non categorizzato', amount: nonCategorizzato });
   }
+  const uncategorizedInvoices = [...uncategorizedByInvoice.values()].sort((a, b) => b.amount - a.amount);
 
   const creditRiskBuckets: JobsForecastCreditRiskBucket[] = [
     { label: '0-30', amount: 0 },
@@ -708,6 +723,7 @@ export async function getJobsForecast(fiscalYear: number): Promise<JobsForecastR
     topClients,
     funnel,
     productBreakdown,
+    uncategorizedInvoices,
   };
 }
 

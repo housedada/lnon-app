@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* Su mobile il titolo pagina è già mostrato nella barra sidebar (con
+   eventuale sotto-titolo attenuato): l'h1 duplicato dentro il contenuto
+   sparisce sotto i 768px (soglia md di Tailwind). I modali non sono
+   coinvolti perché montati via portal fuori da <main>. */
+@media (max-width: 767px) {
+  main h1 {
+    display: none;
+  }
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

@@ -20,6 +20,20 @@ function isSubItemActive(sub: NavSubItem, pathname: string | null, searchParams:
   return current === sub.matchQuery.value;
 }
 
+function MobileHeaderTitle() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeItem = NAV_ITEMS.find((item) => pathname?.startsWith(item.href));
+  const activeSubItem = activeItem?.subItems?.find((sub) => isSubItemActive(sub, pathname, searchParams));
+
+  return (
+    <span className="truncate text-sm font-bold text-white">
+      {activeItem?.label}
+      {activeSubItem && <span className="font-normal text-white/60"> · {activeSubItem.label}</span>}
+    </span>
+  );
+}
+
 function SidebarContent({ role, onNavigate }: SidebarProps & { onNavigate?: () => void }) {
   const permissions = getUserPermissions(role);
   const pathname = usePathname();
@@ -103,14 +117,14 @@ function SidebarContent({ role, onNavigate }: SidebarProps & { onNavigate?: () =
 
 export default function Sidebar({ role }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const pathname = usePathname();
-  const activePageLabel = NAV_ITEMS.find((item) => pathname?.startsWith(item.href))?.label;
 
   return (
     <div className="md:contents">
       {/* Pulsante hamburger mobile (la topbar ospita già logo/utente) */}
       <div className="flex items-center justify-between border-b border-neutral-800 bg-[var(--color-chrome-bg)] px-4 py-2 md:hidden">
-        <span className="truncate text-sm font-bold text-white">{activePageLabel}</span>
+        <Suspense fallback={<span className="text-sm font-bold text-white">&nbsp;</span>}>
+          <MobileHeaderTitle />
+        </Suspense>
         <button
           onClick={() => setMobileOpen(true)}
           aria-label="Apri menu"

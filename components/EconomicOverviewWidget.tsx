@@ -74,6 +74,7 @@ export default function EconomicOverviewWidget({
   topClients,
   funnel,
   productBreakdown,
+  uncategorizedInvoices,
   providerExpirations,
 }: {
   fiscalYear: number;
@@ -85,6 +86,7 @@ export default function EconomicOverviewWidget({
   topClients: JobsForecastResult['topClients'];
   funnel: JobsForecastResult['funnel'];
   productBreakdown: JobsForecastResult['productBreakdown'];
+  uncategorizedInvoices: JobsForecastResult['uncategorizedInvoices'];
   providerExpirations: Contract[];
 }) {
   // Contratti Web e Conteggio Orario sono già ricompresi nel fatturato lavori
@@ -136,7 +138,7 @@ export default function EconomicOverviewWidget({
         <ConversionFunnelSection funnel={funnel} />
       </div>
 
-      <ProductBreakdownSection fiscalYear={fiscalYear} productBreakdown={productBreakdown} />
+      <ProductBreakdownSection fiscalYear={fiscalYear} productBreakdown={productBreakdown} uncategorizedInvoices={uncategorizedInvoices} />
 
       <div>
         <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-secondary">
