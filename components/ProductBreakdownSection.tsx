@@ -5,6 +5,13 @@ function formatExact(value: number): string {
   return `€ ${value.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+function formatCompact(value: number): string {
+  if (Math.abs(value) >= 1000) {
+    return `€ ${(value / 1000).toLocaleString('it-IT', { maximumFractionDigits: 1 })}K`;
+  }
+  return `€ ${value.toLocaleString('it-IT', { maximumFractionDigits: 0 })}`;
+}
+
 export default function ProductBreakdownSection({
   fiscalYear,
   productBreakdown,
@@ -32,7 +39,8 @@ export default function ProductBreakdownSection({
             {productBreakdown.map((product) => (
               <div key={product.productId ?? 'non-categorizzato'} className="border-b border-r border-grid-border px-4 py-3 last:border-r-0">
                 <p className="detail-label truncate">{product.productName}</p>
-                <p className="mt-1 text-sm font-semibold text-primary">{formatExact(product.amount)}</p>
+                <p className="mt-1 text-sm font-semibold text-primary">{formatCompact(product.amount)}</p>
+                <p className="mt-0.5 truncate text-[9px] text-secondary">{formatExact(product.amount)}</p>
               </div>
             ))}
           </div>

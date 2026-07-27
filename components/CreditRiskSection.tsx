@@ -5,6 +5,13 @@ function formatExact(value: number): string {
   return `€ ${value.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+function formatCompact(value: number): string {
+  if (Math.abs(value) >= 1000) {
+    return `€ ${(value / 1000).toLocaleString('it-IT', { maximumFractionDigits: 1 })}K`;
+  }
+  return `€ ${value.toLocaleString('it-IT', { maximumFractionDigits: 0 })}`;
+}
+
 const BUCKET_COLORS: Record<string, string> = {
   '0-30': '#9ca3af',
   '30-60': '#c9932f',
@@ -31,8 +38,9 @@ export default function CreditRiskSection({
             <div key={bucket.label} className="border-b border-r border-grid-border px-5 py-3 last:border-r-0">
               <p className="detail-label">{bucket.label} giorni</p>
               <p className="mt-1 text-xl font-semibold" style={{ color: BUCKET_COLORS[bucket.label] }}>
-                {formatExact(bucket.amount)}
+                {formatCompact(bucket.amount)}
               </p>
+              <p className="mt-0.5 text-[10px] text-secondary">{formatExact(bucket.amount)}</p>
             </div>
           ))}
         </div>

@@ -11,6 +11,15 @@ function formatExact(value: number): string {
   return `€ ${value.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+// Stessa logica "cifra compatta grande + cifra estesa piccola sotto" già
+// usata negli altri widget infografici (es. JobsForecastStatsWidget).
+function formatCompact(value: number): string {
+  if (Math.abs(value) >= 1000) {
+    return `€ ${(value / 1000).toLocaleString('it-IT', { maximumFractionDigits: 1 })}K`;
+  }
+  return `€ ${value.toLocaleString('it-IT', { maximumFractionDigits: 0 })}`;
+}
+
 function Tile({
   label,
   value,
@@ -31,8 +40,9 @@ function Tile({
         {label}
       </p>
       <p className="mt-1 text-xl font-semibold" style={{ color }}>
-        {formatExact(value)}
+        {formatCompact(value)}
       </p>
+      <p className="mt-0.5 text-[10px] text-secondary">{formatExact(value)}</p>
       {sub && <p className="mt-0.5 text-[10px] text-secondary">{sub}</p>}
     </div>
   );
@@ -158,9 +168,12 @@ export default function EconomicOverviewWidget({
           <p className="detail-label">Margine stimato (entrate attuali − uscite)</p>
           <p className="mt-0.5 text-[10px] text-secondary">Non include il potenziale non ancora confermato</p>
         </div>
-        <p className="text-2xl font-bold" style={{ color: margine >= 0 ? MARGINE_POSITIVE_COLOR : MARGINE_NEGATIVE_COLOR }}>
-          {formatExact(margine)}
-        </p>
+        <div className="text-right">
+          <p className="text-2xl font-bold" style={{ color: margine >= 0 ? MARGINE_POSITIVE_COLOR : MARGINE_NEGATIVE_COLOR }}>
+            {formatCompact(margine)}
+          </p>
+          <p className="mt-0.5 text-[10px] text-secondary">{formatExact(margine)}</p>
+        </div>
       </div>
     </div>
   );
