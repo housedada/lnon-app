@@ -305,6 +305,23 @@ export async function listAllFicInvoices(): Promise<FicIssuedDocumentModel[]> {
 }
 
 /**
+ * Scarica le sottovoci reali (con id prodotto FiC) di una singola fattura
+ * emessa su Fatture in Cloud, per collegare localmente sottovoce -> prodotto.
+ */
+export async function getFicIssuedDocumentItems(
+  ficInvoiceId: number
+): Promise<{ description: string; netAmount: number; ficProductId?: number }[]> {
+  const { api, companyId } = await getIssuedDocumentsApi();
+  const response = await api.getIssuedDocument(companyId, ficInvoiceId);
+  const items = response.data.data?.items_list ?? [];
+  return items.map((item) => ({
+    description: item.description ?? item.name ?? 'Voce senza descrizione',
+    netAmount: item.net_price ?? 0,
+    ficProductId: item.product_id ?? undefined,
+  }));
+}
+
+/**
  * Cerca tra le aliquote IVA configurate sull'account Fatture in Cloud
  * connesso quella con percentuale uguale a vatRatePercent (es. 22 per il 22%).
  * Nessun fallback: se non esiste, l'emissione fattura deve fermarsi.

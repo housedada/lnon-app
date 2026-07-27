@@ -219,6 +219,7 @@ export type ProjectInvoiceStatus = 'da_fatturare' | 'fatturata' | 'annullata' | 
 export interface ProjectInvoiceLineItem {
   label: string;
   netAmount: number;
+  productId?: string;
 }
 
 export interface ProjectInvoice {
