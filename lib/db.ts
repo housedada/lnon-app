@@ -501,6 +501,32 @@ export interface JobForecastRow {
   margin: number;
 }
 
+export interface JobsForecastCreditRiskBucket {
+  label: '0-30' | '30-60' | 'oltre 60';
+  amount: number;
+}
+
+export interface JobsForecastUnpaidInvoice {
+  id: string;
+  clientName: string;
+  invoiceNumber?: string;
+  amount: number;
+  days: number;
+}
+
+export interface JobsForecastTopClient {
+  clientName: string;
+  amount: number;
+}
+
+export interface JobsForecastFunnel {
+  potenziale: number;
+  preventivato: number;
+  confermato: number;
+  fatturato: number;
+  total: number;
+}
+
 export interface JobsForecastResult {
   rows: JobForecastRow[];
   totals: {
@@ -511,11 +537,19 @@ export interface JobsForecastResult {
     fatturatoNonRiscosso: number;
     speseFornitori: number;
   };
+  creditRisk: {
+    buckets: JobsForecastCreditRiskBucket[];
+    topUnpaid: JobsForecastUnpaidInvoice[];
+  };
+  topClients: JobsForecastTopClient[];
+  funnel: JobsForecastFunnel;
 }
 
 /**
  * Aggrega i lavori di un anno di competenza in Potenziale/Preventivato/
- * Confermato/Fatturato/Spese Fornitori per la Overview Lavori (Reports).
+ * Confermato/Fatturato/Spese Fornitori per la Overview Lavori (Reports), più
+ * rischio credito (aging fatture non riscosse), top clienti e funnel di
+ * conversione: tutti derivati dalla stessa query fatture, nessuna query extra.
  */
 export async function getJobsForecast(fiscalYear: number): Promise<JobsForecastResult> {
   const { data: jobRows, error: jobsError } = await supabaseServer
@@ -529,30 +563,74 @@ export async function getJobsForecast(fiscalYear: number): Promise<JobsForecastR
   const jobs = (jobRows ?? []).map(jobRowToJob);
   const jobIds = jobs.map((j) => j.id);
 
-  let invoicedByJobId = new Map<string, number>();
-  let unpaidByJobId = new Map<string, number>();
+  type InvoiceForForecastRow = {
+    id: string;
+    job_id: string | null;
+    client_id: string | null;
+    client_name: string;
+    net_amount: number;
+    invoice_date: string | null;
+    created_at: string;
+    paid_at: string | null;
+    invoice_number: string | null;
+  };
+
+  let invoiceRows: InvoiceForForecastRow[] = [];
   if (jobIds.length > 0) {
-    const { data: invoiceRows, error: invoicesError } = await supabaseServer
+    const { data, error: invoicesError } = await supabaseServer
       .from('project_invoices')
-      .select('job_id, net_amount, paid_at')
+      .select('id, job_id, client_id, client_name, net_amount, invoice_date, created_at, paid_at, invoice_number')
       .in('job_id', jobIds)
       .eq('status', 'fatturata');
     if (invoicesError) throw invoicesError;
-
-    invoicedByJobId = (invoiceRows ?? []).reduce((map, row: any) => {
-      if (!row.job_id) return map;
-      map.set(row.job_id, (map.get(row.job_id) ?? 0) + Number(row.net_amount ?? 0));
-      return map;
-    }, new Map<string, number>());
-
-    unpaidByJobId = (invoiceRows ?? []).reduce((map, row: any) => {
-      if (!row.job_id || row.paid_at) return map;
-      map.set(row.job_id, (map.get(row.job_id) ?? 0) + Number(row.net_amount ?? 0));
-      return map;
-    }, new Map<string, number>());
+    invoiceRows = data ?? [];
   }
 
+  const invoicedByJobId = new Map<string, number>();
+  const unpaidByJobId = new Map<string, number>();
+  const amountByClient = new Map<string, JobsForecastTopClient>();
+  const unpaidInvoices: JobsForecastUnpaidInvoice[] = [];
+  const now = Date.now();
+
+  for (const row of invoiceRows) {
+    if (!row.job_id) continue;
+    const amount = Number(row.net_amount ?? 0);
+    invoicedByJobId.set(row.job_id, (invoicedByJobId.get(row.job_id) ?? 0) + amount);
+
+    const clientKey = row.client_id ?? row.client_name;
+    const existingClient = amountByClient.get(clientKey);
+    amountByClient.set(clientKey, { clientName: row.client_name, amount: (existingClient?.amount ?? 0) + amount });
+
+    if (!row.paid_at) {
+      unpaidByJobId.set(row.job_id, (unpaidByJobId.get(row.job_id) ?? 0) + amount);
+      const referenceDate = row.invoice_date ?? row.created_at;
+      const days = Math.floor((now - new Date(referenceDate).getTime()) / (1000 * 60 * 60 * 24));
+      unpaidInvoices.push({
+        id: row.id,
+        clientName: row.client_name,
+        invoiceNumber: row.invoice_number ?? undefined,
+        amount,
+        days,
+      });
+    }
+  }
+
+  const creditRiskBuckets: JobsForecastCreditRiskBucket[] = [
+    { label: '0-30', amount: 0 },
+    { label: '30-60', amount: 0 },
+    { label: 'oltre 60', amount: 0 },
+  ];
+  for (const inv of unpaidInvoices) {
+    if (inv.days <= 30) creditRiskBuckets[0].amount += inv.amount;
+    else if (inv.days <= 60) creditRiskBuckets[1].amount += inv.amount;
+    else creditRiskBuckets[2].amount += inv.amount;
+  }
+
+  const topUnpaid = [...unpaidInvoices].sort((a, b) => b.days - a.days).slice(0, 5);
+  const topClients = [...amountByClient.values()].sort((a, b) => b.amount - a.amount).slice(0, 5);
+
   const totals = { potenziale: 0, preventivato: 0, confermato: 0, fatturato: 0, fatturatoNonRiscosso: 0, speseFornitori: 0 };
+  const funnel: JobsForecastFunnel = { potenziale: 0, preventivato: 0, confermato: 0, fatturato: 0, total: 0 };
   const rows: JobForecastRow[] = [];
 
   for (const job of jobs) {
@@ -569,6 +647,13 @@ export async function getJobsForecast(fiscalYear: number): Promise<JobsForecastR
     totals.fatturatoNonRiscosso += unpaidAmount;
     totals.speseFornitori += supplierCost;
 
+    funnel.total += 1;
+    if (invoicedAmount > 0) {
+      funnel.fatturato += 1;
+    } else {
+      funnel[category] += 1;
+    }
+
     rows.push({
       jobId: job.id,
       clientName: job.clientName ?? job.clientNameRaw ?? 'Cliente non specificato',
@@ -582,7 +667,13 @@ export async function getJobsForecast(fiscalYear: number): Promise<JobsForecastR
     });
   }
 
-  return { rows, totals };
+  return {
+    rows,
+    totals,
+    creditRisk: { buckets: creditRiskBuckets, topUnpaid },
+    topClients,
+    funnel,
+  };
 }
 
 /**
@@ -1644,6 +1735,29 @@ export async function getContractsStats(): Promise<ContractsStats> {
   };
 }
 
+/**
+ * Contratti attivi con scadenza provider entro i prossimi `days` giorni
+ * (finestra di calendario reale, non filtrata per anno fiscale).
+ */
+export async function getUpcomingProviderExpirations(days: number): Promise<Contract[]> {
+  const today = new Date();
+  const endDate = new Date(today);
+  endDate.setDate(endDate.getDate() + days);
+  const todayStr = today.toISOString().slice(0, 10);
+  const endStr = endDate.toISOString().slice(0, 10);
+
+  const { data, error } = await supabaseServer
+    .from('contracts')
+    .select('*, clients(name)')
+    .eq('status', 'attivo')
+    .is('deleted_at', null)
+    .gte('provider_expiry_date', todayStr)
+    .lte('provider_expiry_date', endStr)
+    .order('provider_expiry_date', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(contractRowToContract);
+}
+
 export interface HourlyContractsSummary {
   count: number;
   totalAmount: number;
@@ -1936,6 +2050,8 @@ export async function getProjectInvoices(filters?: {
   archived?: boolean;
   archivedYear?: number;
   trashed?: boolean;
+  unpaid?: boolean;
+  jobFiscalYear?: number;
   limit?: number;
   offset?: number;
 }): Promise<{ data: ProjectInvoice[]; total: number }> {
@@ -1960,6 +2076,21 @@ export async function getProjectInvoices(filters?: {
   if (filters?.clientId) query = query.eq('client_id', filters.clientId);
   if (filters?.search) {
     query = query.or(`project_title.ilike.%${filters.search}%,job_title.ilike.%${filters.search}%,client_name.ilike.%${filters.search}%`);
+  }
+  if (filters?.unpaid) {
+    query = query.eq('status', 'fatturata').is('paid_at', null);
+  }
+  if (filters?.jobFiscalYear != null) {
+    const { data: jobRows, error: jobsError } = await supabaseServer
+      .from('jobs')
+      .select('id')
+      .eq('fiscal_year', filters.jobFiscalYear)
+      .is('deleted_at', null);
+    if (jobsError) throw jobsError;
+    const jobIds = (jobRows ?? []).map((r: any) => r.id);
+    // Nessun job per quell'anno: sentinella impossibile per garantire zero righe
+    // invece di lasciare .in() con array vuoto (comportamento non affidabile).
+    query = query.in('job_id', jobIds.length > 0 ? jobIds : ['00000000-0000-0000-0000-000000000000']);
   }
 
   query = query.order('created_at', { ascending: false });
