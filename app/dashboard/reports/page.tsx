@@ -7,22 +7,14 @@ import {
   getHourlyContractsSummary,
   getFixedExpensesForYear,
   getUpcomingProviderExpirations,
-  type JobForecastCategory,
 } from '@/lib/db';
 import EconomicOverviewWidget from '@/components/EconomicOverviewWidget';
 import ReportsYearSelect from '@/components/ReportsYearSelect';
+import ReportJobRow from '@/components/ReportJobRow';
 
 export const metadata = { title: 'Report' };
 
-const CATEGORY_LABEL: Record<JobForecastCategory, string> = {
-  potenziale: 'Potenziale',
-  preventivato: 'Preventivato',
-  confermato: 'Confermato',
-};
-
-function formatEuro(value: number): string {
-  return `€ ${value.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
+const GRID_TEMPLATE = 'repeat(7, minmax(max-content, 1fr)) max-content';
 
 type SearchParams = { year?: string };
 
@@ -70,40 +62,27 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
       <h2 className="mx-6 mt-8 text-sm font-semibold text-primary">Lavori {fiscalYear}</h2>
 
-      <div className="overflow-x-auto p-6">
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-grid-border text-left text-secondary">
-              <th className="px-3 py-2 font-medium">Cliente</th>
-              <th className="px-3 py-2 font-medium">Lavoro</th>
-              <th className="px-3 py-2 font-medium">Categoria</th>
-              <th className="px-3 py-2 text-right font-medium">Budget stimato</th>
-              <th className="px-3 py-2 text-right font-medium">Spese fornitori</th>
-              <th className="px-3 py-2 text-right font-medium">Fatturato</th>
-              <th className="px-3 py-2 text-right font-medium">Margine</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.jobId} className="border-b border-grid-border/60 text-primary">
-                <td className="px-3 py-2">{row.clientName}</td>
-                <td className="px-3 py-2">{row.title}</td>
-                <td className="px-3 py-2">{CATEGORY_LABEL[row.category]}</td>
-                <td className="px-3 py-2 text-right">{formatEuro(row.estimatedBudget)}</td>
-                <td className="px-3 py-2 text-right">{formatEuro(row.supplierCost)}</td>
-                <td className="px-3 py-2 text-right">{formatEuro(row.invoicedAmount)}</td>
-                <td className="px-3 py-2 text-right">{formatEuro(row.margin)}</td>
-              </tr>
-            ))}
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-3 py-8 text-center text-secondary">
-                  Nessun lavoro con anno di competenza {fiscalYear}.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div className="mx-6 mt-3 mb-6 overflow-x-auto border-t border-grid-border">
+        <div className="grid w-full text-[12px]" style={{ gridTemplateColumns: GRID_TEMPLATE }}>
+          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Cliente</div>
+          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Lavoro</div>
+          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Categoria</div>
+          <div className="list-header-cell flex items-center justify-end whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Budget stimato</div>
+          <div className="list-header-cell flex items-center justify-end whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Spese fornitori</div>
+          <div className="list-header-cell flex items-center justify-end whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Fatturato</div>
+          <div className="list-header-cell flex items-center justify-end whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Margine</div>
+          <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
+
+          {rows.length === 0 && (
+            <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
+              Nessun lavoro con anno di competenza {fiscalYear}.
+            </div>
+          )}
+
+          {rows.map((row) => (
+            <ReportJobRow key={row.jobId} row={row} />
+          ))}
+        </div>
       </div>
     </div>
   );
