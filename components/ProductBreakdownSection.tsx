@@ -11,9 +11,14 @@ export default function ProductBreakdownSection({
   fiscalYear: number;
   productBreakdown: JobsForecastResult['productBreakdown'];
 }) {
+  const total = productBreakdown.reduce((sum, p) => sum + p.amount, 0);
+
   return (
     <div>
-      <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-secondary">Fatturato per prodotto {fiscalYear}</p>
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-[10px] font-medium uppercase tracking-wide text-secondary">Fatturato per prodotto {fiscalYear}</p>
+        {productBreakdown.length > 0 && <p className="text-[10px] font-medium text-secondary">Totale: {formatExact(total)}</p>}
+      </div>
       {productBreakdown.length === 0 ? (
         <div className="card-shadow rounded-lg border border-grid-border bg-card-bg px-5 py-3">
           <p className="py-2 text-xs text-secondary">Nessuna sottovoce sincronizzata da Fatture in Cloud.</p>

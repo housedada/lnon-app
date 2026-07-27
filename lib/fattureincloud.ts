@@ -307,6 +307,8 @@ export async function listAllFicInvoices(): Promise<FicIssuedDocumentModel[]> {
 /**
  * Scarica le sottovoci reali (con id prodotto FiC) di una singola fattura
  * emessa su Fatture in Cloud, per collegare localmente sottovoce -> prodotto.
+ * net_price di FiC è il prezzo unitario, non il totale riga: va moltiplicato
+ * per qty e scontato della percentuale discount per ottenere l'importo reale.
  */
 export async function getFicIssuedDocumentItems(
   ficInvoiceId: number
@@ -314,11 +316,17 @@ export async function getFicIssuedDocumentItems(
   const { api, companyId } = await getIssuedDocumentsApi();
   const response = await api.getIssuedDocument(companyId, ficInvoiceId);
   const items = response.data.data?.items_list ?? [];
-  return items.map((item) => ({
-    description: item.description ?? item.name ?? 'Voce senza descrizione',
-    netAmount: item.net_price ?? 0,
-    ficProductId: item.product_id ?? undefined,
-  }));
+  return items.map((item) => {
+    const qty = item.qty ?? 1;
+    const unitPrice = item.net_price ?? 0;
+    const discountPct = item.discount ?? 0;
+    const netAmount = Math.round(qty * unitPrice * (1 - discountPct / 100) * 100) / 100;
+    return {
+      description: item.description ?? item.name ?? 'Voce senza descrizione',
+      netAmount,
+      ficProductId: item.product_id ?? undefined,
+    };
+  });
 }
 
 /**
