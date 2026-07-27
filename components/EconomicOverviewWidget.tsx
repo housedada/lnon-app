@@ -157,7 +157,7 @@ export default function EconomicOverviewWidget({
           <Truck size={11} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
           Flusso in Uscita
         </p>
-        <div className="card-shadow grid grid-cols-3 overflow-hidden rounded-lg border border-red-600/30 bg-red-600/5">
+        <div className="card-shadow grid grid-cols-1 overflow-hidden rounded-lg border border-red-600/30 bg-red-600/5 sm:grid-cols-3">
           <Tile label={`Spese fornitori ${fiscalYear}`} value={jobsForecastTotals.speseFornitori} color={USCITE_COLOR} icon={Truck} />
           <Tile label={`Spese fisse ${fiscalYear}`} value={fixedExpensesTotal} color={USCITE_COLOR} icon={Wallet} />
           <Tile label="Costo provider contratti" value={contractsStats.providerCostTotal} color={USCITE_COLOR} icon={Server} />
