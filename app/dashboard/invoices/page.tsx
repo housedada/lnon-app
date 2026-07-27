@@ -6,6 +6,7 @@ import { getProjectInvoices } from '@/lib/db';
 import { canViewAmounts } from '@/lib/permissions';
 import ListNavigator from '@/components/ListNavigator';
 import ListPlaceholder from '@/components/ListPlaceholder';
+import InvoicesFilterWidget from '@/components/InvoicesFilterWidget';
 import InvoicesSelectAllCheckbox from '@/components/InvoicesSelectAllCheckbox';
 import InvoicesBulkBar from '@/components/InvoicesBulkBar';
 import ProjectInvoiceRow from '@/components/ProjectInvoiceRow';
@@ -13,10 +14,19 @@ import NotifyFromQuery from '@/components/NotifyFromQuery';
 import RememberRoute from '@/components/RememberRoute';
 import LazyRevealRows from '@/components/LazyRevealRows';
 import { parsePageSize } from '@/lib/listPageSize';
+import type { ProjectInvoiceStatus } from '@/lib/types';
 
 export const metadata = { title: 'Fatture' };
 
-type SearchParams = { q?: string; page?: string; pageSize?: string; unpaid?: string; jobFiscalYear?: string };
+type SearchParams = {
+  q?: string;
+  page?: string;
+  pageSize?: string;
+  unpaid?: string;
+  jobFiscalYear?: string;
+  status?: string;
+  syncState?: string;
+};
 
 export default async function InvoicesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
@@ -57,6 +67,8 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
         )}
       </div>
 
+      <InvoicesFilterWidget />
+
       <Suspense fallback={<ListPlaceholder />}>
         <InvoicesListSection params={params} isSuperadmin={isSuperadmin} canManage={canManage} showAmounts={showAmounts} />
       </Suspense>
@@ -75,17 +87,23 @@ async function InvoicesListSection({
   canManage: boolean;
   showAmounts: boolean;
 }) {
-  const { q, page, unpaid, jobFiscalYear } = params;
+  const { q, page, unpaid, jobFiscalYear, status, syncState } = params;
   const pageSize = parsePageSize(params.pageSize);
   const currentPage = Math.max(1, Number(page) || 1);
   const offset = (currentPage - 1) * pageSize;
   const isUnpaidFilter = unpaid === '1';
   const jobFiscalYearNum = jobFiscalYear && Number.isFinite(Number(jobFiscalYear)) ? Number(jobFiscalYear) : undefined;
+  const statusFilter: ProjectInvoiceStatus | undefined =
+    status === 'da_fatturare' || status === 'fatturata' || status === 'annullata' || status === 'accorpata' ? status : undefined;
+  const syncStateFilter: 'not_linked' | 'not_synced' | 'synced' | undefined =
+    syncState === 'not_linked' || syncState === 'not_synced' || syncState === 'synced' ? syncState : undefined;
 
   const { data: invoices, total } = await getProjectInvoices({
     search: q,
     unpaid: isUnpaidFilter,
     jobFiscalYear: jobFiscalYearNum,
+    status: statusFilter,
+    syncState: syncStateFilter,
     limit: pageSize,
     offset,
   });

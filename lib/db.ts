@@ -20,6 +20,7 @@ import type {
   ProjectTaskStatus,
   ProjectInvoice,
   ProjectInvoiceLineItem,
+  ProjectInvoiceStatus,
   HourlyContract,
   HourlyWorkEntry,
   HourlyRateType,
@@ -2087,6 +2088,8 @@ export async function getProjectInvoices(filters?: {
   trashed?: boolean;
   unpaid?: boolean;
   jobFiscalYear?: number;
+  status?: ProjectInvoiceStatus;
+  syncState?: 'not_linked' | 'not_synced' | 'synced';
   limit?: number;
   offset?: number;
 }): Promise<{ data: ProjectInvoice[]; total: number }> {
@@ -2114,6 +2117,16 @@ export async function getProjectInvoices(filters?: {
   }
   if (filters?.unpaid) {
     query = query.eq('status', 'fatturata').is('paid_at', null);
+  }
+  if (filters?.status) {
+    query = query.eq('status', filters.status);
+  }
+  if (filters?.syncState === 'not_linked') {
+    query = query.is('fic_invoice_id', null);
+  } else if (filters?.syncState === 'not_synced') {
+    query = query.not('fic_invoice_id', 'is', null).is('line_items_synced_at', null);
+  } else if (filters?.syncState === 'synced') {
+    query = query.not('fic_invoice_id', 'is', null).not('line_items_synced_at', 'is', null);
   }
   if (filters?.jobFiscalYear != null) {
     const { data: jobRows, error: jobsError } = await supabaseServer

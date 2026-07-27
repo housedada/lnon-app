@@ -20,6 +20,7 @@ import { TUNES, RANDOM_CHOICE, CHIPTUNE_CHOICE_STORAGE_KEY } from '@/lib/chiptun
 import { useContractsFilterStore } from '@/lib/store/contractsFilterStore';
 import { useContractsStatsStore } from '@/lib/store/contractsStatsStore';
 import { useJobsFilterStore } from '@/lib/store/jobsFilterStore';
+import { useInvoicesFilterStore } from '@/lib/store/invoicesFilterStore';
 
 export default function TopBar({
   role,
@@ -35,12 +36,15 @@ export default function TopBar({
   const pathname = usePathname();
   const isContractsPage = pathname?.startsWith('/dashboard/contracts');
   const isJobsPage = pathname?.startsWith('/dashboard/jobs');
+  const isInvoicesPage = pathname?.startsWith('/dashboard/invoices');
   const contractsFilterVisible = useContractsFilterStore((s) => s.visible);
   const toggleContractsFilter = useContractsFilterStore((s) => s.toggle);
   const contractsStatsVisible = useContractsStatsStore((s) => s.visible);
   const toggleContractsStats = useContractsStatsStore((s) => s.toggle);
   const jobsFilterVisible = useJobsFilterStore((s) => s.visible);
   const toggleJobsFilter = useJobsFilterStore((s) => s.toggle);
+  const invoicesFilterVisible = useInvoicesFilterStore((s) => s.visible);
+  const toggleInvoicesFilter = useInvoicesFilterStore((s) => s.toggle);
 
   const [chiptuneChoice, setChiptuneChoice] = useState(RANDOM_CHOICE);
   const [chiptuneModalOpen, setChiptuneModalOpen] = useState(false);
@@ -94,6 +98,20 @@ export default function TopBar({
             aria-pressed={jobsFilterVisible}
             className={`flex h-8 w-8 items-center justify-center rounded-md transition ${
               jobsFilterVisible ? 'bg-amber-500/15 text-amber-500' : 'text-amber-500/80 hover:bg-neutral-800 hover:text-amber-500'
+            }`}
+          >
+            <SlidersHorizontal size={17} strokeWidth={1.75} aria-hidden="true" />
+          </button>
+        )}
+
+        {isInvoicesPage && (
+          <button
+            type="button"
+            onClick={toggleInvoicesFilter}
+            aria-label="Mostra/nascondi filtri fatture"
+            aria-pressed={invoicesFilterVisible}
+            className={`flex h-8 w-8 items-center justify-center rounded-md transition ${
+              invoicesFilterVisible ? 'bg-amber-500/15 text-amber-500' : 'text-amber-500/80 hover:bg-neutral-800 hover:text-amber-500'
             }`}
           >
             <SlidersHorizontal size={17} strokeWidth={1.75} aria-hidden="true" />
