@@ -37,7 +37,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const currentYear = new Date().getFullYear();
   const fiscalYear = params.year ? Number(params.year) : currentYear;
 
-  const [{ rows, totals, creditRisk, topClients, funnel }, contractsStats, hourlySummary, fixedExpenses, providerExpirations] = await Promise.all([
+  const [{ rows, totals, creditRisk, topClients, funnel, productBreakdown }, contractsStats, hourlySummary, fixedExpenses, providerExpirations] = await Promise.all([
     getJobsForecast(fiscalYear),
     getContractsStats(),
     getHourlyContractsSummary(),
@@ -63,6 +63,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         creditRisk={creditRisk}
         topClients={topClients}
         funnel={funnel}
+        productBreakdown={productBreakdown}
         providerExpirations={providerExpirations}
       />
 

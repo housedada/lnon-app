@@ -4,6 +4,7 @@ import CreditRiskSection from '@/components/CreditRiskSection';
 import TopClientsSection from '@/components/TopClientsSection';
 import ConversionFunnelSection from '@/components/ConversionFunnelSection';
 import ProviderExpirationsSection from '@/components/ProviderExpirationsSection';
+import ProductBreakdownSection from '@/components/ProductBreakdownSection';
 import type { Contract } from '@/lib/types';
 
 function formatExact(value: number): string {
@@ -72,6 +73,7 @@ export default function EconomicOverviewWidget({
   creditRisk,
   topClients,
   funnel,
+  productBreakdown,
   providerExpirations,
 }: {
   fiscalYear: number;
@@ -82,6 +84,7 @@ export default function EconomicOverviewWidget({
   creditRisk: JobsForecastResult['creditRisk'];
   topClients: JobsForecastResult['topClients'];
   funnel: JobsForecastResult['funnel'];
+  productBreakdown: JobsForecastResult['productBreakdown'];
   providerExpirations: Contract[];
 }) {
   // Contratti Web e Conteggio Orario sono già ricompresi nel fatturato lavori
@@ -132,6 +135,8 @@ export default function EconomicOverviewWidget({
         <TopClientsSection topClients={topClients} />
         <ConversionFunnelSection funnel={funnel} />
       </div>
+
+      <ProductBreakdownSection fiscalYear={fiscalYear} productBreakdown={productBreakdown} />
 
       <div>
         <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-secondary">
