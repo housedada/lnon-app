@@ -180,7 +180,7 @@ export default function ContractRow({
         <div
           key={col.key}
           onClick={() => setDetailOpen(true)}
-          className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border bg-card-bg px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary [&:first-child]:font-semibold [&:first-child]:tracking-[0.01em] [&:first-child]:text-primary"
+          className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary [&:first-child]:font-semibold [&:first-child]:tracking-[0.01em] [&:first-child]:text-primary"
         >
           {renderCell(contract, col.key, showAmounts)}
         </div>

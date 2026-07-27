@@ -7,9 +7,12 @@ import UnarchiveInvoiceButton from '@/components/UnarchiveInvoiceButton';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import RememberRoute from '@/components/RememberRoute';
 import LazyRevealRows from '@/components/LazyRevealRows';
+import RowActionsCell from '@/components/RowActionsCell';
 import { parsePageSize } from '@/lib/listPageSize';
 
 export const metadata = { title: 'Archivio Fatture' };
+
+const GRID_TEMPLATE = 'repeat(6, minmax(max-content, 1fr)) max-content';
 
 function formatAmount(value: number) {
   return `€ ${value.toFixed(2)}`;
@@ -88,38 +91,40 @@ export default async function InvoicesArchivePage({
         totalCount={total}
         totalLabel="fatture archiviate"
       >
-        <div className="mx-6 mt-6 grid grid-cols-[1.5fr_1.5fr_1fr_1fr_1fr_1fr_40px] gap-x-[2px] border-t border-grid-border text-[12px]">
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Cliente</div>
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Progetto</div>
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Totale</div>
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Stato</div>
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Creata il</div>
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Archiviata il</div>
-          <div className="border-b border-grid-border bg-grid-header-bg" />
+        <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
+          <div className="grid w-full text-[12px]" style={{ gridTemplateColumns: GRID_TEMPLATE }}>
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Cliente</div>
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Progetto</div>
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Totale</div>
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Stato</div>
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Creata il</div>
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Archiviata il</div>
+            <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
 
-          {invoices.length === 0 && (
-            <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
-              Nessuna fattura archiviata{q ? ` per “${q}”` : ''}.
-            </div>
-          )}
-
-          <LazyRevealRows total={invoices.length} enabled={pageSize > 25}>
-            {invoices.map((invoice) => (
-              <div key={invoice.id} className="group contents">
-                <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{invoice.clientName}</div>
-                <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{invoice.projectTitle}</div>
-                <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 font-semibold text-primary group-hover:bg-row-hover">{formatAmount(invoice.totalAmount)}</div>
-                <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
-                  <span className="rounded-full bg-grid-header-bg px-2 py-0.5 text-[10px] font-medium text-secondary">{invoice.status}</span>
-                </div>
-                <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(invoice.createdAt)}</div>
-                <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(invoice.archivedAt)}</div>
-                <div className="flex aspect-square items-center justify-center border-b border-grid-border group-hover:bg-row-hover">
-                  <UnarchiveInvoiceButton invoiceId={invoice.id} />
-                </div>
+            {invoices.length === 0 && (
+              <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
+                Nessuna fattura archiviata{q ? ` per “${q}”` : ''}.
               </div>
-            ))}
-          </LazyRevealRows>
+            )}
+
+            <LazyRevealRows total={invoices.length} enabled={pageSize > 25}>
+              {invoices.map((invoice) => (
+                <div key={invoice.id} className="group contents">
+                  <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{invoice.clientName}</div>
+                  <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{invoice.projectTitle}</div>
+                  <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 font-semibold text-primary group-hover:bg-row-hover">{formatAmount(invoice.totalAmount)}</div>
+                  <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
+                    <span className="rounded-full bg-grid-header-bg px-2 py-0.5 text-[10px] font-medium text-secondary">{invoice.status}</span>
+                  </div>
+                  <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(invoice.createdAt)}</div>
+                  <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(invoice.archivedAt)}</div>
+                  <RowActionsCell>
+                    <UnarchiveInvoiceButton invoiceId={invoice.id} />
+                  </RowActionsCell>
+                </div>
+              ))}
+            </LazyRevealRows>
+          </div>
         </div>
       </ListNavigator>
     </div>

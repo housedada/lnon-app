@@ -7,10 +7,13 @@ import UnarchiveJobButton from '@/components/UnarchiveJobButton';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import RememberRoute from '@/components/RememberRoute';
 import LazyRevealRows from '@/components/LazyRevealRows';
+import RowActionsCell from '@/components/RowActionsCell';
 import { parsePageSize } from '@/lib/listPageSize';
 import type { JobStatus } from '@/lib/types';
 
 export const metadata = { title: 'Archivio Lavori' };
+
+const GRID_TEMPLATE = 'repeat(5, minmax(max-content, 1fr)) max-content';
 
 const STATUS_LABEL: Record<JobStatus, string> = {
   draft: 'Bozza',
@@ -92,38 +95,38 @@ export default async function JobsArchivePage({
         totalCount={total}
         totalLabel="lavori archiviati"
       >
-        <div className="mx-6 mt-6 grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr_40px] gap-x-[2px] border-t border-grid-border text-[12px]">
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Titolo</div>
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Cliente</div>
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Stato</div>
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Assegnato a</div>
-          <div className="flex items-center border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Archiviato il</div>
-          <div className="border-b border-grid-border bg-grid-header-bg" />
+        <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
+          <div className="grid w-full text-[12px]" style={{ gridTemplateColumns: GRID_TEMPLATE }}>
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Titolo</div>
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Cliente</div>
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Stato</div>
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Assegnato a</div>
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Archiviato il</div>
+            <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
 
-          {jobs.length === 0 && (
-            <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
-              Nessun lavoro archiviato{q ? ` per “${q}”` : ''}.
-            </div>
-          )}
-
-          <LazyRevealRows total={jobs.length} enabled={pageSize > 25}>
-            {jobs.map((job) => (
-              <div key={job.id} className="group contents">
-                <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{job.title}</div>
-                <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">
-                  {job.clientName ?? job.clientNameRaw ?? '—'}
-                </div>
-                <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
-                  <span className="rounded-full bg-green-600/10 px-2 py-0.5 text-[10px] font-medium text-green-700">{STATUS_LABEL[job.status]}</span>
-                </div>
-                <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{job.assignedToName ?? '—'}</div>
-                <div className="list-row-cell flex items-center border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(job.archivedAt)}</div>
-                <div className="flex aspect-square items-center justify-center border-b border-grid-border group-hover:bg-row-hover">
-                  {canUpdate && <UnarchiveJobButton jobId={job.id} />}
-                </div>
+            {jobs.length === 0 && (
+              <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
+                Nessun lavoro archiviato{q ? ` per “${q}”` : ''}.
               </div>
-            ))}
-          </LazyRevealRows>
+            )}
+
+            <LazyRevealRows total={jobs.length} enabled={pageSize > 25}>
+              {jobs.map((job) => (
+                <div key={job.id} className="group contents">
+                  <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">{job.title}</div>
+                  <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">
+                    {job.clientName ?? job.clientNameRaw ?? '—'}
+                  </div>
+                  <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
+                    <span className="rounded-full bg-green-600/10 px-2 py-0.5 text-[10px] font-medium text-green-700">{STATUS_LABEL[job.status]}</span>
+                  </div>
+                  <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{job.assignedToName ?? '—'}</div>
+                  <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(job.archivedAt)}</div>
+                  <RowActionsCell>{canUpdate && <UnarchiveJobButton jobId={job.id} />}</RowActionsCell>
+                </div>
+              ))}
+            </LazyRevealRows>
+          </div>
         </div>
       </ListNavigator>
     </div>
