@@ -249,6 +249,7 @@ export interface ProjectInvoice {
   deletedAt?: Date;
   sourceType?: 'project' | 'hourly_contract';
   hourlyContractId?: string;
+  lineItemsSyncedAt?: Date;
 }
 
 export interface FixedExpenseCategory {

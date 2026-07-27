@@ -96,8 +96,8 @@ async function InvoicesListSection({
   );
 
   const gridCols = canManage
-    ? '32px repeat(8, minmax(max-content, 1fr)) max-content'
-    : 'repeat(8, minmax(max-content, 1fr))';
+    ? '32px repeat(9, minmax(max-content, 1fr)) max-content'
+    : 'repeat(9, minmax(max-content, 1fr))';
 
   return (
     <>
@@ -136,6 +136,7 @@ async function InvoicesListSection({
             <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Totale</div>
             <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Stato</div>
             <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Creata il</div>
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Sync sottovoci</div>
             {canManage && <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />}
 
             {invoices.length === 0 && (

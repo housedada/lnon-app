@@ -1992,6 +1992,7 @@ function projectInvoiceRowToProjectInvoice(row: Record<string, any>): ProjectInv
     updatedAt: new Date(row.updated_at),
     archivedAt: row.archived_at ? new Date(row.archived_at) : undefined,
     deletedAt: row.deleted_at ? new Date(row.deleted_at) : undefined,
+    lineItemsSyncedAt: row.line_items_synced_at ? new Date(row.line_items_synced_at) : undefined,
   };
 }
 
@@ -2263,7 +2264,10 @@ export async function getProjectInvoicesWithFicId(): Promise<{ id: string; ficIn
  * sincronizzazione sottovoci da Fatture in Cloud).
  */
 export async function updateProjectInvoiceLineItems(id: string, lineItems: ProjectInvoiceLineItem[]): Promise<void> {
-  const { error } = await supabaseServer.from('project_invoices').update({ line_items: lineItems }).eq('id', id);
+  const { error } = await supabaseServer
+    .from('project_invoices')
+    .update({ line_items: lineItems, line_items_synced_at: new Date().toISOString() })
+    .eq('id', id);
   if (error) throw error;
 }
 

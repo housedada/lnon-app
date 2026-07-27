@@ -103,6 +103,15 @@ export default function ProjectInvoiceRow({
         <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE[invoice.status]}`}>{STATUS_LABEL[invoice.status]}</span>
       </div>
       <div onClick={() => setPreviewOpen(true)} className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(invoice.createdAt)}</div>
+      <div onClick={() => setPreviewOpen(true)} className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
+        {!invoice.ficInvoiceId ? (
+          <span className="rounded-full bg-grid-header-bg px-2 py-0.5 text-[10px] font-medium text-secondary">Non collegata a FIC</span>
+        ) : invoice.lineItemsSyncedAt ? (
+          <span className="rounded-full bg-green-600/10 px-2 py-0.5 text-[10px] font-medium text-green-700">Sincronizzato il {formatDate(invoice.lineItemsSyncedAt)}</span>
+        ) : (
+          <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700">Non sincronizzato</span>
+        )}
+      </div>
 
       <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-4 group-hover:bg-row-hover">
         <button type="button" onClick={() => setPreviewOpen(true)} aria-label="Vedi fattura" title="Vedi fattura" className="text-secondary transition hover:text-primary">
