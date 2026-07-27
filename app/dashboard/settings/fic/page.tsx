@@ -7,6 +7,7 @@ import { getFicDeleteWebhookStatus, FIC_WEBHOOK_DELETE_TYPES } from '@/lib/fattu
 import { registerFicWebhookAction } from '@/lib/actions/fic';
 import SubmitButton from '@/components/SubmitButton';
 import BulkMatchInvoicesButton from '@/components/BulkMatchInvoicesButton';
+import SyncInvoiceLineItemsButton from '@/components/SyncInvoiceLineItemsButton';
 
 export const metadata = { title: 'Fatture in Cloud' };
 
@@ -108,6 +109,7 @@ export default async function FicSettingsPage({
           </p>
           <div className="mt-3">
             <BulkMatchInvoicesButton />
+            <SyncInvoiceLineItemsButton />
           </div>
         </div>
       )}
