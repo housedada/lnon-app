@@ -19,6 +19,7 @@ import type {
   ProjectTask,
   ProjectTaskStatus,
   ProjectInvoice,
+  ProjectInvoiceLineItem,
   HourlyContract,
   HourlyWorkEntry,
   HourlyRateType,
@@ -527,6 +528,12 @@ export interface JobsForecastFunnel {
   total: number;
 }
 
+export interface JobsForecastProductBreakdown {
+  productId: string | null;
+  productName: string;
+  amount: number;
+}
+
 export interface JobsForecastResult {
   rows: JobForecastRow[];
   totals: {
@@ -543,6 +550,7 @@ export interface JobsForecastResult {
   };
   topClients: JobsForecastTopClient[];
   funnel: JobsForecastFunnel;
+  productBreakdown: JobsForecastProductBreakdown[];
 }
 
 /**
@@ -573,13 +581,14 @@ export async function getJobsForecast(fiscalYear: number): Promise<JobsForecastR
     created_at: string;
     paid_at: string | null;
     invoice_number: string | null;
+    line_items: ProjectInvoiceLineItem[] | null;
   };
 
   let invoiceRows: InvoiceForForecastRow[] = [];
   if (jobIds.length > 0) {
     const { data, error: invoicesError } = await supabaseServer
       .from('project_invoices')
-      .select('id, job_id, client_id, client_name, net_amount, invoice_date, created_at, paid_at, invoice_number')
+      .select('id, job_id, client_id, client_name, net_amount, invoice_date, created_at, paid_at, invoice_number, line_items')
       .in('job_id', jobIds)
       .eq('status', 'fatturata')
       .is('deleted_at', null);
@@ -614,6 +623,29 @@ export async function getJobsForecast(fiscalYear: number): Promise<JobsForecastR
         days,
       });
     }
+  }
+
+  const productNames = await getAllProductNames();
+  const productNameById = new Map(productNames.map((p) => [p.id, p.name]));
+  const amountByProduct = new Map<string, number>();
+  let nonCategorizzato = 0;
+
+  for (const row of invoiceRows) {
+    for (const item of row.line_items ?? []) {
+      const amount = Number(item.netAmount ?? 0);
+      if (item.productId) {
+        amountByProduct.set(item.productId, (amountByProduct.get(item.productId) ?? 0) + amount);
+      } else {
+        nonCategorizzato += amount;
+      }
+    }
+  }
+
+  const productBreakdown: JobsForecastProductBreakdown[] = [...amountByProduct.entries()]
+    .map(([productId, amount]) => ({ productId, productName: productNameById.get(productId) ?? 'Prodotto sconosciuto', amount }))
+    .sort((a, b) => b.amount - a.amount);
+  if (nonCategorizzato > 0) {
+    productBreakdown.push({ productId: null, productName: 'Non categorizzato', amount: nonCategorizzato });
   }
 
   const creditRiskBuckets: JobsForecastCreditRiskBucket[] = [
@@ -674,6 +706,7 @@ export async function getJobsForecast(fiscalYear: number): Promise<JobsForecastR
     creditRisk: { buckets: creditRiskBuckets, topUnpaid },
     topClients,
     funnel,
+    productBreakdown,
   };
 }
 
