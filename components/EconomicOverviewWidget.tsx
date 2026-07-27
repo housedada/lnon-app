@@ -34,7 +34,7 @@ function Tile({
   icon?: typeof Receipt;
 }) {
   return (
-    <div className="border-b border-r border-grid-border px-5 py-3 last:border-r-0">
+    <div className="border-b border-r border-grid-border px-[15px] py-3 last:border-r-0 sm:px-5">
       <p className="detail-label flex items-center gap-1.5">
         {Icon && <Icon size={11} strokeWidth={1.75} className="shrink-0" style={{ color }} aria-hidden="true" />}
         {label}

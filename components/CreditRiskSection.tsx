@@ -44,7 +44,7 @@ export default function CreditRiskSection({
           {creditRisk.buckets.map((bucket) => {
             const BucketIcon = BUCKET_ICONS[bucket.label];
             return (
-            <div key={bucket.label} className="border-b border-r border-grid-border px-5 py-3 last:border-r-0">
+            <div key={bucket.label} className="border-b border-r border-grid-border px-[15px] py-3 last:border-r-0 sm:px-5">
               <p className="detail-label flex items-center gap-1.5">
                 {BucketIcon && <BucketIcon size={11} strokeWidth={1.75} className="shrink-0" style={{ color: BUCKET_COLORS[bucket.label] }} aria-hidden="true" />}
                 {bucket.label} giorni
