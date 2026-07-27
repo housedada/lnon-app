@@ -1,7 +1,14 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
-import { getJobsForecast, getContractsStats, getHourlyContractsSummary, getFixedExpensesForYear, type JobForecastCategory } from '@/lib/db';
+import {
+  getJobsForecast,
+  getContractsStats,
+  getHourlyContractsSummary,
+  getFixedExpensesForYear,
+  getUpcomingProviderExpirations,
+  type JobForecastCategory,
+} from '@/lib/db';
 import EconomicOverviewWidget from '@/components/EconomicOverviewWidget';
 import ReportsYearSelect from '@/components/ReportsYearSelect';
 
@@ -30,11 +37,12 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const currentYear = new Date().getFullYear();
   const fiscalYear = params.year ? Number(params.year) : currentYear;
 
-  const [{ rows, totals }, contractsStats, hourlySummary, fixedExpenses] = await Promise.all([
+  const [{ rows, totals, creditRisk, topClients, funnel }, contractsStats, hourlySummary, fixedExpenses, providerExpirations] = await Promise.all([
     getJobsForecast(fiscalYear),
     getContractsStats(),
     getHourlyContractsSummary(),
     getFixedExpensesForYear(fiscalYear),
+    getUpcomingProviderExpirations(30),
   ]);
 
   const yearOptions = [currentYear + 1, currentYear, currentYear - 1, currentYear - 2];
@@ -52,6 +60,10 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         hourlySummary={hourlySummary}
         fixedExpensesTotal={fixedExpenses.total}
         jobsForecastTotals={totals}
+        creditRisk={creditRisk}
+        topClients={topClients}
+        funnel={funnel}
+        providerExpirations={providerExpirations}
       />
 
       <h2 className="mx-6 mt-8 text-sm font-semibold text-primary">Lavori {fiscalYear}</h2>

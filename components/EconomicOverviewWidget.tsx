@@ -1,5 +1,10 @@
 import { Receipt, FileSignature, Clock } from 'lucide-react';
 import type { JobsForecastResult, ContractsStats, HourlyContractsSummary } from '@/lib/db';
+import CreditRiskSection from '@/components/CreditRiskSection';
+import TopClientsSection from '@/components/TopClientsSection';
+import ConversionFunnelSection from '@/components/ConversionFunnelSection';
+import ProviderExpirationsSection from '@/components/ProviderExpirationsSection';
+import type { Contract } from '@/lib/types';
 
 function formatExact(value: number): string {
   return `€ ${value.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -64,12 +69,20 @@ export default function EconomicOverviewWidget({
   hourlySummary,
   fixedExpensesTotal,
   jobsForecastTotals,
+  creditRisk,
+  topClients,
+  funnel,
+  providerExpirations,
 }: {
   fiscalYear: number;
   contractsStats: ContractsStats;
   hourlySummary: HourlyContractsSummary;
   fixedExpensesTotal: number;
   jobsForecastTotals: JobsForecastResult['totals'];
+  creditRisk: JobsForecastResult['creditRisk'];
+  topClients: JobsForecastResult['topClients'];
+  funnel: JobsForecastResult['funnel'];
+  providerExpirations: Contract[];
 }) {
   // Contratti Web e Conteggio Orario sono già ricompresi nel fatturato lavori
   // (generano a loro volta Job/fatture): non li sommiamo di nuovo qui sotto.
@@ -113,6 +126,13 @@ export default function EconomicOverviewWidget({
         </div>
       </div>
 
+      <CreditRiskSection fiscalYear={fiscalYear} creditRisk={creditRisk} />
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <TopClientsSection topClients={topClients} />
+        <ConversionFunnelSection funnel={funnel} />
+      </div>
+
       <div>
         <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-secondary">
           Uscite — spese fornitori lavori {fiscalYear}, spese fisse {fiscalYear}, costo provider contratti
@@ -123,6 +143,8 @@ export default function EconomicOverviewWidget({
           <Tile label="Costo provider contratti" value={contractsStats.providerCostTotal} color={USCITE_COLOR} />
         </div>
       </div>
+
+      <ProviderExpirationsSection contracts={providerExpirations} />
 
       <div className="card-shadow flex items-center justify-between rounded-lg border border-grid-border bg-card-bg px-5 py-4">
         <div>
