@@ -25,6 +25,10 @@ const BUCKET_ICONS: Record<string, typeof Clock> = {
   'oltre 60': AlertOctagon,
 };
 
+const BUCKET_DISPLAY_LABELS: Record<string, string> = {
+  'oltre 60': '60+',
+};
+
 export default function CreditRiskSection({
   fiscalYear,
   creditRisk,
@@ -47,7 +51,7 @@ export default function CreditRiskSection({
             <div key={bucket.label} className="border-b border-r border-grid-border px-[15px] py-3 last:border-r-0 sm:px-5">
               <p className="detail-label flex items-center gap-1.5">
                 {BucketIcon && <BucketIcon size={11} strokeWidth={1.75} className="shrink-0" style={{ color: BUCKET_COLORS[bucket.label] }} aria-hidden="true" />}
-                {bucket.label} giorni
+                {BUCKET_DISPLAY_LABELS[bucket.label] ?? bucket.label} giorni
               </p>
               <p className="mt-1 text-xl font-semibold" style={{ color: BUCKET_COLORS[bucket.label] }}>
                 {formatCompact(bucket.amount)}

@@ -13,6 +13,16 @@ function formatCompact(value: number): string {
   return `€ ${value.toLocaleString('it-IT', { maximumFractionDigits: 0 })}`;
 }
 
+const PRODUCT_DOT_COLORS = ['#0ea5e9', '#2f9e6b', '#b8860b', '#c94848', '#8b5cf6', '#ec4899', '#6b7280', '#0891b2'];
+
+function productDotColor(key: string): string {
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) {
+    hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+  }
+  return PRODUCT_DOT_COLORS[hash % PRODUCT_DOT_COLORS.length];
+}
+
 export default function ProductBreakdownSection({
   fiscalYear,
   productBreakdown,
@@ -42,7 +52,14 @@ export default function ProductBreakdownSection({
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8">
             {productBreakdown.map((product) => (
               <div key={product.productId ?? 'non-categorizzato'} className="border-b border-r border-grid-border px-4 py-3 last:border-r-0">
-                <p className="detail-label truncate">{product.productName}</p>
+                <p className="detail-label flex items-center gap-1.5 truncate">
+                  <span
+                    className="h-1.5 w-1.5 shrink-0 rounded-full"
+                    style={{ background: productDotColor(product.productId ?? product.productName) }}
+                    aria-hidden="true"
+                  />
+                  <span className="truncate">{product.productName}</span>
+                </p>
                 <p className="mt-1 text-sm font-semibold text-primary">{formatCompact(product.amount)}</p>
                 <p className="mt-0.5 truncate text-[9px] text-secondary">{formatExact(product.amount)}</p>
               </div>
