@@ -1,3 +1,4 @@
+import { CalendarClock } from 'lucide-react';
 import type { Contract } from '@/lib/types';
 
 function formatDate(value?: Date): string {
@@ -12,7 +13,8 @@ function daysUntil(value?: Date): number {
 export default function ProviderExpirationsSection({ contracts }: { contracts: Contract[] }) {
   return (
     <div>
-      <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-secondary">
+      <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-secondary">
+        <CalendarClock size={11} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
         Scadenze provider nei prossimi 30 giorni
       </p>
       <div className="card-shadow rounded-lg border border-grid-border bg-card-bg px-5 py-3">

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Clock, AlertTriangle, AlertOctagon } from 'lucide-react';
 import type { JobsForecastResult } from '@/lib/db';
 
 function formatExact(value: number): string {
@@ -18,6 +19,12 @@ const BUCKET_COLORS: Record<string, string> = {
   'oltre 60': '#c94848',
 };
 
+const BUCKET_ICONS: Record<string, typeof Clock> = {
+  '0-30': Clock,
+  '30-60': AlertTriangle,
+  'oltre 60': AlertOctagon,
+};
+
 export default function CreditRiskSection({
   fiscalYear,
   creditRisk,
@@ -34,15 +41,21 @@ export default function CreditRiskSection({
       </p>
       <div className="card-shadow overflow-hidden rounded-lg border border-grid-border bg-card-bg">
         <div className="grid grid-cols-3">
-          {creditRisk.buckets.map((bucket) => (
+          {creditRisk.buckets.map((bucket) => {
+            const BucketIcon = BUCKET_ICONS[bucket.label];
+            return (
             <div key={bucket.label} className="border-b border-r border-grid-border px-5 py-3 last:border-r-0">
-              <p className="detail-label">{bucket.label} giorni</p>
+              <p className="detail-label flex items-center gap-1.5">
+                {BucketIcon && <BucketIcon size={11} strokeWidth={1.75} className="shrink-0" style={{ color: BUCKET_COLORS[bucket.label] }} aria-hidden="true" />}
+                {bucket.label} giorni
+              </p>
               <p className="mt-1 text-xl font-semibold" style={{ color: BUCKET_COLORS[bucket.label] }}>
                 {formatCompact(bucket.amount)}
               </p>
               <p className="mt-0.5 text-[10px] text-secondary">{formatExact(bucket.amount)}</p>
             </div>
-          ))}
+            );
+          })}
         </div>
         {hasUnpaid ? (
           <div className="space-y-1.5 border-t border-grid-border px-5 py-3">

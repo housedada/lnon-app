@@ -1,4 +1,4 @@
-import { Receipt, FileSignature, Clock } from 'lucide-react';
+import { Receipt, FileSignature, Clock, TrendingUp, FileClock, CheckCircle2, Truck, Wallet, Server, Scale } from 'lucide-react';
 import type { JobsForecastResult, ContractsStats, HourlyContractsSummary } from '@/lib/db';
 import CreditRiskSection from '@/components/CreditRiskSection';
 import TopClientsSection from '@/components/TopClientsSection';
@@ -108,7 +108,8 @@ export default function EconomicOverviewWidget({
   return (
     <div className="mx-6 mt-6 space-y-4">
       <div>
-        <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-secondary">
+        <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-secondary">
+          <Receipt size={11} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
           Entrate attuali {fiscalYear} — contratti web e conteggio orario sono dettaglio, già inclusi nel fatturato
         </p>
         <div className="card-shadow grid grid-cols-2 overflow-hidden rounded-lg border border-grid-border bg-card-bg sm:grid-cols-3">
@@ -131,13 +132,14 @@ export default function EconomicOverviewWidget({
       </div>
 
       <div>
-        <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-secondary">
+        <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-secondary">
+          <TrendingUp size={11} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
           Potenziale {fiscalYear} — lavori non ancora fatturati (upside)
         </p>
         <div className="card-shadow grid grid-cols-3 overflow-hidden rounded-lg border border-grid-border bg-card-bg">
-          <Tile label="Potenziale" value={jobsForecastTotals.potenziale} color={POTENZIALE_GRAYS[0]} />
-          <Tile label="Preventivato" value={jobsForecastTotals.preventivato} color={POTENZIALE_GRAYS[1]} />
-          <Tile label="Confermato" value={jobsForecastTotals.confermato} color={POTENZIALE_GRAYS[2]} />
+          <Tile label="Potenziale" value={jobsForecastTotals.potenziale} color={POTENZIALE_GRAYS[0]} icon={TrendingUp} />
+          <Tile label="Preventivato" value={jobsForecastTotals.preventivato} color={POTENZIALE_GRAYS[1]} icon={FileClock} />
+          <Tile label="Confermato" value={jobsForecastTotals.confermato} color={POTENZIALE_GRAYS[2]} icon={CheckCircle2} />
         </div>
       </div>
 
@@ -151,13 +153,14 @@ export default function EconomicOverviewWidget({
       <ProductBreakdownSection fiscalYear={fiscalYear} productBreakdown={productBreakdown} uncategorizedInvoices={uncategorizedInvoices} />
 
       <div>
-        <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-secondary">
-          Uscite — spese fornitori lavori {fiscalYear}, spese fisse {fiscalYear}, costo provider contratti
+        <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-secondary">
+          <Truck size={11} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
+          Flusso in Uscita
         </p>
         <div className="card-shadow grid grid-cols-3 overflow-hidden rounded-lg border border-red-600/30 bg-red-600/5">
-          <Tile label={`Spese fornitori ${fiscalYear}`} value={jobsForecastTotals.speseFornitori} color={USCITE_COLOR} />
-          <Tile label={`Spese fisse ${fiscalYear}`} value={fixedExpensesTotal} color={USCITE_COLOR} />
-          <Tile label="Costo provider contratti" value={contractsStats.providerCostTotal} color={USCITE_COLOR} />
+          <Tile label={`Spese fornitori ${fiscalYear}`} value={jobsForecastTotals.speseFornitori} color={USCITE_COLOR} icon={Truck} />
+          <Tile label={`Spese fisse ${fiscalYear}`} value={fixedExpensesTotal} color={USCITE_COLOR} icon={Wallet} />
+          <Tile label="Costo provider contratti" value={contractsStats.providerCostTotal} color={USCITE_COLOR} icon={Server} />
         </div>
       </div>
 
@@ -165,7 +168,10 @@ export default function EconomicOverviewWidget({
 
       <div className="card-shadow flex items-center justify-between rounded-lg border border-grid-border bg-card-bg px-5 py-4">
         <div>
-          <p className="detail-label">Margine stimato (entrate attuali − uscite)</p>
+          <p className="detail-label flex items-center gap-1.5">
+            <Scale size={11} strokeWidth={1.75} className="shrink-0 text-secondary" aria-hidden="true" />
+            Margine stimato (entrate attuali − uscite)
+          </p>
           <p className="mt-0.5 text-[10px] text-secondary">Non include il potenziale non ancora confermato</p>
         </div>
         <div className="text-right">

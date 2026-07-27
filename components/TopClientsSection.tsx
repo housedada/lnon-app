@@ -1,3 +1,4 @@
+import { Users } from 'lucide-react';
 import type { JobsForecastResult } from '@/lib/db';
 
 function formatExact(value: number): string {
@@ -7,7 +8,10 @@ function formatExact(value: number): string {
 export default function TopClientsSection({ topClients }: { topClients: JobsForecastResult['topClients'] }) {
   return (
     <div>
-      <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-secondary">Top 5 clienti per fatturato</p>
+      <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-secondary">
+        <Users size={11} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
+        Top 5 clienti per fatturato
+      </p>
       <div className="card-shadow rounded-lg border border-grid-border bg-card-bg px-5 py-3">
         {topClients.length === 0 ? (
           <p className="py-2 text-xs text-secondary">Nessuna fattura emessa.</p>

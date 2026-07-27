@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Package, AlertCircle } from 'lucide-react';
 import type { JobsForecastResult } from '@/lib/db';
 
 function formatExact(value: number): string {
@@ -26,7 +27,10 @@ export default function ProductBreakdownSection({
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-[10px] font-medium uppercase tracking-wide text-secondary">Fatturato per prodotto {fiscalYear}</p>
+        <p className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-secondary">
+          <Package size={11} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
+          Fatturato per prodotto {fiscalYear}
+        </p>
         {productBreakdown.length > 0 && <p className="text-[10px] font-medium text-secondary">Totale: {formatExact(total)}</p>}
       </div>
       {productBreakdown.length === 0 ? (
@@ -46,7 +50,8 @@ export default function ProductBreakdownSection({
           </div>
           {uncategorizedInvoices.length > 0 && (
             <div className="border-t border-grid-border px-4 py-3">
-              <p className="detail-label mb-1.5">
+              <p className="detail-label mb-1.5 flex items-center gap-1.5">
+                <AlertCircle size={11} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
                 Fatture con sottovoci non categorizzate ({uncategorizedInvoices.length})
               </p>
               <ul className="space-y-1">
