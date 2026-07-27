@@ -2209,6 +2209,46 @@ export async function getProjectInvoicesWithNumber(): Promise<{ id: string; invo
 }
 
 /**
+ * Fatture progetto già collegate a un documento reale su Fatture in Cloud,
+ * per la sincronizzazione delle sottovoci con prodotto.
+ */
+export async function getProjectInvoicesWithFicId(): Promise<{ id: string; ficInvoiceId: number }[]> {
+  const { data, error } = await supabaseServer
+    .from('project_invoices')
+    .select('id, fic_invoice_id')
+    .not('fic_invoice_id', 'is', null)
+    .is('deleted_at', null);
+  if (error) throw error;
+  return (data ?? []).map((row: { id: string; fic_invoice_id: number }) => ({
+    id: row.id,
+    ficInvoiceId: row.fic_invoice_id,
+  }));
+}
+
+/**
+ * Sostituisce le lineItems di una fattura progetto (usato dalla
+ * sincronizzazione sottovoci da Fatture in Cloud).
+ */
+export async function updateProjectInvoiceLineItems(id: string, lineItems: ProjectInvoiceLineItem[]): Promise<void> {
+  const { error } = await supabaseServer.from('project_invoices').update({ line_items: lineItems }).eq('id', id);
+  if (error) throw error;
+}
+
+/**
+ * Prodotti locali con un fic_id collegato, per mappare le sottovoci FiC
+ * (product_id) al prodotto locale corrispondente.
+ */
+export async function getProductsWithFicId(): Promise<{ id: string; ficId: number }[]> {
+  const { data, error } = await supabaseServer
+    .from('products')
+    .select('id, fic_id')
+    .not('fic_id', 'is', null)
+    .is('deleted_at', null);
+  if (error) throw error;
+  return (data ?? []).map((row: { id: string; fic_id: number }) => ({ id: row.id, ficId: row.fic_id }));
+}
+
+/**
  * Collega una fattura progetto locale alla fattura corrispondente su Fatture in Cloud
  */
 export async function linkProjectInvoiceToFic(id: string, ficInvoiceId: number): Promise<void> {
