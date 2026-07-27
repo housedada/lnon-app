@@ -2240,19 +2240,64 @@ export async function mergeProjectInvoices(ids: string[], createdBy: string): Pr
  * Fatture progetto con numero fattura noto ma non ancora collegate a una
  * fattura reale su Fatture in Cloud, per il match bulk (bulkMatchInvoicesAction)
  */
-export async function getProjectInvoicesWithNumber(): Promise<{ id: string; invoiceNumber: string; totalAmount: number }[]> {
+export async function getProjectInvoicesWithNumber(): Promise<
+  { id: string; invoiceNumber: string; totalAmount: number; invoiceDate?: Date; createdAt: Date }[]
+> {
   const { data, error } = await supabaseServer
     .from('project_invoices')
-    .select('id, invoice_number, total_amount')
+    .select('id, invoice_number, total_amount, invoice_date, created_at')
     .not('invoice_number', 'is', null)
     .is('fic_invoice_id', null)
     .is('deleted_at', null);
   if (error) throw error;
-  return (data ?? []).map((row: { id: string; invoice_number: string; total_amount: number }) => ({
+  return (data ?? []).map((row: { id: string; invoice_number: string; total_amount: number; invoice_date: string | null; created_at: string }) => ({
     id: row.id,
     invoiceNumber: row.invoice_number,
     totalAmount: Number(row.total_amount),
+    invoiceDate: row.invoice_date ? new Date(row.invoice_date) : undefined,
+    createdAt: new Date(row.created_at),
   }));
+}
+
+/**
+ * Fatture progetto emesse ma non ancora collegate a un documento FiC (con o
+ * senza numero fattura locale), per il secondo livello di match per
+ * cliente/importo/data (suggestInvoiceMatchesAction).
+ */
+export async function getProjectInvoicesWithoutFicId(): Promise<
+  { id: string; clientId?: string; clientName: string; totalAmount: number; invoiceDate?: Date; createdAt: Date }[]
+> {
+  const { data, error } = await supabaseServer
+    .from('project_invoices')
+    .select('id, client_id, client_name, total_amount, invoice_date, created_at')
+    .is('fic_invoice_id', null)
+    .is('deleted_at', null)
+    .eq('status', 'fatturata');
+  if (error) throw error;
+  return (data ?? []).map(
+    (row: { id: string; client_id: string | null; client_name: string; total_amount: number; invoice_date: string | null; created_at: string }) => ({
+      id: row.id,
+      clientId: row.client_id ?? undefined,
+      clientName: row.client_name,
+      totalAmount: Number(row.total_amount),
+      invoiceDate: row.invoice_date ? new Date(row.invoice_date) : undefined,
+      createdAt: new Date(row.created_at),
+    })
+  );
+}
+
+/**
+ * Clienti locali con un fic_id collegato, per mappare l'entity di un
+ * documento FiC al cliente LNON corrispondente (match fatture per cliente).
+ */
+export async function getClientsWithFicId(): Promise<{ id: string; ficId: number }[]> {
+  const { data, error } = await supabaseServer
+    .from('clients')
+    .select('id, fic_id')
+    .not('fic_id', 'is', null)
+    .is('deleted_at', null);
+  if (error) throw error;
+  return (data ?? []).map((row: { id: string; fic_id: number }) => ({ id: row.id, ficId: row.fic_id }));
 }
 
 /**

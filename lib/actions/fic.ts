@@ -11,6 +11,8 @@ import {
   linkProductToFic as dbLinkProductToFic,
   getAllClientsWithTaxIds,
   getProjectInvoicesWithNumber,
+  getProjectInvoicesWithoutFicId,
+  getClientsWithFicId,
   linkProjectInvoiceToFic,
   getProjectInvoicesWithFicId,
   updateProjectInvoiceLineItems,
@@ -159,30 +161,46 @@ export async function bulkMatchClientsAction(): Promise<{ matched: number; unmat
 }
 
 const INVOICE_AMOUNT_TOLERANCE = 0.02;
+const INVOICE_MATCH_DATE_WINDOW_DAYS = 60;
+
+// Il numero fattura locale può includere prefissi/anno (es. "136/2024",
+// "FT-0136") mentre FiC restituisce solo il numero puro (136): si confronta
+// solo la parte numerica, disambiguando per anno (i numeri si azzerano ogni
+// anno) per evitare falsi positivi tra anni diversi.
+function normalizeInvoiceNumber(value: string): string {
+  return value.replace(/\D+/g, '');
+}
 
 /**
  * Collega in blocco le fatture progetto storiche (con numero fattura noto,
  * non ancora collegate) alle fatture reali corrispondenti su Fatture in Cloud,
- * confrontando il numero fattura. Se il numero coincide ma l'importo totale
- * differisce oltre la tolleranza di arrotondamento, la riga viene segnalata
- * come "da verificare" invece di essere collegata automaticamente.
+ * confrontando la parte numerica del numero fattura e l'anno (dalla data
+ * fattura o, in mancanza, dalla data di creazione). Se il numero coincide ma
+ * l'importo totale differisce oltre la tolleranza di arrotondamento, la riga
+ * viene segnalata come "da verificare" invece di essere collegata
+ * automaticamente.
  */
 export async function bulkMatchInvoicesAction(): Promise<{ matched: number; unmatched: number; uncertain: number }> {
   await requireSuperadmin();
 
   const [localInvoices, ficInvoices] = await Promise.all([getProjectInvoicesWithNumber(), listAllFicInvoices()]);
 
-  const byNumber = new Map<string, { id: number; amountGross: number | null }>();
+  const byKey = new Map<string, { id: number; amountGross: number | null }>();
   for (const doc of ficInvoices) {
-    if (doc.id == null || doc.number == null) continue;
-    const key = String(doc.number);
-    if (!byNumber.has(key)) byNumber.set(key, { id: doc.id, amountGross: doc.amount_gross ?? null });
+    if (doc.id == null || doc.number == null || !doc.date) continue;
+    const year = doc.date.slice(0, 4);
+    const key = `${normalizeInvoiceNumber(String(doc.number))}|${year}`;
+    if (!byKey.has(key)) byKey.set(key, { id: doc.id, amountGross: doc.amount_gross ?? null });
   }
 
   let matched = 0;
   let uncertain = 0;
   for (const invoice of localInvoices) {
-    const ficMatch = byNumber.get(invoice.invoiceNumber);
+    const normalizedNumber = normalizeInvoiceNumber(invoice.invoiceNumber);
+    if (!normalizedNumber) continue;
+    const referenceDate = invoice.invoiceDate ?? invoice.createdAt;
+    const year = String(referenceDate.getFullYear());
+    const ficMatch = byKey.get(`${normalizedNumber}|${year}`);
     if (!ficMatch) continue;
 
     if (ficMatch.amountGross != null && Math.abs(ficMatch.amountGross - invoice.totalAmount) > INVOICE_AMOUNT_TOLERANCE) {
@@ -199,6 +217,94 @@ export async function bulkMatchInvoicesAction(): Promise<{ matched: number; unma
 
   revalidatePath('/dashboard/invoices');
   return { matched, unmatched: localInvoices.length - matched - uncertain, uncertain };
+}
+
+export interface InvoiceMatchSuggestion {
+  invoiceId: string;
+  clientName: string;
+  localAmount: number;
+  localDate?: string;
+  ficId: number;
+  ficNumber?: string;
+  ficAmount?: number;
+  ficDate?: string;
+}
+
+/**
+ * Propone abbinamenti fattura LNON <-> documento FiC per le fatture rimaste
+ * scollegate dopo il match per numero (bulkMatchInvoicesAction, che copre
+ * solo le fatture con un numero locale valorizzato): stesso cliente (via
+ * fic_id del cliente collegato, o nome normalizzato se il cliente non è
+ * ancora collegato) + importo entro tolleranza + data entro una finestra di
+ * 60 giorni. Propone solo quando esiste un'unica corrispondenza univoca tra
+ * i documenti FiC non ancora collegati a nessun'altra fattura; non collega
+ * nulla da sola, l'utente conferma in un secondo passaggio.
+ */
+export async function suggestInvoiceMatchesAction(): Promise<InvoiceMatchSuggestion[]> {
+  await requireSuperadmin();
+
+  const [localInvoices, ficInvoices, clientsWithFicId, alreadyLinked] = await Promise.all([
+    getProjectInvoicesWithoutFicId(),
+    listAllFicInvoices(),
+    getClientsWithFicId(),
+    getProjectInvoicesWithFicId(),
+  ]);
+
+  const ficIdByClientId = new Map(clientsWithFicId.map((c) => [c.id, c.ficId]));
+  const linkedFicIds = new Set(alreadyLinked.map((inv) => inv.ficInvoiceId));
+  const availableFicInvoices = ficInvoices.filter((doc) => doc.id != null && !linkedFicIds.has(doc.id));
+
+  const suggestions: InvoiceMatchSuggestion[] = [];
+
+  for (const invoice of localInvoices) {
+    const referenceDate = invoice.invoiceDate ?? invoice.createdAt;
+    const expectedFicClientId = invoice.clientId ? ficIdByClientId.get(invoice.clientId) : undefined;
+    const normalizedClientName = normalizeName(invoice.clientName);
+
+    const candidates = availableFicInvoices.filter((doc) => {
+      const clientMatches =
+        expectedFicClientId != null ? doc.entity?.id === expectedFicClientId : normalizeName(doc.entity?.name ?? '') === normalizedClientName;
+      if (!clientMatches) return false;
+
+      const amountMatches = doc.amount_gross == null || Math.abs(doc.amount_gross - invoice.totalAmount) <= INVOICE_AMOUNT_TOLERANCE;
+      if (!amountMatches) return false;
+
+      if (!doc.date) return true;
+      const daysDiff = Math.abs((referenceDate.getTime() - new Date(doc.date).getTime()) / (1000 * 60 * 60 * 24));
+      return daysDiff <= INVOICE_MATCH_DATE_WINDOW_DAYS;
+    });
+
+    if (candidates.length === 1) {
+      const doc = candidates[0];
+      suggestions.push({
+        invoiceId: invoice.id,
+        clientName: invoice.clientName,
+        localAmount: invoice.totalAmount,
+        localDate: referenceDate.toISOString().slice(0, 10),
+        ficId: doc.id!,
+        ficNumber: doc.number != null ? String(doc.number) : undefined,
+        ficAmount: doc.amount_gross ?? undefined,
+        ficDate: doc.date ?? undefined,
+      });
+    }
+  }
+
+  return suggestions;
+}
+
+/**
+ * Collega in blocco le coppie fattura LNON / documento FiC confermate
+ * dall'utente dopo la revisione dei suggerimenti.
+ */
+export async function confirmInvoiceMatchesAction(pairs: { invoiceId: string; ficId: number }[]): Promise<number> {
+  await requireSuperadmin();
+
+  for (const pair of pairs) {
+    await linkProjectInvoiceToFic(pair.invoiceId, pair.ficId);
+  }
+
+  revalidatePath('/dashboard/invoices');
+  return pairs.length;
 }
 
 /**
