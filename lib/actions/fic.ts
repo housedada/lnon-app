@@ -12,6 +12,9 @@ import {
   getAllClientsWithTaxIds,
   getProjectInvoicesWithNumber,
   linkProjectInvoiceToFic,
+  getProjectInvoicesWithFicId,
+  updateProjectInvoiceLineItems,
+  getProductsWithFicId,
 } from '@/lib/db';
 import {
   createFicClientFromLnonClient,
@@ -22,6 +25,7 @@ import {
   importAllFicProducts,
   listAllFicClients,
   listAllFicInvoices,
+  getFicIssuedDocumentItems,
 } from '@/lib/fattureincloud';
 import type { FicClientSummary, FicProductSummary } from '@/lib/types';
 
@@ -297,4 +301,40 @@ export async function importAllFicProductsAction(): Promise<number> {
   const count = await importAllFicProducts();
   revalidatePath('/dashboard/settings/products');
   return count;
+}
+
+/**
+ * Scarica da Fatture in Cloud le sottovoci reali (con prodotto) di tutte le
+ * fatture progetto già collegate a un documento FiC, sostituendo le lineItems
+ * locali. Tollerante agli errori: una fattura che fallisce non blocca le
+ * altre. Riproponibile: ogni click sovrascrive con l'ultimo stato FiC.
+ */
+export async function syncInvoiceLineItemsFromFicAction(): Promise<{ synced: number; errors: number }> {
+  await requireSuperadmin();
+
+  const [invoices, products] = await Promise.all([getProjectInvoicesWithFicId(), getProductsWithFicId()]);
+  const productIdByFicId = new Map(products.map((p) => [p.ficId, p.id]));
+
+  let synced = 0;
+  let errors = 0;
+
+  for (const invoice of invoices) {
+    try {
+      const items = await getFicIssuedDocumentItems(invoice.ficInvoiceId);
+      const lineItems = items.map((item) => ({
+        label: item.description,
+        netAmount: item.netAmount,
+        productId: item.ficProductId != null ? productIdByFicId.get(item.ficProductId) : undefined,
+      }));
+      await updateProjectInvoiceLineItems(invoice.id, lineItems);
+      synced += 1;
+    } catch (err) {
+      errors += 1;
+      console.warn(`[syncInvoiceLineItemsFromFicAction] fattura ${invoice.id}: errore nel recupero sottovoci da FIC`, err);
+    }
+  }
+
+  revalidatePath('/dashboard/reports');
+  revalidatePath('/dashboard/invoices');
+  return { synced, errors };
 }
