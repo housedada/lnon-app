@@ -1,7 +1,6 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { ChevronDown, Menu, X } from 'lucide-react';
@@ -127,13 +126,14 @@ export default function Sidebar({ role }: SidebarProps) {
       </aside>
       <div className="hidden md:block md:w-[188px] md:shrink-0" aria-hidden="true" />
 
-      {/* Drawer overlay mobile */}
+      {/* Drawer overlay mobile: z-index sotto la topbar (z-40) e ancorato
+          sotto di essa (top-[50px]), così la topbar resta sempre visibile
+          sopra il drawer invece di finirci coperta dietro. */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} aria-hidden="true" />
-          <div className="absolute inset-y-0 left-0 w-64 shadow-xl">
-            <div className="flex items-center justify-between border-b border-neutral-800 bg-[var(--color-chrome-bg)] px-4 py-3">
-              <Image src="/logo.png" alt="Housedada" width={90} height={18} />
+        <div className="fixed inset-0 z-30 md:hidden">
+          <div className="absolute inset-0 top-[50px] bg-black/50" onClick={() => setMobileOpen(false)} aria-hidden="true" />
+          <div className="absolute left-0 top-[50px] h-[calc(100vh-50px)] w-64 shadow-xl">
+            <div className="flex items-center justify-end border-b border-neutral-800 bg-[var(--color-chrome-bg)] px-4 py-3">
               <button
                 onClick={() => setMobileOpen(false)}
                 aria-label="Chiudi menu"
