@@ -29,14 +29,14 @@ export default function SyncJobsClientsButton() {
         disabled={isPending}
         aria-label="Sincronizza lavori con anagrafica clienti"
         title="Cerca corrispondenze per nome tra lavori e clienti"
-        className="flex items-center gap-1.5 rounded-lg border border-grid-border px-4 py-2 text-sm font-medium text-primary transition hover:bg-row-hover disabled:opacity-60"
+        className="flex items-center gap-1.5 rounded-lg border border-grid-border px-2.5 py-2 text-sm font-medium text-primary transition hover:bg-row-hover disabled:opacity-60 sm:px-4"
       >
         {isPending ? (
           <Loader2 size={15} strokeWidth={1.75} className="animate-spin" aria-hidden="true" />
         ) : (
           <RefreshCw size={15} strokeWidth={1.75} aria-hidden="true" />
         )}
-        Sincronizza clienti
+        <span className="hidden sm:inline">Sincronizza clienti</span>
       </button>
 
       {suggestions && <JobClientMatchModal suggestions={suggestions} onClose={() => setSuggestions(null)} />}

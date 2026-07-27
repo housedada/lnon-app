@@ -8,7 +8,13 @@ import HourlyWorkEntryForm from '@/components/HourlyWorkEntryForm';
 import { createHourlyWorkEntryAction } from '@/lib/actions/hourlyBilling';
 import { notify } from '@/lib/notify';
 
-export default function NewHourlyWorkEntryButton({ hourlyContractId }: { hourlyContractId: string }) {
+export default function NewHourlyWorkEntryButton({
+  hourlyContractId,
+  compact,
+}: {
+  hourlyContractId: string;
+  compact?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -26,14 +32,29 @@ export default function NewHourlyWorkEntryButton({ hourlyContractId }: { hourlyC
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="btn-accent flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
-      >
-        <Plus size={16} strokeWidth={2} aria-hidden="true" />
-        Nuova lavorazione
-      </button>
+      {compact ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen(true);
+          }}
+          aria-label="Nuova lavorazione"
+          title="Nuova lavorazione"
+          className="text-secondary transition hover:text-primary"
+        >
+          <Plus size={15} strokeWidth={1.75} />
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="btn-accent flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
+        >
+          <Plus size={16} strokeWidth={2} aria-hidden="true" />
+          Nuova lavorazione
+        </button>
+      )}
       {open && (
         <FormPageModal
           title="Nuova lavorazione"

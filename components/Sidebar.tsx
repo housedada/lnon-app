@@ -103,12 +103,14 @@ function SidebarContent({ role, onNavigate }: SidebarProps & { onNavigate?: () =
 
 export default function Sidebar({ role }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+  const activePageLabel = NAV_ITEMS.find((item) => pathname?.startsWith(item.href))?.label;
 
   return (
     <div className="md:contents">
       {/* Pulsante hamburger mobile (la topbar ospita già logo/utente) */}
       <div className="flex items-center justify-between border-b border-neutral-800 bg-[var(--color-chrome-bg)] px-4 py-2 md:hidden">
-        <span className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Menu</span>
+        <span className="truncate text-sm font-bold text-white">{activePageLabel}</span>
         <button
           onClick={() => setMobileOpen(true)}
           aria-label="Apri menu"

@@ -7,6 +7,7 @@ import FixedExpenseAmountInput from '@/components/FixedExpenseAmountInput';
 import FixedExpenseActiveToggle from '@/components/FixedExpenseActiveToggle';
 import AddFixedExpenseCategoryModal from '@/components/AddFixedExpenseCategoryModal';
 import DeleteFixedExpenseCategoryButton from '@/components/DeleteFixedExpenseCategoryButton';
+import RowActionsCell from '@/components/RowActionsCell';
 
 export const metadata = { title: 'Spese Fisse' };
 
@@ -32,6 +33,7 @@ export default async function SpeseFissePage({ searchParams }: { searchParams: P
   const canCreate = hasPermission(role, 'fixed_expenses', 'create');
   const canDelete = canDeleteResource(role, '', '', 'fixed_expenses');
   const yearOptions = [currentYear + 1, currentYear, currentYear - 1, currentYear - 2];
+  const gridTemplate = 'repeat(3, minmax(max-content, 1fr)) max-content';
 
   return (
     <div>
@@ -43,51 +45,45 @@ export default async function SpeseFissePage({ searchParams }: { searchParams: P
         </div>
       </div>
 
-      <div className="overflow-x-auto p-6">
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-grid-border text-left text-secondary">
-              <th className="px-3 py-2 font-medium">Categoria</th>
-              <th className="px-3 py-2 text-right font-medium">Importo</th>
-              <th className="px-3 py-2 font-medium">Stato</th>
-              {canDelete && <th className="px-3 py-2 font-medium">Azioni</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.categoryId} className="border-b border-grid-border/60 text-primary">
-                <td className="px-3 py-2">{row.categoryLabel}</td>
-                <td className="px-3 py-2 text-right">
-                  <FixedExpenseAmountInput categoryId={row.categoryId} fiscalYear={fiscalYear} amount={row.amount} isActive={row.isActive} />
-                </td>
-                <td className="px-3 py-2">
-                  <FixedExpenseActiveToggle categoryId={row.categoryId} fiscalYear={fiscalYear} amount={row.amount} isActive={row.isActive} />
-                </td>
-                {canDelete && (
-                  <td className="px-3 py-2">
-                    <DeleteFixedExpenseCategoryButton categoryId={row.categoryId} categoryLabel={row.categoryLabel} />
-                  </td>
-                )}
-              </tr>
-            ))}
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={canDelete ? 4 : 3} className="px-3 py-8 text-center text-secondary">
-                  Nessuna categoria di spesa fissa.
-                </td>
-              </tr>
-            )}
-          </tbody>
-          {rows.length > 0 && (
-            <tfoot>
-              <tr className="border-t-2 border-grid-border font-semibold text-primary">
-                <td className="px-3 py-3">Totale (voci incluse)</td>
-                <td className="px-3 py-3 text-right">{formatEuro(total)}</td>
-                <td colSpan={canDelete ? 2 : 1} />
-              </tr>
-            </tfoot>
+      <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
+        <div className="grid w-full text-[12px]" style={{ gridTemplateColumns: gridTemplate }}>
+          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Categoria</div>
+          <div className="list-header-cell flex items-center justify-end whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Importo</div>
+          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Stato</div>
+          <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
+
+          {rows.length === 0 && (
+            <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
+              Nessuna categoria di spesa fissa.
+            </div>
           )}
-        </table>
+
+          {rows.map((row) => (
+            <div key={row.categoryId} className="group contents">
+              <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 font-semibold tracking-[0.01em] text-primary group-hover:bg-row-hover">
+                {row.categoryLabel}
+              </div>
+              <div className="list-row-cell flex items-center justify-end whitespace-nowrap border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
+                <FixedExpenseAmountInput categoryId={row.categoryId} fiscalYear={fiscalYear} amount={row.amount} isActive={row.isActive} />
+              </div>
+              <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
+                <FixedExpenseActiveToggle categoryId={row.categoryId} fiscalYear={fiscalYear} amount={row.amount} isActive={row.isActive} />
+              </div>
+              <RowActionsCell>
+                {canDelete && <DeleteFixedExpenseCategoryButton categoryId={row.categoryId} categoryLabel={row.categoryLabel} />}
+              </RowActionsCell>
+            </div>
+          ))}
+
+          {rows.length > 0 && (
+            <div className="contents">
+              <div className="flex items-center whitespace-nowrap border-t-2 border-grid-border px-3 py-3 font-semibold text-primary">Totale (voci incluse)</div>
+              <div className="flex items-center justify-end whitespace-nowrap border-t-2 border-grid-border px-3 py-3 font-semibold text-primary">{formatEuro(total)}</div>
+              <div className="border-t-2 border-grid-border" />
+              <div className="sticky right-0 z-[6] border-t-2 border-l border-grid-border bg-card-bg" />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
