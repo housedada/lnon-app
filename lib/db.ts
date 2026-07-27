@@ -2259,16 +2259,17 @@ export async function getProjectInvoicesWithNumber(): Promise<{ id: string; invo
  * Fatture progetto già collegate a un documento reale su Fatture in Cloud,
  * per la sincronizzazione delle sottovoci con prodotto.
  */
-export async function getProjectInvoicesWithFicId(): Promise<{ id: string; ficInvoiceId: number }[]> {
+export async function getProjectInvoicesWithFicId(): Promise<{ id: string; ficInvoiceId: number; clientName: string }[]> {
   const { data, error } = await supabaseServer
     .from('project_invoices')
-    .select('id, fic_invoice_id')
+    .select('id, fic_invoice_id, client_name')
     .not('fic_invoice_id', 'is', null)
     .is('deleted_at', null);
   if (error) throw error;
-  return (data ?? []).map((row: { id: string; fic_invoice_id: number }) => ({
+  return (data ?? []).map((row: { id: string; fic_invoice_id: number; client_name: string }) => ({
     id: row.id,
     ficInvoiceId: row.fic_invoice_id,
+    clientName: row.client_name,
   }));
 }
 

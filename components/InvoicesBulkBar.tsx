@@ -2,25 +2,30 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Archive, Combine, FileOutput, Loader2 } from 'lucide-react';
+import { Archive, Combine, FileOutput, Loader2, RefreshCw } from 'lucide-react';
 import { useProjectInvoicesSelectionStore } from '@/lib/store/projectInvoicesSelectionStore';
 import { archiveProjectInvoicesAction, mergeProjectInvoicesAction, generateFicInvoicesBulkAction } from '@/lib/actions/projectInvoices';
+import { syncInvoiceLineItemsForIdsAction, type SyncLineItemsResult } from '@/lib/actions/fic';
 import DoubleConfirmModal from '@/components/DoubleConfirmModal';
+import SyncResultsModal from '@/components/SyncResultsModal';
 import { notify } from '@/lib/notify';
 import type { ProjectInvoiceStatus } from '@/lib/types';
 
 export default function InvoicesBulkBar({
   invoiceGroupKeys,
   invoiceStatuses,
+  isSuperadmin,
 }: {
   invoiceGroupKeys: Record<string, string>;
   invoiceStatuses: Record<string, { status: ProjectInvoiceStatus; ficInvoiceId?: number }>;
+  isSuperadmin: boolean;
 }) {
   const selected = useProjectInvoicesSelectionStore((s) => s.selected);
   const clear = useProjectInvoicesSelectionStore((s) => s.clear);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const [ficConfirmOpen, setFicConfirmOpen] = useState(false);
+  const [syncResults, setSyncResults] = useState<SyncLineItemsResult[] | null>(null);
 
   if (selected.length === 0) return null;
 
@@ -29,6 +34,8 @@ export default function InvoicesBulkBar({
   const canGenerateFic =
     selected.length >= 1 &&
     selected.every((id) => invoiceStatuses[id]?.status === 'da_fatturare' && !invoiceStatuses[id]?.ficInvoiceId);
+  const syncEligibleIds = selected.filter((id) => invoiceStatuses[id]?.ficInvoiceId);
+  const canSync = isSuperadmin && syncEligibleIds.length > 0;
 
   function handleArchive() {
     startTransition(async () => {
@@ -62,6 +69,16 @@ export default function InvoicesBulkBar({
     setFicConfirmOpen(false);
   }
 
+  async function handleSyncLineItems() {
+    const skipped = selected.length - syncEligibleIds.length;
+    const res = await syncInvoiceLineItemsForIdsAction(syncEligibleIds);
+    if (skipped > 0) {
+      notify(`${skipped} fattur${skipped === 1 ? 'a esclusa' : 'e escluse'} (non collegate a FIC).`);
+    }
+    setSyncResults(res.results);
+    router.refresh();
+  }
+
   return (
     <div className="flex items-center gap-2">
       {canMerge && (
@@ -92,6 +109,18 @@ export default function InvoicesBulkBar({
           Genera su FIC ({selected.length})
         </button>
       )}
+      {canSync && (
+        <button
+          type="button"
+          onClick={handleSyncLineItems}
+          disabled={isPending}
+          title="Sincronizza le sottovoci reali da Fatture in Cloud per le fatture selezionate collegate"
+          className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-grid-border px-3 py-1.5 text-xs font-medium text-primary transition hover:bg-row-hover disabled:opacity-60"
+        >
+          <RefreshCw size={14} strokeWidth={1.75} aria-hidden="true" />
+          Sincronizza sottovoci ({syncEligibleIds.length})
+        </button>
+      )}
       <button
         type="button"
         onClick={handleArchive}
@@ -111,6 +140,7 @@ export default function InvoicesBulkBar({
           onClose={() => setFicConfirmOpen(false)}
         />
       )}
+      {syncResults && <SyncResultsModal results={syncResults} onClose={() => setSyncResults(null)} />}
     </div>
   );
 }

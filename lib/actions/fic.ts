@@ -309,14 +309,19 @@ export async function importAllFicProductsAction(): Promise<number> {
  * locali. Tollerante agli errori: una fattura che fallisce non blocca le
  * altre. Riproponibile: ogni click sovrascrive con l'ultimo stato FiC.
  */
-export async function syncInvoiceLineItemsFromFicAction(): Promise<{ synced: number; errors: number }> {
-  await requireSuperadmin();
+export interface SyncLineItemsResult {
+  id: string;
+  clientName: string;
+  success: boolean;
+  message: string;
+}
 
-  const [invoices, products] = await Promise.all([getProjectInvoicesWithFicId(), getProductsWithFicId()]);
+async function syncInvoiceLineItemsCore(scopeIds: string[] | null): Promise<SyncLineItemsResult[]> {
+  const [allInvoices, products] = await Promise.all([getProjectInvoicesWithFicId(), getProductsWithFicId()]);
   const productIdByFicId = new Map(products.map((p) => [p.ficId, p.id]));
+  const invoices = scopeIds ? allInvoices.filter((inv) => scopeIds.includes(inv.id)) : allInvoices;
 
-  let synced = 0;
-  let errors = 0;
+  const results: SyncLineItemsResult[] = [];
 
   for (const invoice of invoices) {
     try {
@@ -327,14 +332,40 @@ export async function syncInvoiceLineItemsFromFicAction(): Promise<{ synced: num
         productId: item.ficProductId != null ? productIdByFicId.get(item.ficProductId) : undefined,
       }));
       await updateProjectInvoiceLineItems(invoice.id, lineItems);
-      synced += 1;
+      results.push({
+        id: invoice.id,
+        clientName: invoice.clientName,
+        success: true,
+        message: `${lineItems.length} sottovoc${lineItems.length === 1 ? 'e' : 'i'} sincronizzat${lineItems.length === 1 ? 'a' : 'e'}.`,
+      });
     } catch (err) {
-      errors += 1;
-      console.warn(`[syncInvoiceLineItemsFromFicAction] fattura ${invoice.id}: errore nel recupero sottovoci da FIC`, err);
+      const message = err instanceof Error ? err.message : 'Errore sconosciuto nel recupero da Fatture in Cloud.';
+      results.push({ id: invoice.id, clientName: invoice.clientName, success: false, message });
+      console.warn(`[syncInvoiceLineItemsCore] fattura ${invoice.id} (FIC #${invoice.ficInvoiceId}): ${message}`, err);
     }
   }
 
   revalidatePath('/dashboard/reports');
   revalidatePath('/dashboard/invoices');
-  return { synced, errors };
+  return results;
+}
+
+/**
+ * Sincronizza le sottovoci di TUTTE le fatture collegate a un documento FIC.
+ */
+export async function syncInvoiceLineItemsFromFicAction(): Promise<{ synced: number; errors: number }> {
+  await requireSuperadmin();
+  const results = await syncInvoiceLineItemsCore(null);
+  return { synced: results.filter((r) => r.success).length, errors: results.filter((r) => !r.success).length };
+}
+
+/**
+ * Sincronizza le sottovoci solo delle fatture indicate (singola o selezione
+ * multipla dalla lista Fatture), con il dettaglio per fattura per il modale
+ * di riepilogo.
+ */
+export async function syncInvoiceLineItemsForIdsAction(ids: string[]): Promise<{ results: SyncLineItemsResult[] }> {
+  await requireSuperadmin();
+  const results = await syncInvoiceLineItemsCore(ids);
+  return { results };
 }

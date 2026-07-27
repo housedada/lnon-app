@@ -2,13 +2,15 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Archive, Trash2, Bug, FileOutput, Eye } from 'lucide-react';
+import { Archive, Trash2, Bug, FileOutput, Eye, RefreshCw } from 'lucide-react';
 import RowContextMenu from '@/components/RowContextMenu';
 import InvoiceRowSelectCheckbox from '@/components/InvoiceRowSelectCheckbox';
 import DoubleConfirmModal from '@/components/DoubleConfirmModal';
 import InvoicePreviewModal from '@/components/InvoicePreviewModal';
+import SyncResultsModal from '@/components/SyncResultsModal';
 import MaskedAmount from '@/components/MaskedAmount';
 import { archiveProjectInvoicesAction, deleteProjectInvoiceAction, generateFicInvoiceAction } from '@/lib/actions/projectInvoices';
+import { syncInvoiceLineItemsForIdsAction, type SyncLineItemsResult } from '@/lib/actions/fic';
 import { notify } from '@/lib/notify';
 import type { ProjectInvoice, ProjectInvoiceStatus } from '@/lib/types';
 
@@ -53,6 +55,7 @@ export default function ProjectInvoiceRow({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [ficConfirmOpen, setFicConfirmOpen] = useState(false);
   const [ficOverwriteWarning, setFicOverwriteWarning] = useState<string | null>(null);
+  const [syncResults, setSyncResults] = useState<SyncLineItemsResult[] | null>(null);
   const router = useRouter();
 
   async function handleDeleteConfirm() {
@@ -79,6 +82,12 @@ export default function ProjectInvoiceRow({
     setFicConfirmOpen(false);
     setFicOverwriteWarning(null);
     if (res.success) router.refresh();
+  }
+
+  async function handleSyncLineItems() {
+    const res = await syncInvoiceLineItemsForIdsAction([invoice.id]);
+    setSyncResults(res.results);
+    router.refresh();
   }
 
   function handleInspect() {
@@ -162,6 +171,8 @@ export default function ProjectInvoiceRow({
           onClose={() => { setFicConfirmOpen(false); setFicOverwriteWarning(null); }}
         />
       )}
+
+      {syncResults && <SyncResultsModal results={syncResults} onClose={() => setSyncResults(null)} />}
     </>
   );
 
@@ -182,6 +193,12 @@ export default function ProjectInvoiceRow({
             <FileOutput size={15} strokeWidth={1.75} aria-hidden="true" />
             Genera su FIC
           </button>
+          {isSuperadmin && invoice.ficInvoiceId && (
+            <button type="button" onClick={handleSyncLineItems} className={MENU_ROW_CLASS}>
+              <RefreshCw size={15} strokeWidth={1.75} aria-hidden="true" />
+              Sincronizza sottovoci
+            </button>
+          )}
           <button type="button" onClick={handleArchive} className={MENU_ROW_CLASS}>
             <Archive size={15} strokeWidth={1.75} aria-hidden="true" />
             Archivia

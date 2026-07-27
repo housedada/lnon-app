@@ -137,7 +137,7 @@ async function InvoicesListSection({
         showSyncFilter={false}
         totalCount={total}
         totalLabel="fatture"
-        extraTopControls={canManage ? <InvoicesBulkBar invoiceGroupKeys={invoiceGroupKeys} invoiceStatuses={invoiceStatuses} /> : undefined}
+        extraTopControls={canManage ? <InvoicesBulkBar invoiceGroupKeys={invoiceGroupKeys} invoiceStatuses={invoiceStatuses} isSuperadmin={isSuperadmin} /> : undefined}
       >
         <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
           <div className="grid w-full text-[12px]" style={{ gridTemplateColumns: gridCols }}>
