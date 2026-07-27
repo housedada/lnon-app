@@ -26,13 +26,33 @@ function Tile({
   sub,
   color,
   icon: Icon,
+  valueAlign = 'left',
 }: {
   label: string;
   value: number;
   sub?: string;
   color: string;
   icon?: typeof Receipt;
+  valueAlign?: 'left' | 'right';
 }) {
+  if (valueAlign === 'right') {
+    return (
+      <div className="flex items-center justify-between gap-3 border-b border-r border-grid-border px-[15px] py-3 last:border-r-0 sm:px-5">
+        <p className="detail-label flex min-w-0 items-center gap-1.5">
+          {Icon && <Icon size={11} strokeWidth={1.75} className="shrink-0" style={{ color }} aria-hidden="true" />}
+          <span className="truncate">{label}</span>
+        </p>
+        <div className="shrink-0 text-right">
+          <p className="text-xl font-semibold" style={{ color }}>
+            {formatCompact(value)}
+          </p>
+          <p className="mt-0.5 text-[10px] text-secondary">{formatExact(value)}</p>
+          {sub && <p className="mt-0.5 text-[10px] text-secondary">{sub}</p>}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="border-b border-r border-grid-border px-[15px] py-3 last:border-r-0 sm:px-5">
       <p className="detail-label flex items-center gap-1.5">
@@ -110,7 +130,7 @@ export default function EconomicOverviewWidget({
       <div>
         <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-secondary">
           <Receipt size={11} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
-          Entrate attuali {fiscalYear} — contratti web e conteggio orario sono dettaglio, già inclusi nel fatturato
+          Flusso in Entrata
         </p>
         <div className="card-shadow grid grid-cols-2 overflow-hidden rounded-lg border border-grid-border bg-card-bg sm:grid-cols-3">
           <Tile
@@ -158,9 +178,9 @@ export default function EconomicOverviewWidget({
           Flusso in Uscita
         </p>
         <div className="card-shadow grid grid-cols-1 overflow-hidden rounded-lg border border-red-600/30 bg-red-600/5 sm:grid-cols-3">
-          <Tile label={`Spese fornitori ${fiscalYear}`} value={jobsForecastTotals.speseFornitori} color={USCITE_COLOR} icon={Truck} />
-          <Tile label={`Spese fisse ${fiscalYear}`} value={fixedExpensesTotal} color={USCITE_COLOR} icon={Wallet} />
-          <Tile label="Costo provider contratti" value={contractsStats.providerCostTotal} color={USCITE_COLOR} icon={Server} />
+          <Tile label={`Spese fornitori ${fiscalYear}`} value={jobsForecastTotals.speseFornitori} color={USCITE_COLOR} icon={Truck} valueAlign="right" />
+          <Tile label={`Spese fisse ${fiscalYear}`} value={fixedExpensesTotal} color={USCITE_COLOR} icon={Wallet} valueAlign="right" />
+          <Tile label="Costo provider contratti" value={contractsStats.providerCostTotal} color={USCITE_COLOR} icon={Server} valueAlign="right" />
         </div>
       </div>
 
