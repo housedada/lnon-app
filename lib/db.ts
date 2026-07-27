@@ -581,7 +581,8 @@ export async function getJobsForecast(fiscalYear: number): Promise<JobsForecastR
       .from('project_invoices')
       .select('id, job_id, client_id, client_name, net_amount, invoice_date, created_at, paid_at, invoice_number')
       .in('job_id', jobIds)
-      .eq('status', 'fatturata');
+      .eq('status', 'fatturata')
+      .is('deleted_at', null);
     if (invoicesError) throw invoicesError;
     invoiceRows = data ?? [];
   }
@@ -2068,7 +2069,7 @@ export async function getProjectInvoices(filters?: {
         const end = `${filters.archivedYear + 1}-01-01T00:00:00.000Z`;
         query = query.gte('archived_at', start).lt('archived_at', end);
       }
-    } else {
+    } else if (!filters?.unpaid) {
       query = query.is('archived_at', null);
     }
   }
@@ -2085,7 +2086,8 @@ export async function getProjectInvoices(filters?: {
       .from('jobs')
       .select('id')
       .eq('fiscal_year', filters.jobFiscalYear)
-      .is('deleted_at', null);
+      .is('deleted_at', null)
+      .neq('status', 'cancelled');
     if (jobsError) throw jobsError;
     const jobIds = (jobRows ?? []).map((r: any) => r.id);
     // Nessun job per quell'anno: sentinella impossibile per garantire zero righe

@@ -80,7 +80,7 @@ async function InvoicesListSection({
   const currentPage = Math.max(1, Number(page) || 1);
   const offset = (currentPage - 1) * pageSize;
   const isUnpaidFilter = unpaid === '1';
-  const jobFiscalYearNum = jobFiscalYear ? Number(jobFiscalYear) : undefined;
+  const jobFiscalYearNum = jobFiscalYear && Number.isFinite(Number(jobFiscalYear)) ? Number(jobFiscalYear) : undefined;
 
   const { data: invoices, total } = await getProjectInvoices({
     search: q,

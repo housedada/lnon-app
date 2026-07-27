@@ -14,7 +14,7 @@ export default function TopClientsSection({ topClients }: { topClients: JobsFore
         ) : (
           <ol className="space-y-2">
             {topClients.map((client, i) => (
-              <li key={client.clientName} className="flex items-center justify-between text-sm">
+              <li key={`${i}-${client.clientName}`} className="flex items-center justify-between text-sm">
                 <span className="flex items-center gap-2 truncate text-primary">
                   <span className="text-xs text-secondary">{i + 1}.</span>
                   {client.clientName}
