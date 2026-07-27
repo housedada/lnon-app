@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Pencil, RefreshCw, AlertTriangle, Trash2, Bug } from 'lucide-react';
 import RowContextMenu from '@/components/RowContextMenu';
 import DoubleConfirmModal from '@/components/DoubleConfirmModal';
+import RowActionsCell from '@/components/RowActionsCell';
 import { deleteProductFromListAction } from '@/lib/actions/products';
 import { notify } from '@/lib/notify';
 import type { Product } from '@/lib/types';
@@ -99,7 +100,7 @@ export default function ProductRow({
       {ficConnection && (
         <div className="list-row-cell flex items-center whitespace-nowrap border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">{ficBadge(product.ficSyncStatus)}</div>
       )}
-      <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-4 group-hover:bg-row-hover">
+      <RowActionsCell>
         {ficConnection && isSuperadmin && product.ficSyncStatus !== 'synced' && (
           <Link
             href={`/dashboard/settings/products/${product.id}/sync-fic`}
@@ -120,7 +121,7 @@ export default function ProductRow({
             <Pencil size={15} strokeWidth={1.75} />
           </Link>
         )}
-      </div>
+      </RowActionsCell>
 
       {deleteOpen && (
         <DoubleConfirmModal

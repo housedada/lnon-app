@@ -8,6 +8,7 @@ import ContractLinkButton from '@/components/ContractLinkButton';
 import DoubleConfirmModal from '@/components/DoubleConfirmModal';
 import DetailModal, { type DetailSection } from '@/components/DetailModal';
 import MaskedAmount from '@/components/MaskedAmount';
+import RowActionsCell from '@/components/RowActionsCell';
 import { deleteContractFromListAction } from '@/lib/actions/contracts';
 import { notify } from '@/lib/notify';
 import type { Contract, ContractStatus } from '@/lib/types';
@@ -184,7 +185,7 @@ export default function ContractRow({
           {renderCell(contract, col.key, showAmounts)}
         </div>
       ))}
-      <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 border-b border-l border-grid-border bg-card-bg px-4 group-hover:bg-row-hover">
+      <RowActionsCell>
         <button
           type="button"
           onClick={() => setDetailOpen(true)}
@@ -207,7 +208,7 @@ export default function ContractRow({
             <Pencil size={15} strokeWidth={1.75} />
           </Link>
         )}
-      </div>
+      </RowActionsCell>
 
       {detailOpen && (
         <DetailModal

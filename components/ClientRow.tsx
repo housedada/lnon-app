@@ -10,6 +10,7 @@ import RowContextMenu from '@/components/RowContextMenu';
 import FormPageModal from '@/components/FormPageModal';
 import JobForm from '@/components/JobForm';
 import DoubleConfirmModal from '@/components/DoubleConfirmModal';
+import RowActionsCell from '@/components/RowActionsCell';
 import { createJobAction } from '@/lib/actions/jobs';
 import { deleteClientFromListAction } from '@/lib/actions/clients';
 import { notify } from '@/lib/notify';
@@ -180,7 +181,7 @@ export default function ClientRow({
         </div>
       )}
 
-      <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-4 group-hover:bg-row-hover">
+      <RowActionsCell>
         {canCreateJobs && (
           <NewJobFromClientButton
             clientId={client.id}
@@ -219,7 +220,7 @@ export default function ClientRow({
             <Pencil size={15} strokeWidth={1.75} />
           </Link>
         )}
-      </div>
+      </RowActionsCell>
 
       {detailOpen && (
         <DetailModal title={client.name} sections={buildDetailSections(client)} onClose={() => setDetailOpen(false)} />

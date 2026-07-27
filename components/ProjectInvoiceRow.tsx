@@ -8,6 +8,7 @@ import InvoiceRowSelectCheckbox from '@/components/InvoiceRowSelectCheckbox';
 import DoubleConfirmModal from '@/components/DoubleConfirmModal';
 import InvoicePreviewModal from '@/components/InvoicePreviewModal';
 import SyncResultsModal from '@/components/SyncResultsModal';
+import RowActionsCell from '@/components/RowActionsCell';
 import MaskedAmount from '@/components/MaskedAmount';
 import { archiveProjectInvoicesAction, deleteProjectInvoiceAction, generateFicInvoiceAction } from '@/lib/actions/projectInvoices';
 import { syncInvoiceLineItemsForIdsAction, type SyncLineItemsResult } from '@/lib/actions/fic';
@@ -126,7 +127,7 @@ export default function ProjectInvoiceRow({
         )}
       </div>
 
-      <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-4 group-hover:bg-row-hover">
+      <RowActionsCell>
         <button type="button" onClick={() => setPreviewOpen(true)} aria-label="Vedi fattura" title="Vedi fattura" className="text-secondary transition hover:text-primary">
           <Eye size={15} strokeWidth={1.75} />
         </button>
@@ -140,7 +141,7 @@ export default function ProjectInvoiceRow({
             </button>
           </>
         )}
-      </div>
+      </RowActionsCell>
 
       {previewOpen && (
         <InvoicePreviewModal

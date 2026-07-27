@@ -15,6 +15,7 @@ import ArchiveJobButton from '@/components/ArchiveJobButton';
 import DoubleConfirmModal from '@/components/DoubleConfirmModal';
 import DetailModal, { type DetailSection } from '@/components/DetailModal';
 import MaskedAmount from '@/components/MaskedAmount';
+import RowActionsCell from '@/components/RowActionsCell';
 import { deleteJobFromListAction } from '@/lib/actions/jobs';
 import { notify } from '@/lib/notify';
 import type { Job, JobStatus } from '@/lib/types';
@@ -205,7 +206,7 @@ export default function JobRow({
       <div onClick={() => setModal('detail')} className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{showAmounts ? formatAmount(job.estimatedBudget) : <MaskedAmount />}</div>
       <div onClick={() => setModal('detail')} className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{formatDate(job.endDate)}</div>
 
-      <div className="sticky right-0 z-[5] flex items-center justify-end gap-2.5 whitespace-nowrap border-b border-l border-grid-border bg-card-bg px-4 group-hover:bg-row-hover">
+      <RowActionsCell>
         <button
           type="button"
           onClick={() => setModal('detail')}
@@ -227,7 +228,7 @@ export default function JobRow({
             <Pencil size={15} strokeWidth={1.75} />
           </Link>
         )}
-      </div>
+      </RowActionsCell>
 
       {modal === 'detail' && (
         <DetailModal title={job.title} sections={buildDetailSections(job, showAmounts)} onClose={() => setModal(null)} />
