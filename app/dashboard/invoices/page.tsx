@@ -16,7 +16,7 @@ import { parsePageSize } from '@/lib/listPageSize';
 
 export const metadata = { title: 'Fatture' };
 
-type SearchParams = { q?: string; page?: string; pageSize?: string };
+type SearchParams = { q?: string; page?: string; pageSize?: string; unpaid?: string; jobFiscalYear?: string };
 
 export default async function InvoicesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
@@ -75,12 +75,20 @@ async function InvoicesListSection({
   canManage: boolean;
   showAmounts: boolean;
 }) {
-  const { q, page } = params;
+  const { q, page, unpaid, jobFiscalYear } = params;
   const pageSize = parsePageSize(params.pageSize);
   const currentPage = Math.max(1, Number(page) || 1);
   const offset = (currentPage - 1) * pageSize;
+  const isUnpaidFilter = unpaid === '1';
+  const jobFiscalYearNum = jobFiscalYear ? Number(jobFiscalYear) : undefined;
 
-  const { data: invoices, total } = await getProjectInvoices({ search: q, limit: pageSize, offset });
+  const { data: invoices, total } = await getProjectInvoices({
+    search: q,
+    unpaid: isUnpaidFilter,
+    jobFiscalYear: jobFiscalYearNum,
+    limit: pageSize,
+    offset,
+  });
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const invoiceGroupKeys = Object.fromEntries(invoices.map((i) => [i.id, i.clientId ?? i.clientName]));
   const invoiceStatuses = Object.fromEntries(
@@ -92,48 +100,58 @@ async function InvoicesListSection({
     : 'repeat(8, minmax(max-content, 1fr))';
 
   return (
-    <ListNavigator
-      basePath="/dashboard/invoices"
-      searchPlaceholder="Cerca per cliente, progetto o lavoro..."
-      q={q}
-      currentPage={currentPage}
-      totalPages={totalPages}
-      pageSize={pageSize}
-      showSyncFilter={false}
-      totalCount={total}
-      totalLabel="fatture"
-      extraTopControls={canManage ? <InvoicesBulkBar invoiceGroupKeys={invoiceGroupKeys} invoiceStatuses={invoiceStatuses} /> : undefined}
-    >
-      <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
-        <div className="grid w-full text-[12px]" style={{ gridTemplateColumns: gridCols }}>
-          {canManage && (
-            <div className="list-cell-deco flex items-center justify-center border-b border-grid-border bg-grid-header-bg px-1 py-2">
-              <InvoicesSelectAllCheckbox invoiceIds={invoices.map((i) => i.id)} />
-            </div>
-          )}
-          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Cliente</div>
-          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Progetto</div>
-          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Lavoro</div>
-          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Imponibile</div>
-          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">IVA</div>
-          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Totale</div>
-          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Stato</div>
-          <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Creata il</div>
-          {canManage && <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />}
-
-          {invoices.length === 0 && (
-            <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
-              Nessuna fattura trovata{q ? ` per “${q}”` : ''}. Le fatture vengono generate segnando un progetto come completato.
-            </div>
-          )}
-
-          <LazyRevealRows total={invoices.length} enabled={pageSize > 25}>
-            {invoices.map((invoice) => (
-              <ProjectInvoiceRow key={invoice.id} invoice={invoice} isSuperadmin={isSuperadmin} canManage={canManage} showAmounts={showAmounts} />
-            ))}
-          </LazyRevealRows>
+    <>
+      {isUnpaidFilter && (
+        <div className="mx-6 mt-4 flex items-center justify-between rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-2 text-xs text-secondary">
+          <span>Filtro attivo: fatture non riscosse{jobFiscalYearNum ? ` del ${jobFiscalYearNum}` : ''}</span>
+          <a href="/dashboard/invoices" className="font-medium text-secondary underline transition hover:text-primary">
+            Rimuovi filtro
+          </a>
         </div>
-      </div>
-    </ListNavigator>
+      )}
+      <ListNavigator
+        basePath="/dashboard/invoices"
+        searchPlaceholder="Cerca per cliente, progetto o lavoro..."
+        q={q}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        showSyncFilter={false}
+        totalCount={total}
+        totalLabel="fatture"
+        extraTopControls={canManage ? <InvoicesBulkBar invoiceGroupKeys={invoiceGroupKeys} invoiceStatuses={invoiceStatuses} /> : undefined}
+      >
+        <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
+          <div className="grid w-full text-[12px]" style={{ gridTemplateColumns: gridCols }}>
+            {canManage && (
+              <div className="list-cell-deco flex items-center justify-center border-b border-grid-border bg-grid-header-bg px-1 py-2">
+                <InvoicesSelectAllCheckbox invoiceIds={invoices.map((i) => i.id)} />
+              </div>
+            )}
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Cliente</div>
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Progetto</div>
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Lavoro</div>
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Imponibile</div>
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">IVA</div>
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Totale</div>
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Stato</div>
+            <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Creata il</div>
+            {canManage && <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />}
+
+            {invoices.length === 0 && (
+              <div className="col-span-full border-b border-grid-border px-3 py-12 text-center text-sm text-secondary">
+                Nessuna fattura trovata{q ? ` per “${q}”` : ''}. Le fatture vengono generate segnando un progetto come completato.
+              </div>
+            )}
+
+            <LazyRevealRows total={invoices.length} enabled={pageSize > 25}>
+              {invoices.map((invoice) => (
+                <ProjectInvoiceRow key={invoice.id} invoice={invoice} isSuperadmin={isSuperadmin} canManage={canManage} showAmounts={showAmounts} />
+              ))}
+            </LazyRevealRows>
+          </div>
+        </div>
+      </ListNavigator>
+    </>
   );
 }
