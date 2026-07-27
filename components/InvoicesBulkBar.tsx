@@ -71,12 +71,16 @@ export default function InvoicesBulkBar({
 
   async function handleSyncLineItems() {
     const skipped = selected.length - syncEligibleIds.length;
-    const res = await syncInvoiceLineItemsForIdsAction(syncEligibleIds);
-    if (skipped > 0) {
-      notify(`${skipped} fattur${skipped === 1 ? 'a esclusa' : 'e escluse'} (non collegate a FIC).`);
+    try {
+      const res = await syncInvoiceLineItemsForIdsAction(syncEligibleIds);
+      if (skipped > 0) {
+        notify(`${skipped} fattur${skipped === 1 ? 'a esclusa' : 'e escluse'} (non collegate a FIC).`);
+      }
+      setSyncResults(res.results);
+      router.refresh();
+    } catch (err) {
+      notify(err instanceof Error ? err.message : 'Errore imprevisto nella sincronizzazione delle sottovoci.');
     }
-    setSyncResults(res.results);
-    router.refresh();
   }
 
   return (

@@ -85,9 +85,13 @@ export default function ProjectInvoiceRow({
   }
 
   async function handleSyncLineItems() {
-    const res = await syncInvoiceLineItemsForIdsAction([invoice.id]);
-    setSyncResults(res.results);
-    router.refresh();
+    try {
+      const res = await syncInvoiceLineItemsForIdsAction([invoice.id]);
+      setSyncResults(res.results);
+      router.refresh();
+    } catch (err) {
+      notify(err instanceof Error ? err.message : 'Errore imprevisto nella sincronizzazione delle sottovoci.');
+    }
   }
 
   function handleInspect() {

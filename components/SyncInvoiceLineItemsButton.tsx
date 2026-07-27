@@ -12,9 +12,13 @@ export default function SyncInvoiceLineItemsButton() {
 
   function handleClick() {
     startTransition(async () => {
-      const res = await syncInvoiceLineItemsFromFicAction();
-      notify(`Sottovoci sincronizzate: ${res.synced} fatture, ${res.errors} errori.`);
-      router.refresh();
+      try {
+        const res = await syncInvoiceLineItemsFromFicAction();
+        notify(`Sottovoci sincronizzate: ${res.synced} fatture, ${res.errors} errori.`);
+        router.refresh();
+      } catch (err) {
+        notify(err instanceof Error ? err.message : 'Errore imprevisto nella sincronizzazione delle sottovoci.');
+      }
     });
   }
 
