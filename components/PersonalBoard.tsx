@@ -20,7 +20,7 @@ import {
   verticalListSortingStrategy,
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
-import { Briefcase, CheckCircle2, ChevronDown, CircleDot, Clock, GripVertical, ListChecks, Plus, Trash2 } from 'lucide-react';
+import { Briefcase, CheckCircle2, ChevronDown, CircleDot, GripVertical, ListChecks, Plus, Trash2 } from 'lucide-react';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
 import { useTaskBoardScrollStore } from '@/lib/store/taskBoardScrollStore';
 import { useTaskBoardExpandStore } from '@/lib/store/taskBoardExpandStore';
@@ -223,9 +223,6 @@ export default function PersonalBoard({
                       </span>
                       {isSpecial ? (
                         <span className="absolute right-4 top-4 z-10 flex items-center gap-1.5">
-                          <span title="Progetto a conteggio orario" className="text-neutral-800">
-                            <Clock size={13} strokeWidth={1.75} aria-hidden="true" />
-                          </span>
                           {project.jobId &&
                             (project.completedAt ? (
                               <span title="Progetto completato" className="text-neutral-800">
@@ -387,11 +384,6 @@ export default function PersonalBoard({
                             {open}
                           </span>
                         </div>
-                        {isSpecial && (
-                          <span title="Progetto a conteggio orario" className="relative shrink-0 text-neutral-800">
-                            <Clock size={18} strokeWidth={1.75} aria-hidden="true" />
-                          </span>
-                        )}
                         <button
                           type="button"
                           onClick={() => listRefs.current.get(project.id)?.openTrash()}
@@ -505,11 +497,6 @@ export default function PersonalBoard({
                           )}
                         </div>
                       </button>
-                      {isSpecial && (
-                        <span title="Progetto a conteggio orario" className="relative shrink-0 text-neutral-800">
-                          <Clock size={13} strokeWidth={1.75} aria-hidden="true" />
-                        </span>
-                      )}
                       <button
                         type="button"
                         onClick={() => listRefs.current.get(project.id)?.openTrash()}

@@ -21,7 +21,7 @@ import {
   verticalListSortingStrategy,
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
-import { GripVertical, Briefcase, CheckCircle2, ChevronDown, CircleDot, Clock, ListChecks, Trash2, Plus } from 'lucide-react';
+import { GripVertical, Briefcase, CheckCircle2, ChevronDown, CircleDot, ListChecks, Trash2, Plus } from 'lucide-react';
 import { saveTeamColumnOrderAction } from '@/lib/actions/projects';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
 import { useTaskBoardScrollStore } from '@/lib/store/taskBoardScrollStore';
@@ -411,11 +411,6 @@ export default function TeamBoard({
                                     {counts.total - counts.resolved}
                                   </span>
                                 </div>
-                                {isSpecial && (
-                                  <span title="Progetto a conteggio orario" className="relative shrink-0 text-neutral-800">
-                                    <Clock size={15} strokeWidth={1.75} aria-hidden="true" />
-                                  </span>
-                                )}
                                 <button
                                   type="button"
                                   onClick={() => listRefs.current.get(project.id)?.openTrash()}
@@ -557,11 +552,6 @@ export default function TeamBoard({
                                   )}
                                 </div>
                               </button>
-                              {isSpecial && (
-                                <span title="Progetto a conteggio orario" className="relative shrink-0 text-neutral-800">
-                                  <Clock size={13} strokeWidth={1.75} aria-hidden="true" />
-                                </span>
-                              )}
                               <button
                                 type="button"
                                 onClick={() => listRefs.current.get(project.id)?.openTrash()}
