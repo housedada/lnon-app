@@ -140,7 +140,93 @@ const MEGA_MAN: Tune = {
   volumeScale: 1.05,
 };
 
-export const TUNES: Tune[] = [PACMAN, DONKEY_KONG, TETRIS, MARIO_OVERWORLD, ZELDA_SECRET, FINAL_FANTASY_VICTORY, SONIC_GREEN_HILL, MEGA_MAN];
+// Metroid: la fanfara di raccolta oggetto/power-up, brevissima e iconica.
+const METROID_ITEM: Tune = {
+  id: 'metroid-item',
+  name: 'Metroid',
+  notes: [
+    freq('D', 5), freq('D', 5), freq('E', 5), freq('E', 5),
+    freq('FS', 5), freq('FS', 5), freq('A', 5), freq('A', 5),
+    freq('D', 6),
+  ],
+  noteDurationS: 0.1,
+  noteGapS: 0.008,
+  volumeScale: 1.1,
+};
+
+// Castlevania: il riff di apertura di "Vampire Killer".
+const CASTLEVANIA_VAMPIRE_KILLER: Tune = {
+  id: 'castlevania-vampire-killer',
+  name: 'Castlevania',
+  notes: [
+    freq('C', 5), freq('C', 5), REST, freq('AS', 4), freq('C', 5), REST,
+    freq('G', 4), REST, REST,
+    freq('C', 5), freq('C', 5), REST, freq('AS', 4), freq('C', 5), REST,
+    freq('D', 5), REST, REST,
+  ],
+  noteDurationS: 0.115,
+  noteGapS: 0.015,
+};
+
+// Kirby: le prime battute del tema "Green Greens".
+const KIRBY_GREEN_GREENS: Tune = {
+  id: 'kirby-green-greens',
+  name: 'Kirby',
+  notes: [
+    freq('G', 4), freq('C', 5), freq('E', 5), freq('G', 5),
+    freq('E', 5), freq('C', 5), freq('D', 5), freq('G', 4),
+  ],
+  noteDurationS: 0.13,
+  noteGapS: 0.016,
+  volumeScale: 1.05,
+};
+
+// Pokémon: il breve jingle di apertura del Centro Pokémon.
+const POKEMON_CENTER: Tune = {
+  id: 'pokemon-center',
+  name: 'Pokémon',
+  notes: [
+    freq('E', 5), freq('B', 4), freq('C', 5), freq('D', 5),
+    freq('G', 5), freq('FS', 5), freq('E', 5), freq('D', 5),
+    freq('C', 5), freq('B', 4),
+  ],
+  noteDurationS: 0.12,
+  noteGapS: 0.014,
+  harmonySemitones: -12,
+  harmonyVolumeScale: 0.3,
+};
+
+// Street Fighter II: l'incipit dello stage-select/character-select.
+const STREET_FIGHTER_II: Tune = {
+  id: 'street-fighter-ii',
+  name: 'Street Fighter II',
+  notes: [
+    freq('C', 5), freq('D', 5), freq('DS', 5), freq('G', 5),
+    freq('DS', 5), freq('D', 5), freq('C', 5),
+    freq('AS', 4), freq('C', 5),
+  ],
+  noteDurationS: 0.11,
+  noteGapS: 0.013,
+  volumeScale: 1.1,
+};
+
+// Contra: il breve riff d'apertura del tema della jungla (stage 1).
+const CONTRA_JUNGLE: Tune = {
+  id: 'contra-jungle',
+  name: 'Contra',
+  notes: [
+    freq('E', 4), freq('E', 4), freq('E', 5), REST,
+    freq('E', 4), freq('E', 4), freq('D', 5), REST,
+    freq('E', 4), freq('E', 4), freq('C', 5), freq('B', 4),
+  ],
+  noteDurationS: 0.105,
+  noteGapS: 0.012,
+};
+
+export const TUNES: Tune[] = [
+  PACMAN, DONKEY_KONG, TETRIS, MARIO_OVERWORLD, ZELDA_SECRET, FINAL_FANTASY_VICTORY, SONIC_GREEN_HILL, MEGA_MAN,
+  METROID_ITEM, CASTLEVANIA_VAMPIRE_KILLER, KIRBY_GREEN_GREENS, POKEMON_CENTER, STREET_FIGHTER_II, CONTRA_JUNGLE,
+];
 export const RANDOM_CHOICE = 'random';
 export const CHIPTUNE_CHOICE_STORAGE_KEY = 'lnon-chiptune-choice';
 
