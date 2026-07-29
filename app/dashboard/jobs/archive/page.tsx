@@ -10,8 +10,7 @@ import LazyRevealRows from '@/components/LazyRevealRows';
 import RowActionsCell from '@/components/RowActionsCell';
 import { parsePageSize } from '@/lib/listPageSize';
 import JobsCategoryTabs from '@/components/JobsCategoryTabs';
-import type { JobStatus } from '@/lib/types';
-import type { JobCategory } from '@/lib/types';
+import type { JobStatus, JobCategory } from '@/lib/types';
 
 export const metadata = { title: 'Archivio Lavori' };
 

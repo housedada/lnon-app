@@ -81,14 +81,14 @@ export async function createJobAction(formData: FormData) {
   if (formData.get('createProject')) {
     redirect(`/dashboard/jobs?createProject=${job.id}`);
   }
-  redirect('/dashboard/jobs?saved=1');
+  redirect(job.contractId ? '/dashboard/jobs?saved=1&category=web' : '/dashboard/jobs?saved=1');
 }
 
 export async function updateJobAction(id: string, formData: FormData) {
   await requireRole('jobs', 'update');
   const data = parseJobFormData(formData);
   await updateDbJob(id, data);
-  redirect('/dashboard/jobs?saved=1');
+  redirect(data.contractId ? '/dashboard/jobs?saved=1&category=web' : '/dashboard/jobs?saved=1');
 }
 
 export async function deleteJobAction(id: string) {

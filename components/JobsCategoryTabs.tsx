@@ -24,7 +24,7 @@ export default function JobsCategoryTabs({ active }: { active: JobCategory }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Categoria lavori">
       {OPTIONS.map((opt) => (
         <button
           key={opt.value}
