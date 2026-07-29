@@ -4,6 +4,7 @@ import { Archive, Trash2 } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { getJobs, getJobById, getAllClientNames, getAllContractOptions, getAllProductNames, getUsers } from '@/lib/db';
 import { hasPermission, canDeleteResource, canViewAmounts } from '@/lib/permissions';
+import type { JobCategory } from '@/lib/types';
 import ListNavigator from '@/components/ListNavigator';
 import ListPlaceholder from '@/components/ListPlaceholder';
 import SyncJobsClientsButton from '@/components/SyncJobsClientsButton';
@@ -13,7 +14,7 @@ import JobsSelectAllCheckbox from '@/components/JobsSelectAllCheckbox';
 import JobsBulkArchiveButton from '@/components/JobsBulkArchiveButton';
 import JobRow from '@/components/JobRow';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
-import JobsSystemGeneratedToggle from '@/components/JobsSystemGeneratedToggle';
+import JobsCategoryTabs from '@/components/JobsCategoryTabs';
 import RememberRoute from '@/components/RememberRoute';
 import LazyRevealRows from '@/components/LazyRevealRows';
 import JobCreateProjectFlow from '@/components/JobCreateProjectFlow';
@@ -21,7 +22,7 @@ import { parsePageSize } from '@/lib/listPageSize';
 
 export const metadata = { title: 'Lavori' };
 
-type SearchParams = { q?: string; page?: string; pageSize?: string; clientId?: string; sync?: string; status?: string; system?: string; createProject?: string };
+type SearchParams = { q?: string; page?: string; pageSize?: string; clientId?: string; sync?: string; status?: string; category?: string; createProject?: string };
 
 export default async function JobsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
@@ -134,18 +135,18 @@ async function JobsListSection({
   isSuperadmin: boolean;
   showAmounts: boolean;
 }) {
-  const { q, page, clientId, sync, status, system } = params;
+  const { q, page, clientId, sync, status, category: categoryParam } = params;
   const pageSize = parsePageSize(params.pageSize);
   const currentPage = Math.max(1, Number(page) || 1);
   const offset = (currentPage - 1) * pageSize;
-  const systemGenerated = system === '1';
+  const category: JobCategory = categoryParam === 'web' || categoryParam === 'hourly' ? categoryParam : 'standard';
 
   const { data: jobs, total } = await getJobs({
     search: q,
     clientId,
     sync,
     status,
-    systemGenerated,
+    category,
     assignedTo: role === 'dipendente' ? userId : undefined,
     limit: pageSize,
     offset,
@@ -163,7 +164,7 @@ async function JobsListSection({
       showSyncFilter={false}
       totalCount={total}
       totalLabel="lavori"
-      searchExtra={<JobsSystemGeneratedToggle active={systemGenerated} />}
+      searchExtra={<JobsCategoryTabs active={category} />}
       extraTopControls={<JobsBulkArchiveButton />}
     >
       <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
