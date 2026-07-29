@@ -16,7 +16,8 @@ import DoubleConfirmModal from '@/components/DoubleConfirmModal';
 import DetailModal, { type DetailSection } from '@/components/DetailModal';
 import MaskedAmount from '@/components/MaskedAmount';
 import RowActionsCell from '@/components/RowActionsCell';
-import { deleteJobFromListAction } from '@/lib/actions/jobs';
+import InlineSelectCell, { type InlineSelectOption } from '@/components/InlineSelectCell';
+import { deleteJobFromListAction, updateJobStatusAction } from '@/lib/actions/jobs';
 import { notify } from '@/lib/notify';
 import type { Job, JobStatus } from '@/lib/types';
 
@@ -37,6 +38,12 @@ const STATUS_BADGE: Record<JobStatus, string> = {
   fatturato: 'bg-green-600/10 text-green-700',
   annullato: 'bg-red-600/10 text-red-700',
 };
+
+const JOB_STATUS_OPTIONS: InlineSelectOption<JobStatus>[] = (Object.keys(STATUS_LABEL) as JobStatus[]).map((value) => ({
+  value,
+  label: STATUS_LABEL[value],
+  badgeClassName: STATUS_BADGE[value],
+}));
 
 function formatAmount(value?: number) {
   return value != null ? `€ ${value.toFixed(2)}` : '—';
@@ -194,7 +201,11 @@ export default function JobRow({
         )}
       </div>
       <div onClick={() => setModal('detail')} className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 group-hover:bg-row-hover">
-        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE[job.status]}`}>{STATUS_LABEL[job.status]}</span>
+        {canUpdate ? (
+          <InlineSelectCell value={job.status} options={JOB_STATUS_OPTIONS} onSave={updateJobStatusAction.bind(null, job.id)} />
+        ) : (
+          <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE[job.status]}`}>{STATUS_LABEL[job.status]}</span>
+        )}
       </div>
       <div onClick={() => setModal('detail')} className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{job.assignedToName ?? '—'}</div>
       <div onClick={() => setModal('detail')} className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary">{showAmounts ? formatAmount(job.estimatedBudget) : <MaskedAmount />}</div>
