@@ -14,7 +14,7 @@ import ReportJobRow from '@/components/ReportJobRow';
 
 export const metadata = { title: 'Report' };
 
-const GRID_TEMPLATE = 'repeat(7, minmax(max-content, 1fr)) max-content';
+const GRID_TEMPLATE = 'repeat(6, minmax(max-content, 1fr)) max-content';
 
 type SearchParams = { year?: string };
 
@@ -29,7 +29,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const currentYear = new Date().getFullYear();
   const fiscalYear = params.year ? Number(params.year) : currentYear;
 
-  const [{ rows, totals, creditRisk, topClients, funnel, productBreakdown, uncategorizedInvoices }, contractsStats, hourlySummary, fixedExpenses, providerExpirations] = await Promise.all([
+  const [{ rows, totals, funnel }, contractsStats, hourlySummary, fixedExpenses, providerExpirations] = await Promise.all([
     getJobsForecast(fiscalYear),
     getContractsStats(),
     getHourlyContractsSummary(),
@@ -52,11 +52,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         hourlySummary={hourlySummary}
         fixedExpensesTotal={fixedExpenses.total}
         jobsForecastTotals={totals}
-        creditRisk={creditRisk}
-        topClients={topClients}
         funnel={funnel}
-        productBreakdown={productBreakdown}
-        uncategorizedInvoices={uncategorizedInvoices}
         providerExpirations={providerExpirations}
       />
 
@@ -69,8 +65,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Categoria</div>
           <div className="list-header-cell flex items-center justify-end whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Budget stimato</div>
           <div className="list-header-cell flex items-center justify-end whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Spese fornitori</div>
-          <div className="list-header-cell flex items-center justify-end whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Fatturato</div>
-          <div className="list-header-cell flex items-center justify-end whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Margine</div>
+          <div className="list-header-cell flex items-center justify-end whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Budget reale</div>
           <div className="sticky right-0 z-[6] border-b border-l border-grid-border bg-grid-header-bg" />
 
           {rows.length === 0 && (

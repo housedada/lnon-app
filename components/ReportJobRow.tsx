@@ -8,8 +8,10 @@ import type { JobForecastRow, JobForecastCategory } from '@/lib/db';
 
 const CATEGORY_LABEL: Record<JobForecastCategory, string> = {
   potenziale: 'Potenziale',
-  preventivato: 'Preventivato',
+  preApprovato: 'Pre-approvato',
+  inCorso: 'In corso',
   confermato: 'Confermato',
+  fatturato: 'Fatturato',
 };
 
 function formatEuro(value: number): string {
@@ -31,8 +33,7 @@ function buildDetailSections(row: JobForecastRow): DetailSection[] {
       fields: [
         { label: 'Budget stimato', value: formatEuro(row.estimatedBudget) },
         { label: 'Spese fornitori', value: formatEuro(row.supplierCost) },
-        { label: 'Fatturato', value: formatEuro(row.invoicedAmount) },
-        { label: 'Margine', value: formatEuro(row.margin) },
+        { label: 'Budget reale', value: formatEuro(row.actualBudget) },
       ],
     },
   ];
@@ -72,15 +73,9 @@ export default function ReportJobRow({ row }: { row: JobForecastRow }) {
       </div>
       <div
         onClick={() => setShowDetail(true)}
-        className="list-row-cell flex cursor-pointer items-center justify-end whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary"
-      >
-        {formatEuro(row.invoicedAmount)}
-      </div>
-      <div
-        onClick={() => setShowDetail(true)}
         className="list-row-cell flex cursor-pointer items-center justify-end whitespace-nowrap border-b border-grid-border px-3 py-2 font-semibold text-primary group-hover:bg-row-hover"
       >
-        {formatEuro(row.margin)}
+        {formatEuro(row.actualBudget)}
       </div>
 
       <RowActionsCell>

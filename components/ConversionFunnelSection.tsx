@@ -1,9 +1,10 @@
-import { Filter, TrendingUp, FileClock, CheckCircle2, Receipt } from 'lucide-react';
+import { Filter, TrendingUp, FileClock, ListChecks, CheckCircle2, Receipt } from 'lucide-react';
 import type { JobsForecastResult } from '@/lib/db';
 
 const STAGES: { key: keyof JobsForecastResult['funnel']; label: string; color: string; icon: typeof TrendingUp }[] = [
   { key: 'potenziale', label: 'Potenziale', color: '#9ca3af', icon: TrendingUp },
-  { key: 'preventivato', label: 'Preventivato', color: '#6b7280', icon: FileClock },
+  { key: 'preApprovato', label: 'Pre-approvato', color: '#78716c', icon: FileClock },
+  { key: 'inCorso', label: 'In corso', color: '#525252', icon: ListChecks },
   { key: 'confermato', label: 'Confermato', color: '#1f2937', icon: CheckCircle2 },
   { key: 'fatturato', label: 'Fatturato', color: '#2f9e6b', icon: Receipt },
 ];

@@ -9,7 +9,6 @@ import type {
   FixedExpenseCategory,
   FixedExpenseEntry,
   Task,
-  Invoice,
   Invitation,
   ActivityLog,
   FicConnection,
@@ -18,9 +17,6 @@ import type {
   Project,
   ProjectTask,
   ProjectTaskStatus,
-  ProjectInvoice,
-  ProjectInvoiceLineItem,
-  ProjectInvoiceStatus,
   HourlyContract,
   HourlyWorkEntry,
   HourlyRateType,
@@ -336,12 +332,6 @@ function jobRowToJob(row: Record<string, any>): Job {
     fiscalYear: row.fiscal_year,
     supplierCost: row.supplier_cost != null ? Number(row.supplier_cost) : undefined,
     invoiceNumber: row.invoice_number ?? undefined,
-    invoiceDate: row.invoice_date ? new Date(row.invoice_date) : undefined,
-    invoiceNetAmount: row.invoice_net_amount ?? undefined,
-    invoiceVatAmount: row.invoice_vat_amount ?? undefined,
-    invoiceGrossAmount: row.invoice_gross_amount ?? undefined,
-    invoicePaymentStatus: row.invoice_payment_status ?? undefined,
-    invoicePaidAt: row.invoice_paid_at ? new Date(row.invoice_paid_at) : undefined,
     clientName: row.clients?.name ?? undefined,
     contractLabel: row.contracts ? (row.contracts.clients?.name ?? row.contracts.client_name_raw) : undefined,
     assignedToName: row.assigned_user?.name ?? undefined,
@@ -359,7 +349,6 @@ function jobToRow(data: Partial<Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'cl
   if (data.description !== undefined) row.description = data.description;
   if (data.status !== undefined) row.status = data.status;
   if (data.estimatedBudget !== undefined) row.estimated_budget = data.estimatedBudget;
-  if (data.actualBudget !== undefined) row.actual_budget = data.actualBudget;
   if (data.currency !== undefined) row.currency = data.currency;
   if (data.startDate !== undefined) row.start_date = data.startDate ? data.startDate.toISOString().slice(0, 10) : null;
   if (data.endDate !== undefined) row.end_date = data.endDate ? data.endDate.toISOString().slice(0, 10) : null;
@@ -367,6 +356,7 @@ function jobToRow(data: Partial<Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'cl
   if (data.createdBy !== undefined) row.created_by = data.createdBy;
   if (data.fiscalYear !== undefined) row.fiscal_year = data.fiscalYear;
   if (data.supplierCost !== undefined) row.supplier_cost = data.supplierCost;
+  if (data.invoiceNumber !== undefined) row.invoice_number = data.invoiceNumber || null;
   if (data.isSystemGenerated !== undefined) row.is_system_generated = data.isSystemGenerated;
   if (data.systemSource !== undefined) row.system_source = data.systemSource;
   return row;
@@ -457,12 +447,12 @@ export async function getJobs(filters?: {
   // e in corso in cima, poi via via gli altri stati; a parità di stato,
   // i più recenti prima.
   const STATUS_PRIORITY: Record<Job['status'], number> = {
-    approved: 0,
-    in_progress: 1,
-    pending_approval: 2,
-    draft: 3,
-    completed: 4,
-    cancelled: 5,
+    pre_approvato: 0,
+    in_corso: 1,
+    preventivato: 2,
+    completato: 3,
+    fatturato: 4,
+    annullato: 5,
   };
   jobs.sort((a, b) => {
     const priorityDiff = STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status];
@@ -481,15 +471,15 @@ export async function getJobs(filters?: {
 }
 
 const JOB_FORECAST_CATEGORY: Partial<Record<JobStatus, JobForecastCategory>> = {
-  draft: 'potenziale',
-  pending_approval: 'preventivato',
-  approved: 'confermato',
-  in_progress: 'confermato',
-  completed: 'confermato',
-  // cancelled: intenzionalmente assente, escluso da tutti i totali
+  preventivato: 'potenziale',
+  pre_approvato: 'preApprovato',
+  in_corso: 'inCorso',
+  completato: 'confermato',
+  fatturato: 'fatturato',
+  // annullato: intenzionalmente assente, escluso da tutti i totali
 };
 
-export type JobForecastCategory = 'potenziale' | 'preventivato' | 'confermato';
+export type JobForecastCategory = 'potenziale' | 'preApprovato' | 'inCorso' | 'confermato' | 'fatturato';
 
 export interface JobForecastRow {
   jobId: string;
@@ -499,73 +489,35 @@ export interface JobForecastRow {
   category: JobForecastCategory;
   estimatedBudget: number;
   supplierCost: number;
-  invoicedAmount: number;
-  margin: number;
-}
-
-export interface JobsForecastCreditRiskBucket {
-  label: '0-30' | '30-60' | 'oltre 60';
-  amount: number;
-}
-
-export interface JobsForecastUnpaidInvoice {
-  id: string;
-  clientName: string;
-  invoiceNumber?: string;
-  amount: number;
-  days: number;
-}
-
-export interface JobsForecastTopClient {
-  clientName: string;
-  amount: number;
+  actualBudget: number;
 }
 
 export interface JobsForecastFunnel {
   potenziale: number;
-  preventivato: number;
+  preApprovato: number;
+  inCorso: number;
   confermato: number;
   fatturato: number;
   total: number;
-}
-
-export interface JobsForecastProductBreakdown {
-  productId: string | null;
-  productName: string;
-  amount: number;
-}
-
-export interface JobsForecastUncategorizedInvoice {
-  id: string;
-  clientName: string;
-  amount: number;
 }
 
 export interface JobsForecastResult {
   rows: JobForecastRow[];
   totals: {
     potenziale: number;
-    preventivato: number;
+    preApprovato: number;
+    inCorso: number;
     confermato: number;
     fatturato: number;
-    fatturatoNonRiscosso: number;
     speseFornitori: number;
   };
-  creditRisk: {
-    buckets: JobsForecastCreditRiskBucket[];
-    topUnpaid: JobsForecastUnpaidInvoice[];
-  };
-  topClients: JobsForecastTopClient[];
   funnel: JobsForecastFunnel;
-  productBreakdown: JobsForecastProductBreakdown[];
-  uncategorizedInvoices: JobsForecastUncategorizedInvoice[];
 }
 
 /**
- * Aggrega i lavori di un anno di competenza in Potenziale/Preventivato/
- * Confermato/Fatturato/Spese Fornitori per la Overview Lavori (Reports), più
- * rischio credito (aging fatture non riscosse), top clienti e funnel di
- * conversione: tutti derivati dalla stessa query fatture, nessuna query extra.
+ * Aggrega i lavori di un anno di competenza in Potenziale/Pre-approvato/In
+ * corso/Confermato/Fatturato/Spese Fornitori per la Overview Lavori
+ * (Reports), in base allo status del Job.
  */
 export async function getJobsForecast(fiscalYear: number): Promise<JobsForecastResult> {
   const { data: jobRows, error: jobsError } = await supabaseServer
@@ -573,135 +525,28 @@ export async function getJobsForecast(fiscalYear: number): Promise<JobsForecastR
     .select('*, clients(name), contracts(client_name_raw, clients(name))')
     .eq('fiscal_year', fiscalYear)
     .is('deleted_at', null)
-    .neq('status', 'cancelled');
+    .neq('status', 'annullato');
   if (jobsError) throw jobsError;
 
   const jobs = (jobRows ?? []).map(jobRowToJob);
-  const jobIds = jobs.map((j) => j.id);
 
-  type InvoiceForForecastRow = {
-    id: string;
-    job_id: string | null;
-    client_id: string | null;
-    client_name: string;
-    net_amount: number;
-    invoice_date: string | null;
-    created_at: string;
-    paid_at: string | null;
-    invoice_number: string | null;
-    line_items: ProjectInvoiceLineItem[] | null;
-  };
-
-  let invoiceRows: InvoiceForForecastRow[] = [];
-  if (jobIds.length > 0) {
-    const { data, error: invoicesError } = await supabaseServer
-      .from('project_invoices')
-      .select('id, job_id, client_id, client_name, net_amount, invoice_date, created_at, paid_at, invoice_number, line_items')
-      .in('job_id', jobIds)
-      .eq('status', 'fatturata')
-      .is('deleted_at', null);
-    if (invoicesError) throw invoicesError;
-    invoiceRows = data ?? [];
-  }
-
-  const invoicedByJobId = new Map<string, number>();
-  const unpaidByJobId = new Map<string, number>();
-  const amountByClient = new Map<string, JobsForecastTopClient>();
-  const unpaidInvoices: JobsForecastUnpaidInvoice[] = [];
-  const now = Date.now();
-
-  for (const row of invoiceRows) {
-    if (!row.job_id) continue;
-    const amount = Number(row.net_amount ?? 0);
-    invoicedByJobId.set(row.job_id, (invoicedByJobId.get(row.job_id) ?? 0) + amount);
-
-    const clientKey = row.client_id ?? row.client_name;
-    const existingClient = amountByClient.get(clientKey);
-    amountByClient.set(clientKey, { clientName: row.client_name, amount: (existingClient?.amount ?? 0) + amount });
-
-    if (!row.paid_at) {
-      unpaidByJobId.set(row.job_id, (unpaidByJobId.get(row.job_id) ?? 0) + amount);
-      const referenceDate = row.invoice_date ?? row.created_at;
-      const days = Math.floor((now - new Date(referenceDate).getTime()) / (1000 * 60 * 60 * 24));
-      unpaidInvoices.push({
-        id: row.id,
-        clientName: row.client_name,
-        invoiceNumber: row.invoice_number ?? undefined,
-        amount,
-        days,
-      });
-    }
-  }
-
-  const productNames = await getAllProductNames();
-  const productNameById = new Map(productNames.map((p) => [p.id, p.name]));
-  const amountByProduct = new Map<string, number>();
-  const uncategorizedByInvoice = new Map<string, JobsForecastUncategorizedInvoice>();
-  let nonCategorizzato = 0;
-
-  for (const row of invoiceRows) {
-    for (const item of row.line_items ?? []) {
-      const amount = Number(item.netAmount ?? 0);
-      if (item.productId) {
-        amountByProduct.set(item.productId, (amountByProduct.get(item.productId) ?? 0) + amount);
-      } else {
-        nonCategorizzato += amount;
-        const existing = uncategorizedByInvoice.get(row.id);
-        uncategorizedByInvoice.set(row.id, {
-          id: row.id,
-          clientName: row.client_name,
-          amount: (existing?.amount ?? 0) + amount,
-        });
-      }
-    }
-  }
-
-  const productBreakdown: JobsForecastProductBreakdown[] = [...amountByProduct.entries()]
-    .map(([productId, amount]) => ({ productId, productName: productNameById.get(productId) ?? 'Prodotto sconosciuto', amount }))
-    .sort((a, b) => b.amount - a.amount);
-  if (nonCategorizzato > 0) {
-    productBreakdown.push({ productId: null, productName: 'Non categorizzato', amount: nonCategorizzato });
-  }
-  const uncategorizedInvoices = [...uncategorizedByInvoice.values()].sort((a, b) => b.amount - a.amount);
-
-  const creditRiskBuckets: JobsForecastCreditRiskBucket[] = [
-    { label: '0-30', amount: 0 },
-    { label: '30-60', amount: 0 },
-    { label: 'oltre 60', amount: 0 },
-  ];
-  for (const inv of unpaidInvoices) {
-    if (inv.days <= 30) creditRiskBuckets[0].amount += inv.amount;
-    else if (inv.days <= 60) creditRiskBuckets[1].amount += inv.amount;
-    else creditRiskBuckets[2].amount += inv.amount;
-  }
-
-  const topUnpaid = [...unpaidInvoices].sort((a, b) => b.days - a.days).slice(0, 5);
-  const topClients = [...amountByClient.values()].sort((a, b) => b.amount - a.amount).slice(0, 5);
-
-  const totals = { potenziale: 0, preventivato: 0, confermato: 0, fatturato: 0, fatturatoNonRiscosso: 0, speseFornitori: 0 };
-  const funnel: JobsForecastFunnel = { potenziale: 0, preventivato: 0, confermato: 0, fatturato: 0, total: 0 };
+  const totals = { potenziale: 0, preApprovato: 0, inCorso: 0, confermato: 0, fatturato: 0, speseFornitori: 0 };
+  const funnel: JobsForecastFunnel = { potenziale: 0, preApprovato: 0, inCorso: 0, confermato: 0, fatturato: 0, total: 0 };
   const rows: JobForecastRow[] = [];
 
   for (const job of jobs) {
     const category = JOB_FORECAST_CATEGORY[job.status];
-    if (!category) continue; // cancelled o stato non mappato
+    if (!category) continue; // annullato o stato non mappato
 
     const estimatedBudget = job.estimatedBudget ?? 0;
     const supplierCost = job.supplierCost ?? 0;
-    const invoicedAmount = invoicedByJobId.get(job.id) ?? 0;
-    const unpaidAmount = unpaidByJobId.get(job.id) ?? 0;
+    const actualBudget = job.actualBudget ?? 0;
 
     totals[category] += estimatedBudget;
-    totals.fatturato += invoicedAmount;
-    totals.fatturatoNonRiscosso += unpaidAmount;
     totals.speseFornitori += supplierCost;
 
     funnel.total += 1;
-    if (invoicedAmount > 0) {
-      funnel.fatturato += 1;
-    } else {
-      funnel[category] += 1;
-    }
+    funnel[category] += 1;
 
     rows.push({
       jobId: job.id,
@@ -711,20 +556,11 @@ export async function getJobsForecast(fiscalYear: number): Promise<JobsForecastR
       category,
       estimatedBudget,
       supplierCost,
-      invoicedAmount,
-      margin: Math.round((invoicedAmount - supplierCost) * 100) / 100,
+      actualBudget,
     });
   }
 
-  return {
-    rows,
-    totals,
-    creditRisk: { buckets: creditRiskBuckets, topUnpaid },
-    topClients,
-    funnel,
-    productBreakdown,
-    uncategorizedInvoices,
-  };
+  return { rows, totals, funnel };
 }
 
 /**
@@ -831,7 +667,7 @@ export async function approveJob(jobId: string, userId: string): Promise<Job> {
   const { data, error } = await supabaseServer
     .from('jobs')
     .update({
-      status: 'approved',
+      status: 'pre_approvato',
       approved_at: new Date().toISOString(),
       approved_by: userId,
     })
@@ -859,8 +695,8 @@ export async function archiveJob(jobId: string): Promise<Job> {
 }
 
 /**
- * Archivia in blocco i lavori completati fra quelli indicati (ignora
- * silenziosamente eventuali id non completati o già archiviati).
+ * Archivia in blocco i lavori chiusi (completato/fatturato/annullato) fra
+ * quelli indicati (ignora silenziosamente gli altri o quelli già archiviati).
  */
 export async function archiveJobs(jobIds: string[]): Promise<number> {
   if (jobIds.length === 0) return 0;
@@ -868,7 +704,7 @@ export async function archiveJobs(jobIds: string[]): Promise<number> {
     .from('jobs')
     .update({ archived_at: new Date().toISOString() })
     .in('id', jobIds)
-    .eq('status', 'completed')
+    .in('status', ['completato', 'fatturato', 'annullato'])
     .is('archived_at', null)
     .select('id');
 
@@ -959,58 +795,6 @@ export async function updateTaskStatus(
 
   if (error) throw error;
   return data;
-}
-
-/**
- * Crea una nuova fattura
- */
-export async function createInvoice(
-  invoiceData: Omit<Invoice, 'id' | 'createdAt' | 'updatedAt'>
-) {
-  const { data, error } = await supabase
-    .from('invoices')
-    .insert([invoiceData])
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-/**
- * Ottieni fatture
- */
-export async function getInvoices(filters?: {
-  jobId?: string;
-  status?: string;
-  limit?: number;
-  offset?: number;
-}) {
-  let query = supabase
-    .from('invoices')
-    .select('*, jobs!inner(title, clients!inner(name))', { count: 'exact' })
-    .order('issue_date', { ascending: false });
-
-  if (filters?.jobId) {
-    query = query.eq('job_id', filters.jobId);
-  }
-
-  if (filters?.status) {
-    query = query.eq('status', filters.status);
-  }
-
-  if (filters?.limit) {
-    query = query.limit(filters.limit);
-  }
-
-  if (filters?.offset) {
-    query = query.range(filters.offset, filters.offset + (filters.limit || 10) - 1);
-  }
-
-  const { data, error, count } = await query;
-
-  if (error) throw error;
-  return { data, total: count };
 }
 
 /**
@@ -1983,44 +1767,9 @@ export async function getProjectsByJobId(jobId: string): Promise<Project[]> {
   return (data ?? []).map(projectRowToProject);
 }
 
-function projectInvoiceRowToProjectInvoice(row: Record<string, any>): ProjectInvoice {
-  return {
-    id: row.id,
-    projectId: row.project_id ?? undefined,
-    jobId: row.job_id ?? undefined,
-    clientId: row.client_id ?? undefined,
-    projectTitle: row.project_title,
-    jobTitle: row.job_title ?? undefined,
-    clientName: row.client_name,
-    netAmount: Number(row.net_amount),
-    vatRate: Number(row.vat_rate),
-    vatAmount: Number(row.vat_amount),
-    totalAmount: Number(row.total_amount),
-    lineItems: row.line_items ?? [],
-    status: row.status,
-    mergedIntoId: row.merged_into_id ?? undefined,
-    ficInvoiceId: row.fic_invoice_id ?? undefined,
-    invoiceNumber: row.invoice_number ?? undefined,
-    invoiceDate: row.invoice_date ? new Date(row.invoice_date) : undefined,
-    paymentStatus: row.payment_status ?? undefined,
-    paidAt: row.paid_at ? new Date(row.paid_at) : undefined,
-    createdBy: row.created_by,
-    createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at),
-    archivedAt: row.archived_at ? new Date(row.archived_at) : undefined,
-    deletedAt: row.deleted_at ? new Date(row.deleted_at) : undefined,
-    lineItemsSyncedAt: row.line_items_synced_at ? new Date(row.line_items_synced_at) : undefined,
-  };
-}
-
 /**
- * Segna un progetto come completato e genera la relativa fattura interna (bozza),
- * visibile solo agli admin nella pagina Fatture. L'importo è calcolato dal budget
- * del lavoro collegato per la quota % assegnata al progetto.
- */
-/**
- * Segna un progetto come completato. Non genera più fatture automatiche:
- * la fatturazione va sempre creata manualmente dagli admin nella pagina Fatture.
+ * Segna un progetto come completato. La fatturazione del lavoro collegato resta
+ * sempre un cambio di stato manuale sul Job (status = 'fatturato').
  */
 async function lockLastAssignedHourlyEntry(hourlyContractId: string): Promise<void> {
   const { data: lastEntryRow, error: lastEntryError } = await supabaseServer
@@ -2075,356 +1824,6 @@ export async function markProjectCompleted(projectId: string): Promise<void> {
     .update({ status: 'riposo' })
     .eq('id', contract.id);
   if (restError) throw restError;
-}
-
-export async function getProjectInvoiceById(id: string): Promise<ProjectInvoice | null> {
-  const { data, error } = await supabaseServer
-    .from('project_invoices')
-    .select('*')
-    .eq('id', id)
-    .is('deleted_at', null)
-    .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') return null;
-    throw error;
-  }
-
-  return projectInvoiceRowToProjectInvoice(data);
-}
-
-/**
- * Elenco fatture progetto (visibile solo agli admin), con filtri per lista/archivio/cestino
- */
-export async function getProjectInvoices(filters?: {
-  search?: string;
-  clientId?: string;
-  archived?: boolean;
-  archivedYear?: number;
-  trashed?: boolean;
-  unpaid?: boolean;
-  jobFiscalYear?: number;
-  status?: ProjectInvoiceStatus;
-  syncState?: 'not_linked' | 'not_synced' | 'synced';
-  limit?: number;
-  offset?: number;
-}): Promise<{ data: ProjectInvoice[]; total: number }> {
-  let query = supabaseServer.from('project_invoices').select('*', { count: 'exact' });
-
-  if (filters?.trashed) {
-    query = query.not('deleted_at', 'is', null);
-  } else {
-    query = query.is('deleted_at', null);
-    if (filters?.archived) {
-      query = query.not('archived_at', 'is', null);
-      if (filters.archivedYear) {
-        const start = `${filters.archivedYear}-01-01T00:00:00.000Z`;
-        const end = `${filters.archivedYear + 1}-01-01T00:00:00.000Z`;
-        query = query.gte('archived_at', start).lt('archived_at', end);
-      }
-    } else if (!filters?.unpaid) {
-      query = query.is('archived_at', null);
-    }
-  }
-
-  if (filters?.clientId) query = query.eq('client_id', filters.clientId);
-  if (filters?.search) {
-    query = query.or(`project_title.ilike.%${filters.search}%,job_title.ilike.%${filters.search}%,client_name.ilike.%${filters.search}%`);
-  }
-  if (filters?.unpaid) {
-    query = query.eq('status', 'fatturata').is('paid_at', null);
-  }
-  if (filters?.status) {
-    query = query.eq('status', filters.status);
-  }
-  if (filters?.syncState === 'not_linked') {
-    query = query.is('fic_invoice_id', null);
-  } else if (filters?.syncState === 'not_synced') {
-    query = query.not('fic_invoice_id', 'is', null).is('line_items_synced_at', null);
-  } else if (filters?.syncState === 'synced') {
-    query = query.not('fic_invoice_id', 'is', null).not('line_items_synced_at', 'is', null);
-  }
-  if (filters?.jobFiscalYear != null) {
-    const { data: jobRows, error: jobsError } = await supabaseServer
-      .from('jobs')
-      .select('id')
-      .eq('fiscal_year', filters.jobFiscalYear)
-      .is('deleted_at', null)
-      .neq('status', 'cancelled');
-    if (jobsError) throw jobsError;
-    const jobIds = (jobRows ?? []).map((r: any) => r.id);
-    // Nessun job per quell'anno: sentinella impossibile per garantire zero righe
-    // invece di lasciare .in() con array vuoto (comportamento non affidabile).
-    query = query.in('job_id', jobIds.length > 0 ? jobIds : ['00000000-0000-0000-0000-000000000000']);
-  }
-
-  query = query.order('created_at', { ascending: false });
-
-  if (filters?.limit != null && filters?.offset != null) {
-    query = query.range(filters.offset, filters.offset + filters.limit - 1);
-  }
-
-  const { data, error, count } = await query;
-  if (error) throw error;
-  return { data: (data ?? []).map(projectInvoiceRowToProjectInvoice), total: count ?? 0 };
-}
-
-/**
- * Anni distinti in cui sono state archiviate fatture progetto, per i filtri dell'archivio
- */
-export async function getArchivedProjectInvoiceYears(): Promise<number[]> {
-  const { data, error } = await supabaseServer
-    .from('project_invoices')
-    .select('archived_at')
-    .not('archived_at', 'is', null)
-    .is('deleted_at', null);
-  if (error) throw error;
-  const years = new Set((data ?? []).map((r: any) => new Date(r.archived_at).getFullYear()));
-  return Array.from(years).sort((a, b) => b - a);
-}
-
-export async function archiveProjectInvoices(ids: string[]): Promise<void> {
-  const { error } = await supabaseServer.from('project_invoices').update({ archived_at: new Date().toISOString() }).in('id', ids);
-  if (error) throw error;
-}
-
-export async function unarchiveProjectInvoice(id: string): Promise<void> {
-  const { error } = await supabaseServer.from('project_invoices').update({ archived_at: null }).eq('id', id);
-  if (error) throw error;
-}
-
-export async function softDeleteProjectInvoice(id: string): Promise<void> {
-  const { error } = await supabaseServer.from('project_invoices').update({ deleted_at: new Date().toISOString() }).eq('id', id);
-  if (error) throw error;
-}
-
-export async function restoreProjectInvoice(id: string): Promise<void> {
-  const { error } = await supabaseServer.from('project_invoices').update({ deleted_at: null }).eq('id', id);
-  if (error) throw error;
-}
-
-/**
- * Accorpa più fatture progetto dello stesso cliente in un'unica fattura con più
- * voci (una riga per fattura di origine); le fatture di origine vengono spostate
- * nel cestino e collegate alla nuova fattura tramite merged_into_id.
- */
-export async function mergeProjectInvoices(ids: string[], createdBy: string): Promise<ProjectInvoice> {
-  const { data: rows, error } = await supabaseServer.from('project_invoices').select('*').in('id', ids).is('deleted_at', null);
-  if (error) throw error;
-  const invoices = (rows ?? []).map(projectInvoiceRowToProjectInvoice);
-  if (invoices.length < 2) throw new Error('Servono almeno due fatture da accorpare.');
-
-  const clientIds = new Set(invoices.map((i) => i.clientId ?? i.clientName));
-  if (clientIds.size > 1) throw new Error('Le fatture selezionate devono appartenere allo stesso cliente.');
-
-  const lineItems = invoices.map((i) => ({ label: i.projectTitle, netAmount: i.netAmount }));
-  const netAmount = Math.round(invoices.reduce((sum, i) => sum + i.netAmount, 0) * 100) / 100;
-  const vatRate = invoices[0].vatRate;
-  const vatAmount = Math.round(netAmount * (vatRate / 100) * 100) / 100;
-  const totalAmount = Math.round((netAmount + vatAmount) * 100) / 100;
-
-  const { data: merged, error: insertError } = await supabaseServer
-    .from('project_invoices')
-    .insert([
-      {
-        client_id: invoices[0].clientId ?? null,
-        client_name: invoices[0].clientName,
-        project_title: invoices.map((i) => i.projectTitle).join(' + '),
-        job_title: invoices[0].jobTitle ?? null,
-        net_amount: netAmount,
-        vat_rate: vatRate,
-        vat_amount: vatAmount,
-        total_amount: totalAmount,
-        line_items: lineItems,
-        created_by: createdBy,
-      },
-    ])
-    .select()
-    .single();
-  if (insertError) throw insertError;
-
-  const { error: updateError } = await supabaseServer
-    .from('project_invoices')
-    .update({ status: 'accorpata', merged_into_id: merged.id, deleted_at: new Date().toISOString() })
-    .in('id', ids);
-  if (updateError) throw updateError;
-
-  return projectInvoiceRowToProjectInvoice(merged);
-}
-
-/**
- * Fatture progetto con numero fattura noto ma non ancora collegate a una
- * fattura reale su Fatture in Cloud, per il match bulk (bulkMatchInvoicesAction)
- */
-export async function getProjectInvoicesWithNumber(): Promise<
-  { id: string; invoiceNumber: string; totalAmount: number; invoiceDate?: Date; createdAt: Date }[]
-> {
-  const { data, error } = await supabaseServer
-    .from('project_invoices')
-    .select('id, invoice_number, total_amount, invoice_date, created_at')
-    .not('invoice_number', 'is', null)
-    .is('fic_invoice_id', null)
-    .is('deleted_at', null);
-  if (error) throw error;
-  return (data ?? []).map((row: { id: string; invoice_number: string; total_amount: number; invoice_date: string | null; created_at: string }) => ({
-    id: row.id,
-    invoiceNumber: row.invoice_number,
-    totalAmount: Number(row.total_amount),
-    invoiceDate: row.invoice_date ? new Date(row.invoice_date) : undefined,
-    createdAt: new Date(row.created_at),
-  }));
-}
-
-/**
- * Fatture progetto emesse ma non ancora collegate a un documento FiC (con o
- * senza numero fattura locale), per il secondo livello di match per
- * cliente/importo/data (suggestInvoiceMatchesAction).
- */
-export async function getProjectInvoicesWithoutFicId(): Promise<
-  { id: string; clientId?: string; clientName: string; totalAmount: number; invoiceDate?: Date; createdAt: Date }[]
-> {
-  const { data, error } = await supabaseServer
-    .from('project_invoices')
-    .select('id, client_id, client_name, total_amount, invoice_date, created_at')
-    .is('fic_invoice_id', null)
-    .is('deleted_at', null)
-    .eq('status', 'fatturata');
-  if (error) throw error;
-  return (data ?? []).map(
-    (row: { id: string; client_id: string | null; client_name: string; total_amount: number; invoice_date: string | null; created_at: string }) => ({
-      id: row.id,
-      clientId: row.client_id ?? undefined,
-      clientName: row.client_name,
-      totalAmount: Number(row.total_amount),
-      invoiceDate: row.invoice_date ? new Date(row.invoice_date) : undefined,
-      createdAt: new Date(row.created_at),
-    })
-  );
-}
-
-/**
- * Clienti locali con un fic_id collegato, per mappare l'entity di un
- * documento FiC al cliente LNON corrispondente (match fatture per cliente).
- */
-export async function getClientsWithFicId(): Promise<{ id: string; ficId: number }[]> {
-  const { data, error } = await supabaseServer
-    .from('clients')
-    .select('id, fic_id')
-    .not('fic_id', 'is', null)
-    .is('deleted_at', null);
-  if (error) throw error;
-  return (data ?? []).map((row: { id: string; fic_id: number }) => ({ id: row.id, ficId: row.fic_id }));
-}
-
-/**
- * Fatture progetto già collegate a un documento reale su Fatture in Cloud,
- * per la sincronizzazione delle sottovoci con prodotto.
- */
-export async function getProjectInvoicesWithFicId(): Promise<{ id: string; ficInvoiceId: number; clientName: string }[]> {
-  const { data, error } = await supabaseServer
-    .from('project_invoices')
-    .select('id, fic_invoice_id, client_name')
-    .not('fic_invoice_id', 'is', null)
-    .is('deleted_at', null);
-  if (error) throw error;
-  return (data ?? []).map((row: { id: string; fic_invoice_id: number; client_name: string }) => ({
-    id: row.id,
-    ficInvoiceId: row.fic_invoice_id,
-    clientName: row.client_name,
-  }));
-}
-
-/**
- * Sostituisce le lineItems di una fattura progetto (usato dalla
- * sincronizzazione sottovoci da Fatture in Cloud).
- */
-export async function updateProjectInvoiceLineItems(id: string, lineItems: ProjectInvoiceLineItem[]): Promise<void> {
-  const { error } = await supabaseServer
-    .from('project_invoices')
-    .update({ line_items: lineItems, line_items_synced_at: new Date().toISOString() })
-    .eq('id', id);
-  if (error) throw error;
-}
-
-/**
- * Prodotti locali con un fic_id collegato, per mappare le sottovoci FiC
- * (product_id) al prodotto locale corrispondente.
- */
-export async function getProductsWithFicId(): Promise<{ id: string; ficId: number }[]> {
-  const { data, error } = await supabaseServer
-    .from('products')
-    .select('id, fic_id')
-    .not('fic_id', 'is', null)
-    .is('deleted_at', null);
-  if (error) throw error;
-  return (data ?? []).map((row: { id: string; fic_id: number }) => ({ id: row.id, ficId: row.fic_id }));
-}
-
-/**
- * Collega una fattura progetto locale alla fattura corrispondente su Fatture in Cloud
- */
-export async function linkProjectInvoiceToFic(id: string, ficInvoiceId: number): Promise<void> {
-  const { error } = await supabaseServer.from('project_invoices').update({ fic_invoice_id: ficInvoiceId }).eq('id', id);
-  if (error) throw error;
-}
-
-/**
- * Registra l'esito della generazione di un documento fattura reale su
- * Fatture in Cloud (emesso e numerato, non una bozza): collega l'id FIC,
- * aggiorna numero/data con quelli restituiti da FIC e porta lo stato a
- * "fatturata". Distinta da linkProjectInvoiceToFic, che serve solo al
- * match storico bulk e non tocca lo stato.
- */
-export async function markProjectInvoiceIssuedOnFic(
-  id: string,
-  data: { ficInvoiceId: number; invoiceNumber: string; invoiceDate: string }
-): Promise<ProjectInvoice> {
-  const { data: row, error } = await supabaseServer
-    .from('project_invoices')
-    .update({
-      fic_invoice_id: data.ficInvoiceId,
-      invoice_number: data.invoiceNumber,
-      invoice_date: data.invoiceDate,
-      status: 'fatturata',
-    })
-    .eq('id', id)
-    .select()
-    .single();
-  if (error) throw error;
-  return projectInvoiceRowToProjectInvoice(row);
-}
-
-/**
- * "Reclama" atomicamente una fattura per la generazione su FIC, impostando
- * temporaneamente lo stato a 'fatturata' come guardia contro richieste
- * concorrenti (due tab, un retry) che genererebbero due documenti FIC per
- * la stessa fattura. Ritorna false se un'altra richiesta l'ha già reclamata
- * (stato non più 'da_fatturare') nel frattempo.
- */
-export async function claimProjectInvoiceForFicGeneration(id: string): Promise<boolean> {
-  const { data, error } = await supabaseServer
-    .from('project_invoices')
-    .update({ status: 'fatturata' })
-    .eq('id', id)
-    .eq('status', 'da_fatturare')
-    .select('id')
-    .maybeSingle();
-  if (error) throw error;
-  return !!data;
-}
-
-/**
- * Annulla una claim di generazione FIC fallita, riportando la fattura a
- * 'da_fatturare'. Non tocca fatture che nel frattempo hanno già ottenuto un
- * fic_invoice_id reale (già generate con successo da un'altra chiamata).
- */
-export async function releaseProjectInvoiceFicClaim(id: string): Promise<void> {
-  const { error } = await supabaseServer
-    .from('project_invoices')
-    .update({ status: 'da_fatturare' })
-    .eq('id', id)
-    .is('fic_invoice_id', null);
-  if (error) throw error;
 }
 
 /**
@@ -2865,8 +2264,6 @@ function hourlyWorkEntryRowToHourlyWorkEntry(row: Record<string, any>): HourlyWo
     status: row.status,
     amount: Number(row.amount ?? 0),
     locked: row.locked ?? false,
-    invoiceId: row.invoice_id ?? undefined,
-    invoicedAt: row.invoiced_at ? new Date(row.invoiced_at) : undefined,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
@@ -2886,8 +2283,6 @@ function hourlyWorkEntryToRow(data: Partial<Omit<HourlyWorkEntry, 'id' | 'create
   if (data.status !== undefined) row.status = data.status;
   if (data.amount !== undefined) row.amount = data.amount;
   if (data.locked !== undefined) row.locked = data.locked;
-  if (data.invoiceId !== undefined) row.invoice_id = data.invoiceId;
-  if (data.invoicedAt !== undefined) row.invoiced_at = data.invoicedAt ? data.invoicedAt.toISOString() : null;
   if (data.createdBy !== undefined) row.created_by = data.createdBy;
   return row;
 }
@@ -2990,7 +2385,7 @@ export async function createHourlyContract(
   const job = await createDbJob({
     title,
     clientId: input.clientId,
-    status: 'in_progress',
+    status: 'in_corso',
     currency: 'EUR',
     fiscalYear: new Date().getFullYear(),
     isSystemGenerated: true,
@@ -3151,7 +2546,6 @@ export async function updateHourlyWorkEntry(
     .from('hourly_work_entries').select('*').eq('id', id).single();
   if (fetchError) throw fetchError;
   const existing = hourlyWorkEntryRowToHourlyWorkEntry(existingRow);
-  if (existing.invoiceId) throw new Error('Questa lavorazione è già stata fatturata e non può essere modificata.');
   if (existing.locked) throw new Error('Questa lavorazione è congelata (ha messo il contratto in riposo) e non può essere modificata.');
 
   const row = hourlyWorkEntryToRow(patch);
@@ -3187,4 +2581,4 @@ export async function softDeleteHourlyWorkEntry(id: string): Promise<void> {
   }
 }
 
-export type { User, Client, Job, Task, Invoice, Invitation, ActivityLog, Product, Contract, Project, ProjectTask, ProjectInvoice };
+export type { User, Client, Job, Task, Invitation, ActivityLog, Product, Contract, Project, ProjectTask };

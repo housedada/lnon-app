@@ -17,12 +17,12 @@ interface JobFormProps {
 }
 
 const STATUS_OPTIONS: { value: JobStatus; label: string }[] = [
-  { value: 'draft', label: 'Bozza' },
-  { value: 'pending_approval', label: 'In attesa di approvazione' },
-  { value: 'approved', label: 'Approvato' },
-  { value: 'in_progress', label: 'In corso' },
-  { value: 'completed', label: 'Completato' },
-  { value: 'cancelled', label: 'Annullato' },
+  { value: 'preventivato', label: 'Preventivato' },
+  { value: 'pre_approvato', label: 'Pre-approvato' },
+  { value: 'in_corso', label: 'In corso' },
+  { value: 'completato', label: 'Completato' },
+  { value: 'fatturato', label: 'Fatturato' },
+  { value: 'annullato', label: 'Annullato' },
 ];
 
 function Field({
@@ -130,7 +130,7 @@ export default function JobForm({
             <select
               name="status"
               id="status"
-              defaultValue={job?.status ?? 'draft'}
+              defaultValue={job?.status ?? 'preventivato'}
               className="field-input w-full border border-grid-border bg-transparent px-3 pb-2 pt-4 text-sm text-primary"
             >
               {STATUS_OPTIONS.map((s) => (
@@ -166,8 +166,15 @@ export default function JobForm({
         <h2 className="text-sm font-semibold uppercase tracking-wide text-secondary">Budget e date</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <Field label="Budget stimato" name="estimatedBudget" defaultValue={job?.estimatedBudget} type="number" icon={Euro} />
-          <Field label="Budget reale" name="actualBudget" defaultValue={job?.actualBudget} type="number" icon={Euro} />
           <Field label="Spese fornitori" name="supplierCost" defaultValue={job?.supplierCost} type="number" icon={Euro} />
+          {job && (
+            <div className="field-wrap flex flex-col justify-center px-3 pb-2 pt-4">
+              <span className="mb-1 text-xs text-secondary">Budget reale</span>
+              <span className="text-sm text-primary">
+                {(job.actualBudget ?? 0).toLocaleString('it-IT', { style: 'currency', currency: job.currency ?? 'EUR' })}
+              </span>
+            </div>
+          )}
           <Field label="Data inizio" name="startDate" defaultValue={toDateInputValue(job?.startDate)} type="date" icon={Calendar} />
           <Field label="Data fine" name="endDate" defaultValue={toDateInputValue(job?.endDate)} type="date" icon={Calendar} />
         </div>
@@ -178,6 +185,7 @@ export default function JobForm({
             defaultValue={job?.fiscalYear ?? new Date().getFullYear()}
             type="number"
           />
+          <Field label="Numero fattura" name="invoiceNumber" defaultValue={job?.invoiceNumber} />
         </div>
         <input type="hidden" name="currency" value={job?.currency ?? 'EUR'} />
       </section>

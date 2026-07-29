@@ -16,7 +16,6 @@ export const PERMISSION_MATRIX: Record<UserRole, Record<string, string[]>> = {
     projects: ['read', 'create', 'update', 'delete'],
     jobs: ['read', 'create', 'update', 'delete', 'approve', 'assign', 'export'],
     tasks: ['read', 'create', 'update', 'delete', 'reassign'],
-    invoices: ['read', 'create', 'update', 'delete', 'send', 'cancel'],
     reports: ['read', 'create', 'export', 'delete'],
     hourly_billing: ['read', 'create', 'update', 'delete'],
     fixed_expenses: ['read', 'create', 'update', 'delete'],
@@ -31,7 +30,6 @@ export const PERMISSION_MATRIX: Record<UserRole, Record<string, string[]>> = {
     projects: ['read', 'create', 'update'],
     jobs: ['read', 'create', 'update', 'approve', 'assign', 'export'],
     tasks: ['read', 'create', 'update', 'reassign'],
-    invoices: ['read', 'create', 'update', 'send'],
     reports: ['read', 'export'],
     hourly_billing: ['read', 'create', 'update'],
     fixed_expenses: ['read', 'create', 'update'],
@@ -46,7 +44,6 @@ export const PERMISSION_MATRIX: Record<UserRole, Record<string, string[]>> = {
     projects: ['read', 'create', 'update'],
     jobs: ['read'], // Vede solo lavori assegnati a lui
     tasks: ['read', 'update'], // Può aggiornare status dei suoi task
-    invoices: ['read'], // Lettura sola
     reports: [],
     hourly_billing: ['read'],
     fixed_expenses: [],

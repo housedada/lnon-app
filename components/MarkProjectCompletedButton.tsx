@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { CheckCircle2 } from 'lucide-react';
 import DoubleConfirmModal from '@/components/DoubleConfirmModal';
 import SimpleConfirmModal from '@/components/SimpleConfirmModal';
-import { markProjectCompletedAction } from '@/lib/actions/projectInvoices';
+import { markProjectCompletedAction } from '@/lib/actions/projects';
 import { notify } from '@/lib/notify';
 
 export default function MarkProjectCompletedButton({
@@ -61,7 +61,7 @@ export default function MarkProjectCompletedButton({
       {open && !isHourlyContract && (
         <DoubleConfirmModal
           firstMessage={`Segnare il progetto "${projectTitle}" come completato?`}
-          secondMessage="Il completamento non genera più fatture automatiche: potrai creare la fattura manualmente dalla pagina Fatture, se necessario. Confermi?"
+          secondMessage="Il completamento non cambia lo stato di fatturazione del lavoro: quando sarà fatturato, aggiorna manualmente lo stato del lavoro. Confermi?"
           onConfirm={handleConfirm}
           onClose={() => setOpen(false)}
         />

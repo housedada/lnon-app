@@ -12,6 +12,8 @@ import {
   saveTeamColumnOrder,
   savePersonalColumnOrder,
   getJobById,
+  getProjectById,
+  markProjectCompleted,
 } from '@/lib/db';
 
 async function requireRole(resource: string, action: string) {
@@ -125,6 +127,26 @@ export async function deleteProjectAction(id: string): Promise<{ success: boolea
   await softDeleteProject(id);
   revalidatePath('/dashboard/tasks');
   return { success: true, message: 'Progetto eliminato.' };
+}
+
+/**
+ * Segna un progetto come completato. La fatturazione del lavoro collegato
+ * resta sempre un cambio di stato manuale sul Job (status = 'fatturato').
+ */
+export async function markProjectCompletedAction(projectId: string): Promise<{ success: boolean; message: string }> {
+  const session = await auth();
+  const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role;
+  if (!role || role === 'dipendente') {
+    return { success: false, message: 'Solo gli amministratori possono completare un progetto.' };
+  }
+
+  const project = await getProjectById(projectId);
+  if (!project) return { success: false, message: 'Progetto non trovato.' };
+  if (project.completedAt) return { success: false, message: 'Questo progetto è già segnato come completato.' };
+
+  await markProjectCompleted(projectId);
+  revalidatePath('/dashboard/tasks');
+  return { success: true, message: 'Progetto segnato come completato.' };
 }
 
 export async function saveTeamColumnOrderAction(orderedUserIds: string[]): Promise<void> {

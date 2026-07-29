@@ -148,7 +148,7 @@ export interface Contract {
   clientName?: string;
 }
 
-export type JobStatus = 'draft' | 'pending_approval' | 'approved' | 'in_progress' | 'completed' | 'cancelled';
+export type JobStatus = 'preventivato' | 'pre_approvato' | 'in_corso' | 'completato' | 'fatturato' | 'annullato';
 
 export interface Job {
   id: string;
@@ -179,15 +179,8 @@ export interface Job {
   systemSource?: 'hourly_contract';
   // Spesa fornitori/sottofornitori sostenuta per questo lavoro (importo singolo)
   supplierCost?: number;
-  // Campi economico/fiscali di riga, popolati dall'import storico da export
-  // Fatture in Cloud (1 job = 1 voce di fattura)
+  // Numero fattura corrispondente al lavoro (inseribile manualmente)
   invoiceNumber?: string;
-  invoiceDate?: Date;
-  invoiceNetAmount?: number;
-  invoiceVatAmount?: number;
-  invoiceGrossAmount?: number;
-  invoicePaymentStatus?: string;
-  invoicePaidAt?: Date;
   // Popolati solo dalla lista/dettaglio, se collegati
   clientName?: string;
   contractLabel?: string;
@@ -212,44 +205,6 @@ export interface Project {
   // Popolati solo in lettura, se collegati
   jobTitle?: string;
   assignedToName?: string;
-}
-
-export type ProjectInvoiceStatus = 'da_fatturare' | 'fatturata' | 'annullata' | 'accorpata';
-
-export interface ProjectInvoiceLineItem {
-  label: string;
-  netAmount: number;
-  productId?: string;
-}
-
-export interface ProjectInvoice {
-  id: string;
-  projectId?: string;
-  jobId?: string;
-  clientId?: string;
-  projectTitle: string;
-  jobTitle?: string;
-  clientName: string;
-  netAmount: number;
-  vatRate: number;
-  vatAmount: number;
-  totalAmount: number;
-  lineItems: ProjectInvoiceLineItem[];
-  status: ProjectInvoiceStatus;
-  mergedIntoId?: string;
-  ficInvoiceId?: number;
-  invoiceNumber?: string;
-  invoiceDate?: Date;
-  paymentStatus?: string;
-  paidAt?: Date;
-  createdBy: string;
-  createdAt: Date;
-  updatedAt: Date;
-  archivedAt?: Date;
-  deletedAt?: Date;
-  sourceType?: 'project' | 'hourly_contract';
-  hourlyContractId?: string;
-  lineItemsSyncedAt?: Date;
 }
 
 export interface FixedExpenseCategory {
@@ -317,8 +272,6 @@ export interface HourlyWorkEntry {
   // true = lavorazione storica che ha portato il contratto in riposo: resta
   // visibile ma non più cliccabile/modificabile
   locked: boolean;
-  invoiceId?: string;
-  invoicedAt?: Date;
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;

@@ -9,12 +9,12 @@ import AnimatedVisibility from '@/components/AnimatedVisibility';
 
 const STATUS_OPTIONS: { value: JobStatus | ''; label: string }[] = [
   { value: '', label: 'Tutti gli stati' },
-  { value: 'draft', label: 'Bozza' },
-  { value: 'pending_approval', label: 'In attesa di approvazione' },
-  { value: 'approved', label: 'Approvato' },
-  { value: 'in_progress', label: 'In corso' },
-  { value: 'completed', label: 'Completato' },
-  { value: 'cancelled', label: 'Annullato' },
+  { value: 'preventivato', label: 'Preventivato' },
+  { value: 'pre_approvato', label: 'Pre-approvato' },
+  { value: 'in_corso', label: 'In corso' },
+  { value: 'completato', label: 'Completato' },
+  { value: 'fatturato', label: 'Fatturato' },
+  { value: 'annullato', label: 'Annullato' },
 ];
 
 const SYNC_OPTIONS: { value: string; label: string }[] = [

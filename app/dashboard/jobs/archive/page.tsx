@@ -16,12 +16,12 @@ export const metadata = { title: 'Archivio Lavori' };
 const GRID_TEMPLATE = 'repeat(5, minmax(max-content, 1fr)) max-content';
 
 const STATUS_LABEL: Record<JobStatus, string> = {
-  draft: 'Bozza',
-  pending_approval: 'In attesa',
-  approved: 'Approvato',
-  in_progress: 'In corso',
-  completed: 'Completato',
-  cancelled: 'Annullato',
+  preventivato: 'Preventivato',
+  pre_approvato: 'Pre-approvato',
+  in_corso: 'In corso',
+  completato: 'Completato',
+  fatturato: 'Fatturato',
+  annullato: 'Annullato',
 };
 
 function formatDate(value?: Date) {

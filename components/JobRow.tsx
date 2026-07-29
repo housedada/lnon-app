@@ -21,21 +21,21 @@ import { notify } from '@/lib/notify';
 import type { Job, JobStatus } from '@/lib/types';
 
 const STATUS_LABEL: Record<JobStatus, string> = {
-  draft: 'Bozza',
-  pending_approval: 'In attesa',
-  approved: 'Approvato',
-  in_progress: 'In corso',
-  completed: 'Completato',
-  cancelled: 'Annullato',
+  preventivato: 'Preventivato',
+  pre_approvato: 'Pre-approvato',
+  in_corso: 'In corso',
+  completato: 'Completato',
+  fatturato: 'Fatturato',
+  annullato: 'Annullato',
 };
 
 const STATUS_BADGE: Record<JobStatus, string> = {
-  draft: 'bg-grid-header-bg text-secondary',
-  pending_approval: 'bg-amber-500/10 text-amber-700',
-  approved: 'bg-yellow-300/20 text-yellow-700',
-  in_progress: 'bg-blue-600/10 text-blue-700',
-  completed: 'bg-green-600/10 text-green-700',
-  cancelled: 'bg-red-600/10 text-red-700',
+  preventivato: 'bg-grid-header-bg text-secondary',
+  pre_approvato: 'bg-amber-500/10 text-amber-700',
+  in_corso: 'bg-blue-600/10 text-blue-700',
+  completato: 'bg-yellow-300/20 text-yellow-700',
+  fatturato: 'bg-green-600/10 text-green-700',
+  annullato: 'bg-red-600/10 text-red-700',
 };
 
 function formatAmount(value?: number) {
@@ -81,13 +81,7 @@ function buildDetailSections(job: Job, showAmounts: boolean): DetailSection[] {
     },
     {
       title: 'Fattura',
-      fields: [
-        { label: 'Numero fattura', value: job.invoiceNumber },
-        { label: 'Data fattura', value: formatDate(job.invoiceDate) },
-        { label: 'Importo netto', value: showAmounts ? formatAmount(job.invoiceNetAmount) : undefined },
-        { label: 'Importo lordo', value: showAmounts ? formatAmount(job.invoiceGrossAmount) : undefined },
-        { label: 'Stato pagamento', value: job.invoicePaymentStatus },
-      ],
+      fields: [{ label: 'Numero fattura', value: job.invoiceNumber }],
     },
   ];
 }
@@ -221,8 +215,10 @@ export default function JobRow({
         {canUpdate && !job.clientId && job.clientNameRaw && (
           <JobLinkButton jobId={job.id} jobClientName={job.clientNameRaw} clientOptions={clientOptions} />
         )}
-        {canApprove && job.status === 'pending_approval' && <ApproveJobButton jobId={job.id} />}
-        {canUpdate && job.status === 'completed' && !job.archivedAt && <ArchiveJobButton jobId={job.id} />}
+        {canApprove && job.status === 'preventivato' && <ApproveJobButton jobId={job.id} />}
+        {canUpdate &&
+          (job.status === 'completato' || job.status === 'fatturato' || job.status === 'annullato') &&
+          !job.archivedAt && <ArchiveJobButton jobId={job.id} />}
         {canUpdate && (
           <Link href={`/dashboard/jobs/${job.id}/edit`} aria-label="Modifica lavoro" title="Modifica lavoro" className="text-secondary transition hover:text-primary">
             <Pencil size={15} strokeWidth={1.75} />

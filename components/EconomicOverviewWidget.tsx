@@ -1,10 +1,7 @@
-import { Receipt, FileSignature, Clock, TrendingUp, FileClock, CheckCircle2, Truck, Wallet, Server, Scale } from 'lucide-react';
+import { Receipt, FileSignature, Clock, TrendingUp, FileClock, ListChecks, CheckCircle2, Truck, Wallet, Server, Scale } from 'lucide-react';
 import type { JobsForecastResult, ContractsStats, HourlyContractsSummary } from '@/lib/db';
-import CreditRiskSection from '@/components/CreditRiskSection';
-import TopClientsSection from '@/components/TopClientsSection';
 import ConversionFunnelSection from '@/components/ConversionFunnelSection';
 import ProviderExpirationsSection from '@/components/ProviderExpirationsSection';
-import ProductBreakdownSection from '@/components/ProductBreakdownSection';
 import type { Contract } from '@/lib/types';
 
 function formatExact(value: number): string {
@@ -75,7 +72,7 @@ const FATTURATO_COLOR = '#2f9e6b';
 const CONTRACTS_WEB_COLOR = '#0ea5e9';
 const HOURLY_COLOR = '#b8860b';
 // Dal più tenue (meno certo) al più marcato/brillante (Confermato).
-const POTENZIALE_GRAYS = ['#9ca3af', '#6b7280', '#1f2937'];
+const POTENZIALE_GRAYS = ['#9ca3af', '#78716c', '#525252', '#1f2937'];
 const USCITE_COLOR = '#c94848';
 const MARGINE_POSITIVE_COLOR = '#2f9e6b';
 const MARGINE_NEGATIVE_COLOR = '#c94848';
@@ -100,11 +97,7 @@ export default function EconomicOverviewWidget({
   hourlySummary,
   fixedExpensesTotal,
   jobsForecastTotals,
-  creditRisk,
-  topClients,
   funnel,
-  productBreakdown,
-  uncategorizedInvoices,
   providerExpirations,
 }: {
   fiscalYear: number;
@@ -112,11 +105,7 @@ export default function EconomicOverviewWidget({
   hourlySummary: HourlyContractsSummary;
   fixedExpensesTotal: number;
   jobsForecastTotals: JobsForecastResult['totals'];
-  creditRisk: JobsForecastResult['creditRisk'];
-  topClients: JobsForecastResult['topClients'];
   funnel: JobsForecastResult['funnel'];
-  productBreakdown: JobsForecastResult['productBreakdown'];
-  uncategorizedInvoices: JobsForecastResult['uncategorizedInvoices'];
   providerExpirations: Contract[];
 }) {
   // Contratti Web e Conteggio Orario sono già ricompresi nel fatturato lavori
@@ -136,7 +125,6 @@ export default function EconomicOverviewWidget({
           <Tile
             label={`Fatturato lavori ${fiscalYear}`}
             value={jobsForecastTotals.fatturato}
-            sub={jobsForecastTotals.fatturatoNonRiscosso > 0 ? `Non riscosso: ${formatExact(jobsForecastTotals.fatturatoNonRiscosso)}` : undefined}
             color={FATTURATO_COLOR}
             icon={Receipt}
           />
@@ -156,21 +144,15 @@ export default function EconomicOverviewWidget({
           <TrendingUp size={11} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
           Potenziale {fiscalYear} — lavori non ancora fatturati (upside)
         </p>
-        <div className="card-shadow grid grid-cols-3 overflow-hidden rounded-lg border border-grid-border bg-card-bg">
+        <div className="card-shadow grid grid-cols-2 overflow-hidden rounded-lg border border-grid-border bg-card-bg sm:grid-cols-4">
           <Tile label="Potenziale" value={jobsForecastTotals.potenziale} color={POTENZIALE_GRAYS[0]} icon={TrendingUp} />
-          <Tile label="Preventivato" value={jobsForecastTotals.preventivato} color={POTENZIALE_GRAYS[1]} icon={FileClock} />
-          <Tile label="Confermato" value={jobsForecastTotals.confermato} color={POTENZIALE_GRAYS[2]} icon={CheckCircle2} />
+          <Tile label="Pre-approvato" value={jobsForecastTotals.preApprovato} color={POTENZIALE_GRAYS[1]} icon={FileClock} />
+          <Tile label="In corso" value={jobsForecastTotals.inCorso} color={POTENZIALE_GRAYS[2]} icon={ListChecks} />
+          <Tile label="Confermato" value={jobsForecastTotals.confermato} color={POTENZIALE_GRAYS[3]} icon={CheckCircle2} />
         </div>
       </div>
 
-      <CreditRiskSection fiscalYear={fiscalYear} creditRisk={creditRisk} />
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <TopClientsSection topClients={topClients} />
-        <ConversionFunnelSection funnel={funnel} />
-      </div>
-
-      <ProductBreakdownSection fiscalYear={fiscalYear} productBreakdown={productBreakdown} uncategorizedInvoices={uncategorizedInvoices} />
+      <ConversionFunnelSection funnel={funnel} />
 
       <div>
         <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-secondary">

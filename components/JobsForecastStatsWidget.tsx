@@ -24,16 +24,18 @@ function StatTile({ label, value, exact, color }: { label: string; value: string
 }
 
 const POTENZIALE_COLOR = '#8a8f98';
-const PREVENTIVATO_COLOR = '#c9932f';
+const PRE_APPROVATO_COLOR = '#c9932f';
+const IN_CORSO_COLOR = '#b8860b';
 const CONFERMATO_COLOR = '#0ea5e9';
 const FATTURATO_COLOR = '#2f9e6b';
 const SPESE_COLOR = '#c94848';
 
 export default function JobsForecastStatsWidget({ totals }: { totals: JobsForecastResult['totals'] }) {
   return (
-    <div className="card-shadow mx-6 mt-6 grid grid-cols-2 overflow-hidden rounded-lg border border-sky-500/30 bg-sky-500/5 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="card-shadow mx-6 mt-6 grid grid-cols-2 overflow-hidden rounded-lg border border-sky-500/30 bg-sky-500/5 sm:grid-cols-3 lg:grid-cols-6">
       <StatTile label="Potenziale" value={formatCompact(totals.potenziale)} exact={formatExact(totals.potenziale)} color={POTENZIALE_COLOR} />
-      <StatTile label="Preventivato" value={formatCompact(totals.preventivato)} exact={formatExact(totals.preventivato)} color={PREVENTIVATO_COLOR} />
+      <StatTile label="Pre-approvato" value={formatCompact(totals.preApprovato)} exact={formatExact(totals.preApprovato)} color={PRE_APPROVATO_COLOR} />
+      <StatTile label="In corso" value={formatCompact(totals.inCorso)} exact={formatExact(totals.inCorso)} color={IN_CORSO_COLOR} />
       <StatTile label="Confermato" value={formatCompact(totals.confermato)} exact={formatExact(totals.confermato)} color={CONFERMATO_COLOR} />
       <StatTile label="Fatturato" value={formatCompact(totals.fatturato)} exact={formatExact(totals.fatturato)} color={FATTURATO_COLOR} />
       <StatTile label="Spese fornitori" value={formatCompact(totals.speseFornitori)} exact={formatExact(totals.speseFornitori)} color={SPESE_COLOR} />

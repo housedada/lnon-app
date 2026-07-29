@@ -6,8 +6,6 @@ import { getFicConnection } from '@/lib/db';
 import { getFicDeleteWebhookStatus, FIC_WEBHOOK_DELETE_TYPES } from '@/lib/fattureincloud';
 import { registerFicWebhookAction } from '@/lib/actions/fic';
 import SubmitButton from '@/components/SubmitButton';
-import BulkMatchInvoicesButton from '@/components/BulkMatchInvoicesButton';
-import SyncInvoiceLineItemsButton from '@/components/SyncInvoiceLineItemsButton';
 
 export const metadata = { title: 'Fatture in Cloud' };
 
@@ -32,7 +30,6 @@ export default async function FicSettingsPage({
   const webhookComplete = Boolean(
     webhookStatus?.verified && FIC_WEBHOOK_DELETE_TYPES.every((t) => webhookStatus.types.includes(t))
   );
-  const isSuperadmin = role === 'superadmin';
 
   return (
     <div>
@@ -99,20 +96,6 @@ export default async function FicSettingsPage({
           <p className="mt-4 text-xs text-secondary">Solo un superadmin può gestire questa integrazione.</p>
         )}
       </div>
-
-      {connection && isSuperadmin && (
-        <div className="mx-6 mt-4 max-w-xl rounded-lg border border-grid-border p-5">
-          <p className="text-sm font-medium text-primary">Fatture storiche</p>
-          <p className="mt-1 text-xs text-secondary">
-            Collega le fatture progetto già presenti in Housedada alle fatture reali emesse su Fatture in Cloud,
-            confrontando il numero fattura.
-          </p>
-          <div className="mt-3">
-            <BulkMatchInvoicesButton />
-            <SyncInvoiceLineItemsButton />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

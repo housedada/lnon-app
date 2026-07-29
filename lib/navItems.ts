@@ -2,7 +2,6 @@ import {
   Users,
   Briefcase,
   CheckSquare,
-  FileText,
   FileSignature,
   UserCog,
   BarChart2,
@@ -80,19 +79,6 @@ export const NAV_ITEMS: NavItem[] = [
     subItems: [
       { label: 'Team', href: '/dashboard/tasks?view=team', matchQuery: { key: 'view', value: 'team', default: 'team' }, storageValue: 'team' },
       { label: 'Personale', href: '/dashboard/tasks?view=personal', matchQuery: { key: 'view', value: 'personal', default: 'team' }, storageValue: 'personal' },
-    ],
-  },
-  {
-    resource: 'invoices',
-    label: 'Fatture',
-    href: '/dashboard/invoices',
-    icon: FileText,
-    description: 'Fatturazione e sincronizzazione con Fatture in Cloud',
-    viewStorageKey: 'invoices-tab',
-    subItems: [
-      { label: 'Lista', href: '/dashboard/invoices', storageValue: 'list' },
-      { label: 'Archivio', href: '/dashboard/invoices/archive', storageValue: 'archive' },
-      { label: 'Cestino', href: '/dashboard/invoices/trash', storageValue: 'trash' },
     ],
   },
   {
