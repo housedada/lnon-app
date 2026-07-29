@@ -357,6 +357,8 @@ function jobToRow(data: Partial<Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'cl
   if (data.fiscalYear !== undefined) row.fiscal_year = data.fiscalYear;
   if (data.supplierCost !== undefined) row.supplier_cost = data.supplierCost;
   if (data.invoiceNumber !== undefined) row.invoice_number = data.invoiceNumber || null;
+  if (data.approvedAt !== undefined) row.approved_at = data.approvedAt ? data.approvedAt.toISOString() : null;
+  if (data.approvedBy !== undefined) row.approved_by = data.approvedBy || null;
   if (data.isSystemGenerated !== undefined) row.is_system_generated = data.isSystemGenerated;
   if (data.systemSource !== undefined) row.system_source = data.systemSource;
   return row;
