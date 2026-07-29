@@ -9,7 +9,9 @@ import RememberRoute from '@/components/RememberRoute';
 import LazyRevealRows from '@/components/LazyRevealRows';
 import RowActionsCell from '@/components/RowActionsCell';
 import { parsePageSize } from '@/lib/listPageSize';
+import JobsCategoryTabs from '@/components/JobsCategoryTabs';
 import type { JobStatus } from '@/lib/types';
+import type { JobCategory } from '@/lib/types';
 
 export const metadata = { title: 'Cestino Lavori' };
 
@@ -31,9 +33,10 @@ function formatDate(value?: Date) {
 export default async function JobsTrashPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string; pageSize?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; pageSize?: string; category?: string }>;
 }) {
-  const { q, page, pageSize: pageSizeParam } = await searchParams;
+  const { q, page, pageSize: pageSizeParam, category: categoryParam } = await searchParams;
+  const category: JobCategory = categoryParam === 'web' || categoryParam === 'hourly' ? categoryParam : 'standard';
   const pageSize = parsePageSize(pageSizeParam);
   const currentPage = Math.max(1, Number(page) || 1);
   const offset = (currentPage - 1) * pageSize;
@@ -42,7 +45,7 @@ export default async function JobsTrashPage({
   const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role ?? 'dipendente';
   const canRestore = canDeleteResource(role, '', '', 'jobs');
 
-  const { data: jobs, total } = await getJobs({ search: q, trashed: true, limit: pageSize, offset });
+  const { data: jobs, total } = await getJobs({ search: q, trashed: true, category, limit: pageSize, offset });
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
@@ -68,6 +71,7 @@ export default async function JobsTrashPage({
         showSyncFilter={false}
         totalCount={total}
         totalLabel="lavori nel cestino"
+        searchExtra={<JobsCategoryTabs active={category} />}
       >
         <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
           <div className="grid w-full text-[12px]" style={{ gridTemplateColumns: GRID_TEMPLATE }}>

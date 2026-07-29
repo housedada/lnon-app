@@ -9,7 +9,9 @@ import RememberRoute from '@/components/RememberRoute';
 import LazyRevealRows from '@/components/LazyRevealRows';
 import RowActionsCell from '@/components/RowActionsCell';
 import { parsePageSize } from '@/lib/listPageSize';
+import JobsCategoryTabs from '@/components/JobsCategoryTabs';
 import type { JobStatus } from '@/lib/types';
+import type { JobCategory } from '@/lib/types';
 
 export const metadata = { title: 'Archivio Lavori' };
 
@@ -31,9 +33,10 @@ function formatDate(value?: Date) {
 export default async function JobsArchivePage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string; pageSize?: string; year?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; pageSize?: string; year?: string; category?: string }>;
 }) {
-  const { q, page, pageSize: pageSizeParam, year } = await searchParams;
+  const { q, page, pageSize: pageSizeParam, year, category: categoryParam } = await searchParams;
+  const category: JobCategory = categoryParam === 'web' || categoryParam === 'hourly' ? categoryParam : 'standard';
   const pageSize = parsePageSize(pageSizeParam);
   const currentPage = Math.max(1, Number(page) || 1);
   const offset = (currentPage - 1) * pageSize;
@@ -44,7 +47,7 @@ export default async function JobsArchivePage({
   const canUpdate = hasPermission(role, 'jobs', 'update');
 
   const [{ data: jobs, total }, years] = await Promise.all([
-    getJobs({ search: q, archived: true, archivedYear, limit: pageSize, offset }),
+    getJobs({ search: q, archived: true, archivedYear, category, limit: pageSize, offset }),
     getArchivedJobYears(),
   ]);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -94,6 +97,7 @@ export default async function JobsArchivePage({
         showSyncFilter={false}
         totalCount={total}
         totalLabel="lavori archiviati"
+        searchExtra={<JobsCategoryTabs active={category} />}
       >
         <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
           <div className="grid w-full text-[12px]" style={{ gridTemplateColumns: GRID_TEMPLATE }}>
