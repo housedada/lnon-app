@@ -116,8 +116,7 @@ export async function deleteJobFromListAction(jobId: string): Promise<{ success:
   }
 
   await softDeleteJob(jobId);
-  revalidatePath('/dashboard/jobs');
-  revalidatePath('/dashboard/jobs/trash');
+  revalidatePath('/dashboard/jobs', 'layout');
   return { success: true, message: 'Lavoro spostato nel cestino.' };
 }
 
@@ -140,7 +139,7 @@ export async function updateJobStatusAction(jobId: string, status: JobStatus): P
     } else {
       await updateDbJob(jobId, { status });
     }
-    revalidatePath('/dashboard/jobs');
+    revalidatePath('/dashboard/jobs', 'layout');
     return { success: true, message: 'Stato aggiornato.' };
   } catch {
     return { success: false, message: 'Errore nel salvataggio dello stato.' };
@@ -156,8 +155,7 @@ export async function restoreJobAction(jobId: string): Promise<{ success: boolea
   }
 
   await restoreJob(jobId);
-  revalidatePath('/dashboard/jobs');
-  revalidatePath('/dashboard/jobs/trash');
+  revalidatePath('/dashboard/jobs', 'layout');
   return { success: true, message: 'Lavoro ripristinato.' };
 }
 
@@ -171,7 +169,7 @@ export async function approveJobAction(jobId: string): Promise<{ success: boolea
   }
 
   await approveJob(jobId, userId);
-  revalidatePath('/dashboard/jobs');
+  revalidatePath('/dashboard/jobs', 'layout');
   return { success: true, message: 'Lavoro approvato.' };
 }
 
@@ -184,8 +182,7 @@ export async function archiveJobAction(jobId: string): Promise<{ success: boolea
   }
 
   await archiveJob(jobId);
-  revalidatePath('/dashboard/jobs');
-  revalidatePath('/dashboard/jobs/archive');
+  revalidatePath('/dashboard/jobs', 'layout');
   return { success: true, message: 'Lavoro archiviato.' };
 }
 
@@ -201,8 +198,7 @@ export async function archiveJobsAction(jobIds: string[]): Promise<{ success: bo
   }
 
   const count = await archiveJobs(jobIds);
-  revalidatePath('/dashboard/jobs');
-  revalidatePath('/dashboard/jobs/archive');
+  revalidatePath('/dashboard/jobs', 'layout');
   return {
     success: count > 0,
     message: count > 0 ? `${count} lavori archiviati.` : 'Nessun lavoro completato tra quelli selezionati.',
@@ -218,8 +214,7 @@ export async function unarchiveJobAction(jobId: string): Promise<{ success: bool
   }
 
   await unarchiveJob(jobId);
-  revalidatePath('/dashboard/jobs');
-  revalidatePath('/dashboard/jobs/archive');
+  revalidatePath('/dashboard/jobs', 'layout');
   return { success: true, message: 'Lavoro ripristinato.' };
 }
 
@@ -283,7 +278,7 @@ export async function confirmJobClientMatchesAction(pairs: { jobId: string; clie
   for (const pair of pairs) {
     await linkJobToClient(pair.jobId, pair.clientId);
   }
-  revalidatePath('/dashboard/jobs');
+  revalidatePath('/dashboard/jobs', 'layout');
   return pairs.length;
 }
 
@@ -293,5 +288,5 @@ export async function confirmJobClientMatchesAction(pairs: { jobId: string; clie
 export async function linkJobToClientAction(jobId: string, clientId: string): Promise<void> {
   await requireRole('jobs', 'update');
   await linkJobToClient(jobId, clientId);
-  revalidatePath('/dashboard/jobs');
+  revalidatePath('/dashboard/jobs', 'layout');
 }
