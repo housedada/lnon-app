@@ -64,12 +64,17 @@ export default function InlineSelectCell<T extends string>({ value, options, onS
     setOptimisticValue(newValue);
     setIsPending(true);
 
-    const res = await onSave(newValue);
-
-    setIsPending(false);
-    if (!res.success) {
+    try {
+      const res = await onSave(newValue);
+      if (!res.success) {
+        setOptimisticValue(previousValue);
+        notify(res.message);
+      }
+    } catch {
       setOptimisticValue(previousValue);
-      notify(res.message);
+      notify('Salvataggio non riuscito.');
+    } finally {
+      setIsPending(false);
     }
   }
 

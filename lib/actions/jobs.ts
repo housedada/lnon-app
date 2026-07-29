@@ -128,14 +128,23 @@ export async function deleteJobFromListAction(jobId: string): Promise<{ success:
 export async function updateJobStatusAction(jobId: string, status: JobStatus): Promise<{ success: boolean; message: string }> {
   const session = await auth();
   const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role;
+  const userId = (session?.user as { id?: string } | undefined)?.id;
 
   if (!role || !hasPermission(role, 'jobs', 'update')) {
     return { success: false, message: 'Non hai il permesso di modificare questo lavoro.' };
   }
 
-  await updateDbJob(jobId, { status });
-  revalidatePath('/dashboard/jobs');
-  return { success: true, message: 'Stato aggiornato.' };
+  try {
+    if (status === 'pre_approvato' && userId) {
+      await updateDbJob(jobId, { status, approvedAt: new Date(), approvedBy: userId });
+    } else {
+      await updateDbJob(jobId, { status });
+    }
+    revalidatePath('/dashboard/jobs');
+    return { success: true, message: 'Stato aggiornato.' };
+  } catch {
+    return { success: false, message: 'Errore nel salvataggio dello stato.' };
+  }
 }
 
 export async function restoreJobAction(jobId: string): Promise<{ success: boolean; message: string }> {
