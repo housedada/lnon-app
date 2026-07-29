@@ -18,7 +18,7 @@ import {
   getAllClientNames,
   linkJobToClient,
 } from '@/lib/db';
-import type { Job } from '@/lib/types';
+import type { Job, JobStatus } from '@/lib/types';
 
 type JobFormData = Omit<Job, 'id' | 'createdBy' | 'createdAt' | 'updatedAt' | 'clientName' | 'contractLabel' | 'assignedToName' | 'approvedAt' | 'approvedBy'>;
 
@@ -119,6 +119,23 @@ export async function deleteJobFromListAction(jobId: string): Promise<{ success:
   revalidatePath('/dashboard/jobs');
   revalidatePath('/dashboard/jobs/trash');
   return { success: true, message: 'Lavoro spostato nel cestino.' };
+}
+
+/**
+ * Cambia lo stato di un lavoro da un contesto lista (InlineSelectCell):
+ * niente redirect, torna un esito per il toast e l'aggiornamento ottimistico.
+ */
+export async function updateJobStatusAction(jobId: string, status: JobStatus): Promise<{ success: boolean; message: string }> {
+  const session = await auth();
+  const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role;
+
+  if (!role || !hasPermission(role, 'jobs', 'update')) {
+    return { success: false, message: 'Non hai il permesso di modificare questo lavoro.' };
+  }
+
+  await updateDbJob(jobId, { status });
+  revalidatePath('/dashboard/jobs');
+  return { success: true, message: 'Stato aggiornato.' };
 }
 
 export async function restoreJobAction(jobId: string): Promise<{ success: boolean; message: string }> {
