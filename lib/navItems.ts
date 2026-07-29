@@ -64,9 +64,9 @@ export const NAV_ITEMS: NavItem[] = [
     description: 'Pianificazione e avanzamento dei lavori',
     viewStorageKey: 'jobs-tab',
     subItems: [
-      { label: 'Lista', href: '/dashboard/jobs', storageValue: 'list' },
-      { label: 'Archivio', href: '/dashboard/jobs/archive', storageValue: 'archive' },
-      { label: 'Cestino', href: '/dashboard/jobs/trash', storageValue: 'trash' },
+      { label: 'Standard', href: '/dashboard/jobs', storageValue: 'standard' },
+      { label: 'Contratti Web', href: '/dashboard/jobs/web', storageValue: 'web' },
+      { label: 'Conteggio Orario', href: '/dashboard/jobs/hourly', storageValue: 'hourly' },
     ],
   },
   {

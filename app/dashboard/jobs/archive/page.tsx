@@ -5,7 +5,6 @@ import { hasPermission } from '@/lib/permissions';
 import ListNavigator from '@/components/ListNavigator';
 import UnarchiveJobButton from '@/components/UnarchiveJobButton';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
-import RememberRoute from '@/components/RememberRoute';
 import LazyRevealRows from '@/components/LazyRevealRows';
 import RowActionsCell from '@/components/RowActionsCell';
 import { parsePageSize } from '@/lib/listPageSize';
@@ -54,7 +53,6 @@ export default async function JobsArchivePage({
   return (
     <div>
       <NotifyFromQuery param="saved" message="Lavoro aggiornato." />
-      <RememberRoute storageKey="jobs-tab" tabKey="archive" />
       <div className="flex items-center justify-between p-6 pb-0">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-semibold text-primary">
