@@ -17,13 +17,6 @@ export default async function ContractsLayout({ children }: { children: React.Re
   return (
     <div>
       <h1 className="p-6 pb-0 text-2xl font-semibold text-primary">Contratti</h1>
-      <SectionTabs
-        storageKey="contracts-tab"
-        tabs={[
-          { key: 'manutenzioni', label: 'Web', href: '/dashboard/contracts' },
-          { key: 'orario', label: 'Conteggio Orario', href: '/dashboard/contracts/hourly' },
-        ]}
-      />
       {stats && (
         <ContractsStatsWidget
           stats={stats}
@@ -31,6 +24,13 @@ export default async function ContractsLayout({ children }: { children: React.Re
           hourlyContractsTotal={hourlySummary?.totalAmount}
         />
       )}
+      <SectionTabs
+        storageKey="contracts-tab"
+        tabs={[
+          { key: 'manutenzioni', label: 'Web', href: '/dashboard/contracts' },
+          { key: 'orario', label: 'Conteggio Orario', href: '/dashboard/contracts/hourly' },
+        ]}
+      />
       {children}
     </div>
   );
