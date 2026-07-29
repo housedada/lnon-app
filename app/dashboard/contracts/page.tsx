@@ -1,11 +1,11 @@
 import { Suspense } from 'react';
 import { auth } from '@/lib/auth';
-import { getContracts, getContractsStats, getAllClientNames, getHourlyContractsSummary } from '@/lib/db';
+import { getContracts, getAllClientNames } from '@/lib/db';
 import { hasPermission, canDeleteResource, canViewAmounts } from '@/lib/permissions';
 import ListNavigator from '@/components/ListNavigator';
 import ListPlaceholder from '@/components/ListPlaceholder';
 import ContractsFilterWidget from '@/components/ContractsFilterWidget';
-import ContractsStatsWidget from '@/components/ContractsStatsWidget';
+import ContractsFilterToggleButton from '@/components/ContractsFilterToggleButton';
 import SyncContractsClientsButton from '@/components/SyncContractsClientsButton';
 import NewContractButton from '@/components/NewContractButton';
 import ContractRow from '@/components/ContractRow';
@@ -50,11 +50,7 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
   const role = (session?.user as { role?: 'superadmin' | 'admin' | 'dipendente' } | undefined)?.role ?? 'dipendente';
 
   const showAmounts = canViewAmounts(role);
-  const [stats, clientOptions, hourlySummary] = await Promise.all([
-    showAmounts ? getContractsStats() : Promise.resolve(null),
-    getAllClientNames(),
-    showAmounts ? getHourlyContractsSummary() : Promise.resolve(null),
-  ]);
+  const clientOptions = await getAllClientNames();
 
   const canCreate = hasPermission(role, 'contracts', 'create');
   const canUpdate = hasPermission(role, 'contracts', 'update');
@@ -69,13 +65,6 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
         {canUpdate && <SyncContractsClientsButton />}
       </div>
 
-      {stats && (
-        <ContractsStatsWidget
-          stats={stats}
-          hourlyContractsCount={hourlySummary?.count}
-          hourlyContractsTotal={hourlySummary?.totalAmount}
-        />
-      )}
       <ContractsFilterWidget />
 
       <Suspense fallback={<ListPlaceholder />}>
@@ -120,6 +109,7 @@ async function ContractsListSection({
       showSyncFilter={false}
       totalCount={total}
       totalLabel="contratti"
+      searchExtra={<ContractsFilterToggleButton />}
     >
       <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
         <div className="grid w-full text-[12px]" style={{ gridTemplateColumns: GRID_TEMPLATE }}>

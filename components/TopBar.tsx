@@ -17,7 +17,6 @@ import SpaceInvaderIcon from '@/components/SpaceInvaderIcon';
 import CrownIcon from '@/components/CrownIcon';
 import ChiptuneSelectModal from '@/components/ChiptuneSelectModal';
 import { TUNES, RANDOM_CHOICE, CHIPTUNE_CHOICE_STORAGE_KEY } from '@/lib/chiptunes';
-import { useContractsFilterStore } from '@/lib/store/contractsFilterStore';
 import { useContractsStatsStore } from '@/lib/store/contractsStatsStore';
 import { useJobsFilterStore } from '@/lib/store/jobsFilterStore';
 import { useInvoicesFilterStore } from '@/lib/store/invoicesFilterStore';
@@ -37,8 +36,6 @@ export default function TopBar({
   const isContractsPage = pathname?.startsWith('/dashboard/contracts');
   const isJobsPage = pathname?.startsWith('/dashboard/jobs');
   const isInvoicesPage = pathname?.startsWith('/dashboard/invoices');
-  const contractsFilterVisible = useContractsFilterStore((s) => s.visible);
-  const toggleContractsFilter = useContractsFilterStore((s) => s.toggle);
   const contractsStatsVisible = useContractsStatsStore((s) => s.visible);
   const toggleContractsStats = useContractsStatsStore((s) => s.toggle);
   const jobsFilterVisible = useJobsFilterStore((s) => s.visible);
@@ -64,30 +61,17 @@ export default function TopBar({
 
       <div className="flex items-center gap-1">
         {isContractsPage && (
-          <>
-            <button
-              type="button"
-              onClick={toggleContractsStats}
-              aria-label="Mostra/nascondi riepilogo contratti"
-              aria-pressed={contractsStatsVisible}
-              className={`flex h-8 w-8 items-center justify-center rounded-md transition ${
-                contractsStatsVisible ? 'bg-sky-500/15 text-sky-500' : 'text-sky-500/80 hover:bg-neutral-800 hover:text-sky-500'
-              }`}
-            >
-              <BarChart3 size={17} strokeWidth={1.75} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              onClick={toggleContractsFilter}
-              aria-label="Mostra/nascondi filtri contratti"
-              aria-pressed={contractsFilterVisible}
-              className={`flex h-8 w-8 items-center justify-center rounded-md transition ${
-                contractsFilterVisible ? 'bg-amber-500/15 text-amber-500' : 'text-amber-500/80 hover:bg-neutral-800 hover:text-amber-500'
-              }`}
-            >
-              <SlidersHorizontal size={17} strokeWidth={1.75} aria-hidden="true" />
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={toggleContractsStats}
+            aria-label="Mostra/nascondi riepilogo contratti"
+            aria-pressed={contractsStatsVisible}
+            className={`flex h-8 w-8 items-center justify-center rounded-md transition ${
+              contractsStatsVisible ? 'bg-sky-500/15 text-sky-500' : 'text-sky-500/80 hover:bg-neutral-800 hover:text-sky-500'
+            }`}
+          >
+            <BarChart3 size={17} strokeWidth={1.75} aria-hidden="true" />
+          </button>
         )}
 
         {isJobsPage && (
