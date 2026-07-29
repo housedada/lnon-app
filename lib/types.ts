@@ -150,6 +150,8 @@ export interface Contract {
 
 export type JobStatus = 'preventivato' | 'pre_approvato' | 'in_corso' | 'completato' | 'fatturato' | 'annullato';
 
+export type JobCategory = 'standard' | 'web' | 'hourly';
+
 export interface Job {
   id: string;
   clientId?: string;

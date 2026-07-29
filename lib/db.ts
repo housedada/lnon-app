@@ -6,6 +6,7 @@ import type {
   Client,
   Job,
   JobStatus,
+  JobCategory,
   FixedExpenseCategory,
   FixedExpenseEntry,
   Task,
@@ -394,9 +395,10 @@ export async function getJobs(filters?: {
   archived?: boolean;
   archivedYear?: number;
   trashed?: boolean;
-  // true = solo lavori generati automaticamente (es. conteggio orario);
-  // default/false = solo lavori normali, per tenere la lista pulita
-  systemGenerated?: boolean;
+  // Categoria del lavoro: 'standard' (default se assente) = manuale/import
+  // senza contratto collegato; 'web' = collegato a un Contratto; 'hourly' =
+  // generato automaticamente dal Conteggio Orario
+  category?: JobCategory;
   limit?: number;
   offset?: number;
 }): Promise<{ data: Job[]; total: number }> {
@@ -405,7 +407,13 @@ export async function getJobs(filters?: {
     .select('*, clients(name), contracts(client_name_raw, clients(name))');
 
   query = filters?.trashed ? query.not('deleted_at', 'is', null) : query.is('deleted_at', null);
-  query = query.eq('is_system_generated', filters?.systemGenerated ? true : false);
+  const category = filters?.category ?? 'standard';
+  if (category === 'hourly') {
+    query = query.eq('is_system_generated', true);
+  } else {
+    query = query.eq('is_system_generated', false);
+    query = category === 'web' ? query.not('contract_id', 'is', null) : query.is('contract_id', null);
+  }
 
   if (filters?.archived) {
     query = query.not('archived_at', 'is', null);
