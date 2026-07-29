@@ -418,6 +418,9 @@ textarea::placeholder {
   border-right: 1px solid var(--color-grid-border);
   padding-inline: 16px !important;
   padding-block: 12px !important;
+  max-width: 666px;
+  overflow: hidden;
+  text-overflow: clip;
 }
 
 .group:hover .list-row-cell {
@@ -475,6 +478,9 @@ textarea::placeholder {
   border-right: 1px solid var(--color-grid-border);
   padding-inline: 16px !important;
   padding-block: 12px !important;
+  max-width: 666px;
+  overflow: hidden;
+  text-overflow: clip;
 }
 
 /* Checkbox e radio custom: solo outline, quadratino pieno quando selezionati */
