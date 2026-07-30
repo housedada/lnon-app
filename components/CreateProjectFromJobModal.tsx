@@ -83,7 +83,7 @@ export default function CreateProjectFromJobModal({
           </div>
 
           <div className="mt-6">
-            <AssignedToPicker userOptions={userOptions} />
+            <AssignedToPicker userOptions={userOptions} required />
           </div>
 
         </div>

@@ -7,12 +7,14 @@ export default function AssignedToPicker({
   name = 'assignedTo',
   userOptions,
   defaultValue = '',
+  required = false,
 }: {
   name?: string;
   userOptions: { id: string; name: string; color?: string }[];
   defaultValue?: string;
+  required?: boolean;
 }) {
-  const [assignedTo, setAssignedTo] = useState(defaultValue);
+  const [assignedTo, setAssignedTo] = useState(defaultValue || (required ? (userOptions[0]?.id ?? '') : ''));
 
   return (
     <div>
@@ -22,16 +24,18 @@ export default function AssignedToPicker({
       </p>
       <input type="hidden" name={name} value={assignedTo} />
       <div className="flex flex-wrap gap-2 rounded-lg border border-grid-border p-3">
-        <button
-          type="button"
-          onClick={() => setAssignedTo('')}
-          aria-pressed={assignedTo === ''}
-          className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-            assignedTo === '' ? 'border-transparent bg-grid-header-bg text-primary' : 'border-grid-border text-secondary hover:text-primary'
-          }`}
-        >
-          Non assegnato
-        </button>
+        {!required && (
+          <button
+            type="button"
+            onClick={() => setAssignedTo('')}
+            aria-pressed={assignedTo === ''}
+            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+              assignedTo === '' ? 'border-transparent bg-grid-header-bg text-primary' : 'border-grid-border text-secondary hover:text-primary'
+            }`}
+          >
+            Non assegnato
+          </button>
+        )}
         {userOptions.map((u) => {
           const selected = assignedTo === u.id;
           const color = u.color ?? '#e5e5e5';

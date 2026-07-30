@@ -28,7 +28,7 @@ async function requireRole(resource: string, action: string) {
 const ProjectSchema = z.object({
   title: z.string().min(1, 'Il titolo è obbligatorio'),
   description: z.string().optional().or(z.literal('')),
-  assignedTo: z.string().optional().or(z.literal('')),
+  assignedTo: z.string().min(1, 'Assegna il progetto a qualcuno.'),
   jobId: z.string().optional().or(z.literal('')),
 });
 
@@ -82,7 +82,10 @@ export async function createProjectFromJobAction(
   }
 
   const title = String(formData.get('title') || job.title);
-  const assignedTo = String(formData.get('assignedTo') || '') || undefined;
+  const assignedTo = String(formData.get('assignedTo') || '');
+  if (!assignedTo) {
+    return { success: false, message: 'Assegna il progetto a qualcuno.' };
+  }
 
   const project = await createDbProject({
     title,

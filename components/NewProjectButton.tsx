@@ -72,7 +72,7 @@ export default function NewProjectButton({ userOptions }: { userOptions: { id: s
                 </div>
 
                 <div className="mt-6">
-                  <AssignedToPicker userOptions={userOptions} />
+                  <AssignedToPicker userOptions={userOptions} required />
                 </div>
               </div>
 
