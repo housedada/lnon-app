@@ -9,7 +9,8 @@ import DoubleConfirmModal from '@/components/DoubleConfirmModal';
 import DetailModal, { type DetailSection } from '@/components/DetailModal';
 import MaskedAmount from '@/components/MaskedAmount';
 import RowActionsCell from '@/components/RowActionsCell';
-import { deleteContractFromListAction } from '@/lib/actions/contracts';
+import InlineSelectCell, { type InlineSelectOption } from '@/components/InlineSelectCell';
+import { deleteContractFromListAction, updateContractStatusAction } from '@/lib/actions/contracts';
 import { notify } from '@/lib/notify';
 import type { Contract, ContractStatus } from '@/lib/types';
 
@@ -24,6 +25,12 @@ const STATUS_BADGE: Record<ContractStatus, string> = {
   da_definire: 'bg-grid-header-bg text-secondary',
   disattivo: 'bg-red-600/10 text-red-700',
 };
+
+const CONTRACT_STATUS_OPTIONS: InlineSelectOption<ContractStatus>[] = (Object.keys(STATUS_LABEL) as ContractStatus[]).map((value) => ({
+  value,
+  label: STATUS_LABEL[value],
+  badgeClassName: STATUS_BADGE[value],
+}));
 
 function formatAmount(value?: number) {
   return value != null ? `€ ${value.toFixed(2)}` : '—';
@@ -42,7 +49,7 @@ function serviceActiveBadge(value?: number) {
   );
 }
 
-function renderCell(contract: Contract, key: string, showAmounts: boolean): React.ReactNode {
+function renderCell(contract: Contract, key: string, showAmounts: boolean, canUpdate = false): React.ReactNode {
   switch (key) {
     case 'client':
       return contract.clientName ?? contract.clientNameRaw;
@@ -55,7 +62,9 @@ function renderCell(contract: Contract, key: string, showAmounts: boolean): Reac
     case 'site':
       return contract.site ?? '—';
     case 'status':
-      return (
+      return canUpdate ? (
+        <InlineSelectCell value={contract.status} options={CONTRACT_STATUS_OPTIONS} onSave={updateContractStatusAction.bind(null, contract.id)} />
+      ) : (
         <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE[contract.status]}`}>
           {STATUS_LABEL[contract.status]}
         </span>
@@ -182,7 +191,7 @@ export default function ContractRow({
           onClick={() => setDetailOpen(true)}
           className="list-row-cell flex cursor-pointer items-center whitespace-nowrap border-b border-grid-border px-3 py-2 text-secondary group-hover:bg-row-hover group-hover:text-primary [&:first-child]:font-semibold [&:first-child]:tracking-[0.01em] [&:first-child]:text-primary"
         >
-          {renderCell(contract, col.key, showAmounts)}
+          {renderCell(contract, col.key, showAmounts, canUpdate)}
         </div>
       ))}
       <RowActionsCell>

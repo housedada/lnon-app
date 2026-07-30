@@ -13,7 +13,7 @@ import {
   getAllClientNames,
   linkContractToClient,
 } from '@/lib/db';
-import type { Contract } from '@/lib/types';
+import type { Contract, ContractStatus } from '@/lib/types';
 
 type ContractFormData = Omit<Contract, 'id' | 'createdAt' | 'updatedAt' | 'clientName'>;
 
@@ -75,6 +75,22 @@ export async function createContractAction(formData: FormData) {
   const data = parseContractFormData(formData);
   await createDbContract({ ...data, createdBy: userId });
   redirect('/dashboard/contracts?saved=1');
+}
+
+/**
+ * Cambia lo stato di un contratto da un contesto lista (InlineSelectCell):
+ * niente redirect, torna un esito per il toast e l'aggiornamento ottimistico.
+ */
+export async function updateContractStatusAction(id: string, status: ContractStatus): Promise<{ success: boolean; message: string }> {
+  try {
+    await requireRole('contracts', 'update');
+  } catch (e) {
+    return { success: false, message: (e as Error).message };
+  }
+
+  await updateDbContract(id, { status });
+  revalidatePath('/dashboard/contracts');
+  return { success: true, message: 'Stato aggiornato.' };
 }
 
 export async function updateContractAction(id: string, formData: FormData) {

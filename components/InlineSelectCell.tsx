@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronDown } from 'lucide-react';
 import { notify } from '@/lib/notify';
 
 export interface InlineSelectOption<T extends string> {
@@ -86,10 +86,19 @@ export default function InlineSelectCell<T extends string>({ value, options, onS
         ref={triggerRef}
         type="button"
         onClick={openPopover}
-        className={`relative inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition hover:brightness-95 ${currentOption?.badgeClassName ?? ''}`}
+        className={`group/inline-select relative inline-flex items-center gap-1 rounded-full px-2 py-0.5 pr-1.5 text-[10px] font-medium ring-1 ring-inset ring-transparent transition hover:brightness-95 hover:ring-black/15 hover:shadow-sm ${currentOption?.badgeClassName ?? ''}`}
       >
         {currentOption?.label ?? optimisticValue}
-        {isPending && <Loader2 size={10} strokeWidth={2} className="animate-spin" aria-hidden="true" />}
+        {isPending ? (
+          <Loader2 size={10} strokeWidth={2} className="animate-spin" aria-hidden="true" />
+        ) : (
+          <ChevronDown
+            size={10}
+            strokeWidth={2.5}
+            className="opacity-0 transition-opacity duration-150 group-hover/inline-select:opacity-60"
+            aria-hidden="true"
+          />
+        )}
       </button>
       {pos &&
         createPortal(

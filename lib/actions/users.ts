@@ -70,6 +70,22 @@ export async function updateUserAction(userId: string, formData: FormData): Prom
   return { success: true, message: 'Utente aggiornato.' };
 }
 
+export async function setUserColorAction(userId: string, color: string): Promise<{ success: boolean; message: string }> {
+  try {
+    await requireRole('update');
+  } catch (e) {
+    return { success: false, message: (e as Error).message };
+  }
+  if (!(USER_TAG_COLORS as readonly string[]).includes(color)) {
+    return { success: false, message: 'Colore non valido.' };
+  }
+
+  await updateUserRecord(userId, { color });
+  revalidatePath('/dashboard/users');
+  revalidatePath('/dashboard', 'layout');
+  return { success: true, message: 'Colore aggiornato.' };
+}
+
 export async function setUserActiveAction(userId: string, isActive: boolean): Promise<{ success: boolean; message: string }> {
   try {
     await requireRole('deactivate');
