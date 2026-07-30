@@ -156,7 +156,7 @@ export interface Job {
   id: string;
   clientId?: string;
   clientNameRaw?: string;
-  contractId?: string;
+  contractIds?: string[];
   title: string;
   description?: string;
   status: JobStatus;
@@ -185,7 +185,7 @@ export interface Job {
   invoiceNumber?: string;
   // Popolati solo dalla lista/dettaglio, se collegati
   clientName?: string;
-  contractLabel?: string;
+  contractLabels?: string[];
   assignedToName?: string;
 }
 

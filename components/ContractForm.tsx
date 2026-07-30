@@ -2,6 +2,7 @@
 
 import { Save, Tag, Globe, Calendar, Euro, Landmark, Server } from 'lucide-react';
 import type { Contract } from '@/lib/types';
+import EntityPickerField from '@/components/EntityPickerField';
 
 interface ContractFormProps {
   contract?: Contract;
@@ -63,24 +64,13 @@ export default function ContractForm({ contract, clientOptions, action, secondar
         <h2 className="text-sm font-semibold uppercase tracking-wide text-secondary">Cliente e sito</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Field label="Nome cliente (dal foglio) *" name="clientNameRaw" defaultValue={contract?.clientNameRaw} icon={Tag} />
-          <div className="field-wrap">
-            <select
-              name="clientId"
-              id="clientId"
-              defaultValue={contract?.clientId ?? ''}
-              className="field-input w-full border border-grid-border bg-transparent px-3 pb-2 pt-4 text-sm text-primary"
-            >
-              <option value="">— Non collegato —</option>
-              {clientOptions.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            <label htmlFor="clientId" className="field-floating-label">
-              Cliente Housedada collegato
-            </label>
-          </div>
+          <EntityPickerField
+            name="clientId"
+            label="Cliente Housedada collegato"
+            placeholder="— Non collegato —"
+            options={clientOptions.map((c) => ({ id: c.id, label: c.name }))}
+            defaultValue={contract?.clientId}
+          />
           <Field label="Sito / dominio" name="site" defaultValue={contract?.site} icon={Globe} />
           <div className="field-wrap">
             <select

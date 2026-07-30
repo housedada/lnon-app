@@ -60,7 +60,7 @@ function buildDetailSections(job: Job, showAmounts: boolean): DetailSection[] {
       fields: [
         { label: 'Titolo', value: job.title },
         { label: 'Cliente', value: job.clientName ?? job.clientNameRaw },
-        { label: 'Contratto collegato', value: job.contractLabel },
+        { label: 'Contratti collegati', value: job.contractLabels?.join(', ') },
         { label: 'Stato', value: STATUS_LABEL[job.status] },
         { label: 'Assegnato a', value: job.assignedToName },
         { label: 'Descrizione', value: job.description },

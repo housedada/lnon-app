@@ -20,11 +20,11 @@ import {
 } from '@/lib/db';
 import type { Job, JobStatus } from '@/lib/types';
 
-type JobFormData = Omit<Job, 'id' | 'createdBy' | 'createdAt' | 'updatedAt' | 'clientName' | 'contractLabel' | 'assignedToName' | 'approvedAt' | 'approvedBy'>;
+type JobFormData = Omit<Job, 'id' | 'createdBy' | 'createdAt' | 'updatedAt' | 'clientName' | 'contractLabels' | 'assignedToName' | 'approvedAt' | 'approvedBy'>;
 
 const JobSchema = z.object({
   clientId: z.string().min(1, 'Il cliente è obbligatorio'),
-  contractId: z.string().optional().or(z.literal('')),
+  contractIds: z.array(z.string()).optional(),
   title: z.string().min(1, 'Il titolo è obbligatorio'),
   description: z.string().optional().or(z.literal('')),
   status: z.enum(['preventivato', 'pre_approvato', 'in_corso', 'completato', 'fatturato', 'annullato']),
@@ -42,6 +42,7 @@ const JobSchema = z.object({
 function parseJobFormData(formData: FormData) {
   const raw: Record<string, unknown> = Object.fromEntries(formData.entries());
   raw.productIds = formData.getAll('productIds');
+  raw.contractIds = formData.getAll('contractIds');
   const parsed = JobSchema.parse(raw);
 
   const cleaned: Record<string, unknown> = {};
@@ -81,14 +82,14 @@ export async function createJobAction(formData: FormData) {
   if (formData.get('createProject')) {
     redirect(`/dashboard/jobs?createProject=${job.id}`);
   }
-  redirect(job.contractId ? '/dashboard/jobs/web?saved=1' : '/dashboard/jobs?saved=1');
+  redirect((job.contractIds?.length ?? 0) > 0 ? '/dashboard/jobs/web?saved=1' : '/dashboard/jobs?saved=1');
 }
 
 export async function updateJobAction(id: string, formData: FormData) {
   await requireRole('jobs', 'update');
   const data = parseJobFormData(formData);
   await updateDbJob(id, data);
-  redirect(data.contractId ? '/dashboard/jobs/web?saved=1' : '/dashboard/jobs?saved=1');
+  redirect((data.contractIds?.length ?? 0) > 0 ? '/dashboard/jobs/web?saved=1' : '/dashboard/jobs?saved=1');
 }
 
 export async function deleteJobAction(id: string) {

@@ -4,6 +4,7 @@ import { Save, Briefcase, Calendar, Euro } from 'lucide-react';
 import type { Job, JobStatus } from '@/lib/types';
 import AssignedToPicker from '@/components/AssignedToPicker';
 import ProductTagPicker from '@/components/ProductTagPicker';
+import EntityPickerField from '@/components/EntityPickerField';
 
 interface JobFormProps {
   job?: Job;
@@ -87,45 +88,21 @@ export default function JobForm({
         <h2 className="text-sm font-semibold uppercase tracking-wide text-secondary">Lavoro</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Field label="Titolo *" name="title" defaultValue={job?.title} icon={Briefcase} />
-          <div className="field-wrap">
-            <select
-              name="clientId"
-              id="clientId"
-              defaultValue={job?.clientId ?? defaultClientId ?? ''}
-              required
-              className="field-input w-full border border-grid-border bg-transparent px-3 pb-2 pt-4 text-sm text-primary"
-            >
-              <option value="" disabled>
-                Seleziona un cliente
-              </option>
-              {clientOptions.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            <label htmlFor="clientId" className="field-floating-label">
-              Cliente *
-            </label>
-          </div>
-          <div className="field-wrap">
-            <select
-              name="contractId"
-              id="contractId"
-              defaultValue={job?.contractId ?? ''}
-              className="field-input w-full border border-grid-border bg-transparent px-3 pb-2 pt-4 text-sm text-primary"
-            >
-              <option value="">— Nessun contratto di origine —</option>
-              {contractOptions.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-            <label htmlFor="contractId" className="field-floating-label">
-              Contratto di origine
-            </label>
-          </div>
+          <EntityPickerField
+            name="clientId"
+            label="Cliente *"
+            placeholder="Seleziona un cliente"
+            options={clientOptions.map((c) => ({ id: c.id, label: c.name }))}
+            defaultValue={job?.clientId ?? defaultClientId}
+          />
+          <EntityPickerField
+            name="contractIds"
+            label="Contratti collegati"
+            placeholder="Cerca contratto..."
+            multiple
+            options={contractOptions}
+            defaultValues={job?.contractIds}
+          />
           <div className="field-wrap">
             <select
               name="status"

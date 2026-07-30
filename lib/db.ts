@@ -313,7 +313,6 @@ function jobRowToJob(row: Record<string, any>): Job {
     id: row.id,
     clientId: row.client_id ?? undefined,
     clientNameRaw: row.client_name_raw ?? undefined,
-    contractId: row.contract_id ?? undefined,
     title: row.title,
     description: row.description ?? undefined,
     status: row.status,
@@ -334,18 +333,16 @@ function jobRowToJob(row: Record<string, any>): Job {
     supplierCost: row.supplier_cost != null ? Number(row.supplier_cost) : undefined,
     invoiceNumber: row.invoice_number ?? undefined,
     clientName: row.clients?.name ?? undefined,
-    contractLabel: row.contracts ? (row.contracts.clients?.name ?? row.contracts.client_name_raw) : undefined,
     assignedToName: row.assigned_user?.name ?? undefined,
     isSystemGenerated: row.is_system_generated ?? false,
     systemSource: row.system_source ?? undefined,
   };
 }
 
-function jobToRow(data: Partial<Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'clientName' | 'contractLabel' | 'assignedToName' | 'productIds'>>): Record<string, any> {
+function jobToRow(data: Partial<Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'clientName' | 'contractLabels' | 'assignedToName' | 'productIds' | 'contractIds'>>): Record<string, any> {
   const row: Record<string, any> = {};
   if (data.clientId !== undefined) row.client_id = data.clientId || null;
   if (data.clientNameRaw !== undefined) row.client_name_raw = data.clientNameRaw;
-  if (data.contractId !== undefined) row.contract_id = data.contractId || null;
   if (data.title !== undefined) row.title = data.title;
   if (data.description !== undefined) row.description = data.description;
   if (data.status !== undefined) row.status = data.status;
@@ -368,7 +365,7 @@ function jobToRow(data: Partial<Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'cl
 /**
  * Crea un nuovo lavoro
  */
-export async function createDbJob(jobData: Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'clientName' | 'contractLabel' | 'assignedToName'>): Promise<Job> {
+export async function createDbJob(jobData: Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'clientName' | 'contractLabels' | 'assignedToName'>): Promise<Job> {
   const { data, error } = await supabaseServer
     .from('jobs')
     .insert([jobToRow(jobData)])
@@ -379,6 +376,10 @@ export async function createDbJob(jobData: Omit<Job, 'id' | 'createdAt' | 'updat
   const job = jobRowToJob(data);
   if (jobData.productIds?.length) {
     await setJobProducts(job.id, jobData.productIds);
+  }
+  if (jobData.contractIds !== undefined) {
+    await setJobContracts(job.id, jobData.contractIds);
+    job.contractIds = jobData.contractIds;
   }
   return job;
 }
@@ -404,7 +405,7 @@ export async function getJobs(filters?: {
 }): Promise<{ data: Job[]; total: number }> {
   let query = supabaseServer
     .from('jobs')
-    .select('*, clients(name), contracts(client_name_raw, clients(name))');
+    .select('*, clients(name)');
 
   query = filters?.trashed ? query.not('deleted_at', 'is', null) : query.is('deleted_at', null);
   const category = filters?.category ?? 'standard';
@@ -412,7 +413,16 @@ export async function getJobs(filters?: {
     query = query.eq('is_system_generated', true);
   } else {
     query = query.eq('is_system_generated', false);
-    query = category === 'web' ? query.not('contract_id', 'is', null) : query.is('contract_id', null);
+    const { data: jobContractRows, error: jobContractsError } = await supabaseServer
+      .from('job_contracts')
+      .select('job_id');
+    if (jobContractsError) throw jobContractsError;
+    const jobIdsWithContracts = [...new Set((jobContractRows ?? []).map((r) => r.job_id))];
+    if (category === 'web') {
+      query = query.in('id', jobIdsWithContracts.length > 0 ? jobIdsWithContracts : ['00000000-0000-0000-0000-000000000000']);
+    } else if (jobIdsWithContracts.length > 0) {
+      query = query.not('id', 'in', `(${jobIdsWithContracts.join(',')})`);
+    }
   }
 
   if (filters?.archived) {
@@ -477,6 +487,11 @@ export async function getJobs(filters?: {
     jobs = jobs.slice(offset, offset + limit);
   }
 
+  const contractLabelsByJobId = await getContractLabelsForJobs(jobs.map((j) => j.id));
+  for (const job of jobs) {
+    job.contractLabels = contractLabelsByJobId.get(job.id) ?? [];
+  }
+
   return { data: jobs, total };
 }
 
@@ -532,7 +547,7 @@ export interface JobsForecastResult {
 export async function getJobsForecast(fiscalYear: number): Promise<JobsForecastResult> {
   const { data: jobRows, error: jobsError } = await supabaseServer
     .from('jobs')
-    .select('*, clients(name), contracts(client_name_raw, clients(name))')
+    .select('*, clients(name)')
     .eq('fiscal_year', fiscalYear)
     .is('deleted_at', null)
     .neq('status', 'annullato');
@@ -579,7 +594,7 @@ export async function getJobsForecast(fiscalYear: number): Promise<JobsForecastR
 export async function getJobById(id: string): Promise<Job | null> {
   const { data, error } = await supabaseServer
     .from('jobs')
-    .select('*, clients(name), contracts(client_name_raw, clients(name))')
+    .select('*, clients(name)')
     .eq('id', id)
     .is('deleted_at', null)
     .single();
@@ -591,6 +606,8 @@ export async function getJobById(id: string): Promise<Job | null> {
 
   const job = jobRowToJob(data);
   job.productIds = await getJobProductIds(id);
+  job.contractIds = await getJobContractIds(id);
+  job.contractLabels = (await getContractLabelsForJobs([id])).get(id) ?? [];
   return job;
 }
 
@@ -599,7 +616,7 @@ export async function getJobById(id: string): Promise<Job | null> {
  */
 export async function updateDbJob(
   id: string,
-  jobData: Partial<Omit<Job, 'id' | 'createdBy' | 'createdAt' | 'updatedAt' | 'clientName' | 'contractLabel' | 'assignedToName'>>
+  jobData: Partial<Omit<Job, 'id' | 'createdBy' | 'createdAt' | 'updatedAt' | 'clientName' | 'contractLabels' | 'assignedToName'>>
 ): Promise<Job> {
   const { data, error } = await supabaseServer
     .from('jobs')
@@ -612,7 +629,12 @@ export async function updateDbJob(
   if (jobData.productIds !== undefined) {
     await setJobProducts(id, jobData.productIds);
   }
-  return jobRowToJob(data);
+  if (jobData.contractIds !== undefined) {
+    await setJobContracts(id, jobData.contractIds);
+  }
+  const job = jobRowToJob(data);
+  job.contractIds = jobData.contractIds;
+  return job;
 }
 
 /**
@@ -668,6 +690,56 @@ export async function getJobProductIds(jobId: string): Promise<string[]> {
   const { data, error } = await supabaseServer.from('job_products').select('product_id').eq('job_id', jobId);
   if (error) throw error;
   return (data ?? []).map((row) => row.product_id);
+}
+
+/**
+ * Sostituisce l'elenco dei contratti collegati a un lavoro (un job può
+ * essere collegato a più contratti web)
+ */
+export async function setJobContracts(jobId: string, contractIds: string[]): Promise<void> {
+  const { error: deleteError } = await supabaseServer.from('job_contracts').delete().eq('job_id', jobId);
+  if (deleteError) throw deleteError;
+
+  if (contractIds.length === 0) return;
+
+  const { error: insertError } = await supabaseServer
+    .from('job_contracts')
+    .insert(contractIds.map((contractId) => ({ job_id: jobId, contract_id: contractId })));
+  if (insertError) throw insertError;
+}
+
+/**
+ * Ottieni gli id dei contratti collegati a un lavoro
+ */
+export async function getJobContractIds(jobId: string): Promise<string[]> {
+  const { data, error } = await supabaseServer.from('job_contracts').select('contract_id').eq('job_id', jobId);
+  if (error) throw error;
+  return (data ?? []).map((row) => row.contract_id);
+}
+
+/**
+ * Etichette dei contratti collegati a più lavori in blocco (per liste),
+ * stesso principio di getProductColorsForJobs
+ */
+export async function getContractLabelsForJobs(jobIds: string[]): Promise<Map<string, string[]>> {
+  const result = new Map<string, string[]>();
+  if (jobIds.length === 0) return result;
+
+  const { data, error } = await supabaseServer
+    .from('job_contracts')
+    .select('job_id, contracts(client_name_raw, clients(name))')
+    .in('job_id', jobIds);
+  if (error) throw error;
+
+  for (const row of (data ?? []) as { job_id: string; contracts: { client_name_raw: string; clients: { name: string }[] }[] }[]) {
+    const contract = row.contracts?.[0];
+    const label = contract ? (contract.clients?.[0]?.name ?? contract.client_name_raw) : undefined;
+    if (!label) continue;
+    const existing = result.get(row.job_id) ?? [];
+    existing.push(label);
+    result.set(row.job_id, existing);
+  }
+  return result;
 }
 
 /**
