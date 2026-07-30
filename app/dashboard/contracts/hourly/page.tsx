@@ -4,10 +4,12 @@ import { hasPermission } from '@/lib/permissions';
 import { getHourlyContracts, getAllClientNames, getUsers } from '@/lib/db';
 import HourlyContractRow from '@/components/HourlyContractRow';
 import NewHourlyContractButton from '@/components/NewHourlyContractButton';
+import { listGridCappedClass } from '@/lib/listGridCols';
 
 export const metadata = { title: 'Contratti' };
 
 const GRID_TEMPLATE = 'repeat(6, minmax(max-content, 1fr)) max-content';
+const GRID_CLASS = `grid w-full text-[12px] ${listGridCappedClass(GRID_TEMPLATE)}`;
 
 export default async function HourlyContractsPage() {
   const session = await auth();
@@ -27,7 +29,7 @@ export default async function HourlyContractsPage() {
       </div>
 
       <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
-        <div className="grid w-full text-[12px]" style={{ gridTemplateColumns: GRID_TEMPLATE }}>
+        <div className={GRID_CLASS} style={{ gridTemplateColumns: GRID_TEMPLATE }}>
           <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Cliente</div>
           <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Tariffa</div>
           <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Stato</div>

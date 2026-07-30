@@ -9,11 +9,13 @@ import LazyRevealRows from '@/components/LazyRevealRows';
 import RowActionsCell from '@/components/RowActionsCell';
 import { parsePageSize } from '@/lib/listPageSize';
 import JobsCategoryTabs from '@/components/JobsCategoryTabs';
+import { listGridCappedClass } from '@/lib/listGridCols';
 import type { JobStatus, JobCategory } from '@/lib/types';
 
 export const metadata = { title: 'Archivio Lavori' };
 
 const GRID_TEMPLATE = 'repeat(5, minmax(max-content, 1fr)) max-content';
+const GRID_CLASS = `grid w-full text-[12px] ${listGridCappedClass(GRID_TEMPLATE)}`;
 
 const STATUS_LABEL: Record<JobStatus, string> = {
   preventivato: 'Preventivato',
@@ -97,7 +99,7 @@ export default async function JobsArchivePage({
         searchExtra={<JobsCategoryTabs active={category} />}
       >
         <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
-          <div className="grid w-full text-[12px]" style={{ gridTemplateColumns: GRID_TEMPLATE }}>
+          <div className={GRID_CLASS} style={{ gridTemplateColumns: GRID_TEMPLATE }}>
             <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Titolo</div>
             <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Cliente</div>
             <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Stato</div>

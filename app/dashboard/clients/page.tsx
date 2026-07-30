@@ -10,6 +10,7 @@ import ListNavigator from '@/components/ListNavigator';
 import ListPlaceholder from '@/components/ListPlaceholder';
 import LazyRevealRows from '@/components/LazyRevealRows';
 import { parsePageSize } from '@/lib/listPageSize';
+import { listGridCappedClass } from '@/lib/listGridCols';
 
 export const metadata = { title: 'Clienti' };
 
@@ -102,6 +103,7 @@ async function ClientsListSection({
     offset,
   });
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const gridTemplate = ficConnection ? 'repeat(4, minmax(max-content, 1fr)) max-content' : 'repeat(3, minmax(max-content, 1fr)) max-content';
 
   return (
     <ListNavigator
@@ -118,12 +120,8 @@ async function ClientsListSection({
     >
       <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
         <div
-          className="grid w-full text-[12px]"
-          style={{
-            gridTemplateColumns: ficConnection
-              ? 'repeat(4, minmax(max-content, 1fr)) max-content'
-              : 'repeat(3, minmax(max-content, 1fr)) max-content',
-          }}
+          className={`grid w-full text-[12px] ${listGridCappedClass(gridTemplate)}`}
+          style={{ gridTemplateColumns: gridTemplate }}
         >
           <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Nome</div>
           <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">Città</div>

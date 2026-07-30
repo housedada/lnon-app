@@ -418,9 +418,16 @@ textarea::placeholder {
   border-right: 1px solid var(--color-grid-border);
   padding-inline: 16px !important;
   padding-block: 12px !important;
-  max-width: 666px;
   overflow: hidden;
   text-overflow: clip;
+}
+
+/* Il max-width per colonna si attiva solo sulle liste con più di 7 colonne
+   (vedi lib/listGridCols.ts): con poche colonne le si lascia respirare a
+   piena larghezza, è il tavolo largo e stretto a doverle contenere. */
+.list-grid-capped .list-row-cell,
+.list-grid-capped .list-header-cell {
+  max-width: 666px;
 }
 
 .group:hover .list-row-cell {
@@ -478,7 +485,6 @@ textarea::placeholder {
   border-right: 1px solid var(--color-grid-border);
   padding-inline: 16px !important;
   padding-block: 12px !important;
-  max-width: 666px;
   overflow: hidden;
   text-overflow: clip;
 }

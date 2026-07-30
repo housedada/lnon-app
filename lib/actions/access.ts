@@ -61,3 +61,19 @@ export async function revokeSuperadminAction(userId: string): Promise<{ success:
   revalidatePath('/dashboard/users/access');
   return { success: true, message: 'Accesso superadmin revocato.' };
 }
+
+/**
+ * Rimuove i permessi speciali di un admin, riportandolo a dipendente.
+ */
+export async function revokeAdminAction(userId: string): Promise<{ success: boolean; message: string }> {
+  const currentUserId = await requireSuperadmin();
+
+  if (userId === currentUserId) {
+    return { success: false, message: 'Non puoi rimuovere i tuoi stessi permessi.' };
+  }
+
+  await updateUserRole(userId, 'dipendente');
+  revalidatePath('/dashboard/users/access');
+  revalidatePath('/dashboard/users');
+  return { success: true, message: 'Permessi amministrativi rimossi.' };
+}

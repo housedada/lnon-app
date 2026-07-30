@@ -1,9 +1,10 @@
 import RowActionsCell from '@/components/RowActionsCell';
 import RevokeAccessButton from '@/components/RevokeAccessButton';
+import RevokeAdminButton from '@/components/RevokeAdminButton';
 import RoleIcon, { ROLE_LABEL } from '@/components/RoleIcon';
 import type { User } from '@/lib/types';
 
-export default function ElevatedUserRow({ user, canRevoke }: { user: User; canRevoke: boolean }) {
+export default function ElevatedUserRow({ user, isSelf }: { user: User; isSelf: boolean }) {
   return (
     <div className="group contents">
       <div className="list-row-cell flex items-center justify-center border-b border-grid-border group-hover:bg-row-hover">
@@ -19,7 +20,10 @@ export default function ElevatedUserRow({ user, canRevoke }: { user: User; canRe
         <RoleIcon role={user.role} />
         {ROLE_LABEL[user.role]}
       </div>
-      <RowActionsCell>{canRevoke && <RevokeAccessButton userId={user.id} />}</RowActionsCell>
+      <RowActionsCell>
+        {!isSelf && user.role === 'superadmin' && <RevokeAccessButton userId={user.id} />}
+        {!isSelf && user.role === 'admin' && <RevokeAdminButton userId={user.id} />}
+      </RowActionsCell>
     </div>
   );
 }

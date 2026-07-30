@@ -2,10 +2,12 @@ import { auth } from '@/lib/auth';
 import { getUsers } from '@/lib/db';
 import GrantAccessForm from '@/components/GrantAccessForm';
 import ElevatedUserRow from '@/components/ElevatedUserRow';
+import { listGridCappedClass } from '@/lib/listGridCols';
 
 export const metadata = { title: 'Gestione Accessi' };
 
 const GRID_COLS = '40px minmax(140px, 1fr) minmax(200px, 1.4fr) 160px max-content';
+const GRID_CLASS = `grid w-full text-[12px] ${listGridCappedClass(GRID_COLS)}`;
 
 export default async function AccessSettingsPage() {
   const session = await auth();
@@ -37,7 +39,7 @@ export default async function AccessSettingsPage() {
       </div>
 
       <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
-        <div className="grid w-full text-[12px]" style={{ gridTemplateColumns: GRID_COLS }}>
+        <div className={GRID_CLASS} style={{ gridTemplateColumns: GRID_COLS }}>
           <div className="list-cell-deco border-b border-grid-border bg-grid-header-bg" />
           <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">
             Nome
@@ -55,7 +57,7 @@ export default async function AccessSettingsPage() {
           )}
 
           {elevated.map((u) => (
-            <ElevatedUserRow key={u.id} user={u} canRevoke={u.role === 'superadmin' && u.id !== currentUserId} />
+            <ElevatedUserRow key={u.id} user={u} isSelf={u.id === currentUserId} />
           ))}
         </div>
       </div>

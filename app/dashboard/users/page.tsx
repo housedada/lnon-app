@@ -3,11 +3,13 @@ import { getUsers } from '@/lib/db';
 import { hasPermission, canDeleteResource } from '@/lib/permissions';
 import UserFormModal from '@/components/UserFormModal';
 import UserRow from '@/components/UserRow';
+import { listGridCappedClass } from '@/lib/listGridCols';
 import type { UserRole } from '@/lib/types';
 
 export const metadata = { title: 'Utenti' };
 
 const GRID_COLS = '40px minmax(140px, 1fr) minmax(200px, 1.4fr) 160px 140px max-content';
+const GRID_CLASS = `grid w-full text-[12px] ${listGridCappedClass(GRID_COLS)}`;
 
 export default async function UsersPage() {
   const session = await auth();
@@ -28,7 +30,7 @@ export default async function UsersPage() {
       </div>
 
       <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
-        <div className="grid w-full text-[12px]" style={{ gridTemplateColumns: GRID_COLS }}>
+        <div className={GRID_CLASS} style={{ gridTemplateColumns: GRID_COLS }}>
           <div className="list-cell-deco border-b border-grid-border bg-grid-header-bg" />
           <div className="list-header-cell flex items-center whitespace-nowrap border-b border-grid-border bg-grid-header-bg px-3 py-2 font-semibold uppercase tracking-wide text-secondary">
             Nome

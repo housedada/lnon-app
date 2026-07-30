@@ -12,6 +12,7 @@ import ContractRow from '@/components/ContractRow';
 import NotifyFromQuery from '@/components/NotifyFromQuery';
 import LazyRevealRows from '@/components/LazyRevealRows';
 import { parsePageSize } from '@/lib/listPageSize';
+import { listGridCappedClass } from '@/lib/listGridCols';
 
 export const metadata = { title: 'Contratti' };
 
@@ -40,6 +41,7 @@ const DATA_COLUMNS: { key: string; label: string }[] = [
 ];
 
 const GRID_TEMPLATE = `repeat(${DATA_COLUMNS.length}, minmax(max-content, 1fr)) max-content`;
+const GRID_CLASS = `grid w-full text-[12px] ${listGridCappedClass(GRID_TEMPLATE)}`;
 
 type SearchParams = { q?: string; page?: string; pageSize?: string; status?: string; categories?: string };
 
@@ -112,7 +114,7 @@ async function ContractsListSection({
       searchExtra={<ContractsFilterToggleButton />}
     >
       <div className="mx-6 mt-6 overflow-x-auto border-t border-grid-border">
-        <div className="grid w-full text-[12px]" style={{ gridTemplateColumns: GRID_TEMPLATE }}>
+        <div className={GRID_CLASS} style={{ gridTemplateColumns: GRID_TEMPLATE }}>
           {DATA_COLUMNS.map((col) => (
             <div
               key={col.key}
