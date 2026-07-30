@@ -7,7 +7,7 @@ import { X, Plus, Pencil, Loader2, Check, Shuffle } from 'lucide-react';
 import { createUserAction, updateUserAction } from '@/lib/actions/users';
 import { notify } from '@/lib/notify';
 import { USER_TAG_COLORS, type User, type UserRole } from '@/lib/types';
-import { getRoleLabel } from '@/lib/permissions';
+import { ROLE_LABEL } from '@/components/RoleIcon';
 import ParticleCanvasHeader from '@/components/ParticleCanvasHeader';
 
 function randomColor(exclude?: string): string {
@@ -129,7 +129,7 @@ export default function UserFormModal({
                   >
                     {ROLES.map((r) => (
                       <option key={r} value={r}>
-                        {getRoleLabel(r)}
+                        {ROLE_LABEL[r]}
                       </option>
                     ))}
                   </select>

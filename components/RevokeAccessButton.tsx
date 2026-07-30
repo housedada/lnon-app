@@ -23,10 +23,11 @@ export default function RevokeAccessButton({ userId }: { userId: string }) {
       type="button"
       onClick={handleClick}
       disabled={isPending}
-      className="flex items-center gap-1.5 text-xs font-medium text-red-600/80 transition hover:text-red-600 disabled:opacity-60"
+      aria-label="Revoca accesso superadmin"
+      title="Revoca accesso superadmin"
+      className="text-secondary transition hover:text-red-600 disabled:opacity-60"
     >
-      {isPending ? <Loader2 size={13} strokeWidth={1.75} className="animate-spin" aria-hidden="true" /> : <ShieldOff size={13} strokeWidth={1.75} aria-hidden="true" />}
-      Revoca
+      {isPending ? <Loader2 size={15} strokeWidth={1.75} className="animate-spin" aria-hidden="true" /> : <ShieldOff size={15} strokeWidth={1.75} aria-hidden="true" />}
     </button>
   );
 }

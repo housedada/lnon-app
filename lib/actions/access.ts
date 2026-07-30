@@ -42,7 +42,7 @@ export async function grantSuperadminByEmailAction(
   }
 
   await updateUserRole(user.id, 'superadmin');
-  revalidatePath('/dashboard/settings/access');
+  revalidatePath('/dashboard/users/access');
   return { success: true, message: `${user.name} ora ha accesso superadmin.` };
 }
 
@@ -58,6 +58,6 @@ export async function revokeSuperadminAction(userId: string): Promise<{ success:
   }
 
   await updateUserRole(userId, 'admin');
-  revalidatePath('/dashboard/settings/access');
+  revalidatePath('/dashboard/users/access');
   return { success: true, message: 'Accesso superadmin revocato.' };
 }

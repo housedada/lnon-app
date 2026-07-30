@@ -94,6 +94,10 @@ export const NAV_ITEMS: NavItem[] = [
     href: '/dashboard/users',
     icon: UserCog,
     description: 'Gestione utenti e permessi',
+    subItems: [
+      { label: 'Tutti', href: '/dashboard/users' },
+      { label: 'Gestione Accessi', href: '/dashboard/users/access' },
+    ],
   },
   {
     resource: 'reports',
@@ -114,11 +118,10 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Impostazioni',
     href: '/dashboard/settings',
     icon: Settings,
-    description: 'Integrazioni, catalogo prodotti e gestione accessi',
+    description: 'Integrazioni e catalogo prodotti',
     subItems: [
       { label: 'Fatture in Cloud', href: '/dashboard/settings/fic' },
       { label: 'Prodotti', href: '/dashboard/settings/products' },
-      { label: 'Gestione Accessi', href: '/dashboard/settings/access' },
     ],
   },
 ];
