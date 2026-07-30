@@ -196,9 +196,9 @@ export interface Project {
   description?: string;
   assignedTo?: string;
   completedAt?: Date;
-  // Generazione automatica (es. da un contratto a conteggio orario)
+  // Generazione automatica (es. da un contratto a conteggio orario, o dal contenitore appunti personali)
   isSystemGenerated?: boolean;
-  systemSource?: 'hourly_contract';
+  systemSource?: 'hourly_contract' | 'personal_notes';
   isDemo?: boolean;
   createdBy: string;
   createdAt: Date;

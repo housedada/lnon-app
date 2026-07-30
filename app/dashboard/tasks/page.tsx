@@ -8,6 +8,7 @@ import {
   getProductColorsForJobs,
   getProjectTasks,
   getOpenHourlyWorkEntriesCount,
+  getOrCreatePersonalNotesProject,
 } from '@/lib/db';
 import { hasPermission } from '@/lib/permissions';
 import { DEMO_USERS, DEMO_PROJECTS, DEMO_TASKS_BY_PROJECT, DEMO_PRODUCT_COLORS_BY_JOB } from '@/lib/demoData';
@@ -20,6 +21,8 @@ import SpecialProjectsToggle from '@/components/SpecialProjectsToggle';
 import TaskBoardBottomNav from '@/components/TaskBoardBottomNav';
 import DemoDataControls from '@/components/DemoDataControls';
 import NewProjectButton from '@/components/NewProjectButton';
+import NotesSidebar from '@/components/NotesSidebar';
+import NotesSidebarToggle from '@/components/NotesSidebarToggle';
 import type { Project, ProjectTask } from '@/lib/types';
 
 export const metadata = { title: 'Task' };
@@ -42,9 +45,13 @@ export default async function TasksPage({
   const [allUsers, openHourlyCount] = await Promise.all([getUsers(), getOpenHourlyWorkEntriesCount()]);
   const userOptions = allUsers.filter((u) => u.isActive).map((u) => ({ id: u.id, name: u.name, color: u.color }));
 
+  const notesProject = userId ? await getOrCreatePersonalNotesProject(userId) : null;
+  const notesTasks = notesProject ? await getProjectTasks(notesProject.id) : [];
+
   return (
     <div className="flex h-[calc(100vh-50px)] flex-col">
       <div className="task-toolbar-border flex shrink-0 items-center gap-1 px-4 py-2">
+        <NotesSidebarToggle />
         <TaskBoardModeTabs mode={mode} />
         <TaskBoardExpandToggle />
         <div className="ml-auto flex items-center gap-2">
@@ -57,17 +64,20 @@ export default async function TasksPage({
         </div>
       </div>
 
-      <div className="relative min-h-0 flex-1">
-        {mode === 'team' ? (
-          <TeamView currentUserId={userId} canManageInvoices={canManageInvoices} includeDemo={includeDemo} />
-        ) : (
-          <PersonalView userId={userId} canManageInvoices={canManageInvoices} includeDemo={includeDemo} />
-        )}
-        {canManageInvoices && (
-          <div className="absolute bottom-3 right-3 z-10 rounded-md border border-grid-border bg-card-bg/90 shadow-lg backdrop-blur">
-            <DemoDataControls />
-          </div>
-        )}
+      <div className="flex min-h-0 flex-1">
+        {notesProject && <NotesSidebar project={notesProject} initialTasks={notesTasks} userOptions={userOptions} />}
+        <div className="relative min-h-0 flex-1">
+          {mode === 'team' ? (
+            <TeamView currentUserId={userId} canManageInvoices={canManageInvoices} includeDemo={includeDemo} />
+          ) : (
+            <PersonalView userId={userId} canManageInvoices={canManageInvoices} includeDemo={includeDemo} />
+          )}
+          {canManageInvoices && (
+            <div className="absolute bottom-3 right-3 z-10 rounded-md border border-grid-border bg-card-bg/90 shadow-lg backdrop-blur">
+              <DemoDataControls />
+            </div>
+          )}
+        </div>
       </div>
       <TaskBoardBottomNav />
     </div>
@@ -83,11 +93,12 @@ async function TeamView({
   canManageInvoices: boolean;
   includeDemo: boolean;
 }) {
-  const [users, realProjects, savedOrder] = await Promise.all([
+  const [users, allAssignedProjects, savedOrder] = await Promise.all([
     getUsers(),
     getAllAssignedProjects(),
     currentUserId ? getTeamColumnOrder(currentUserId) : Promise.resolve([]),
   ]);
+  const realProjects = allAssignedProjects.filter((p) => p.systemSource !== 'personal_notes');
 
   const activeUsers = includeDemo ? [...users.filter((u) => u.isActive), ...DEMO_USERS] : users.filter((u) => u.isActive);
   const allProjects = includeDemo ? [...realProjects, ...DEMO_PROJECTS] : realProjects;
@@ -135,7 +146,8 @@ async function PersonalView({
   canManageInvoices: boolean;
   includeDemo: boolean;
 }) {
-  const realProjects = userId ? await getProjectsByAssignee(userId) : [];
+  const assignedProjects = userId ? await getProjectsByAssignee(userId) : [];
+  const realProjects = assignedProjects.filter((p) => p.systemSource !== 'personal_notes');
   const jobIds = Array.from(new Set(realProjects.map((p) => p.jobId).filter((id): id is string => Boolean(id))));
 
   const [productColorsMap, allUsers, realTaskLists, savedOrder] = await Promise.all([

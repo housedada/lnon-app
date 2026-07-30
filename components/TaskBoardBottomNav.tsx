@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef } from 'react';
+import { NotebookPen } from 'lucide-react';
 import { useTaskBoardScrollStore, scrollToColumn } from '@/lib/store/taskBoardScrollStore';
 import { useTaskBoardViewStore } from '@/lib/store/taskBoardViewStore';
+import { useNotesSidebarStore } from '@/lib/store/notesSidebarStore';
 
 // Zona attiva ai bordi (px) entro cui il mouse innesca l'autoscroll, e velocità
 // massima raggiunta appena a ridosso del bordo (px per frame, ~60fps) — tenuta
@@ -92,47 +94,66 @@ function useFlipAnimation(itemRefs: React.RefObject<Map<string, HTMLButtonElemen
 export default function TaskBoardBottomNav() {
   const columns = useTaskBoardScrollStore((s) => s.columns);
   const density = useTaskBoardViewStore((s) => s.density);
+  const notesOpen = useNotesSidebarStore((s) => s.open);
+  const toggleNotes = useNotesSidebarStore((s) => s.toggle);
   const scrollRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   useEdgeAutoScroll(scrollRef);
   useFlipAnimation(itemRefs, columns);
 
-  if (density === 'masonry' || columns.length === 0) return null;
+  const showColumns = density !== 'masonry' && columns.length > 0;
 
   return (
-    <div ref={scrollRef} className="sticky bottom-0 z-10 h-[66px] shrink-0 overflow-x-auto overflow-y-hidden">
-      <div className="relative flex h-full min-w-max items-center gap-3 px-4">
-        <div
-          className="pointer-events-none absolute inset-x-4 top-1/2 h-0 -translate-y-1/2 border-t border-dashed"
-          style={{ borderColor: 'color-mix(in srgb, var(--color-secondary) 35%, transparent)' }}
-          aria-hidden="true"
-        />
-        {columns.map((col) => {
-          const hasBackground = Boolean(col.background);
-          return (
-            <button
-              key={col.id}
-              ref={(el) => {
-                if (el) itemRefs.current.set(col.id, el);
-                else itemRefs.current.delete(col.id);
-              }}
-              type="button"
-              onClick={() => scrollToColumn(col.id)}
-              title={col.label}
-              style={hasBackground ? { background: col.background } : undefined}
-              className={`relative z-10 shrink-0 whitespace-nowrap rounded-full border px-4 py-2.5 text-xs font-medium transition ${
-                col.isSpecial
-                  ? 'special-project-header special-project-border text-neutral-800 hover:brightness-95'
-                  : hasBackground
-                    ? 'border-transparent text-neutral-800 hover:brightness-95'
-                    : 'border-grid-border text-secondary hover:border-primary hover:text-primary'
-              }`}
-            >
-              {col.label}
-            </button>
-          );
-        })}
-      </div>
+    <div className="flex shrink-0 items-center border-t border-grid-border">
+      <button
+        type="button"
+        onClick={toggleNotes}
+        aria-label={notesOpen ? 'Chiudi Appunti' : 'Apri Appunti'}
+        aria-pressed={notesOpen}
+        title="Appunti"
+        className={`flex h-[66px] w-[66px] shrink-0 items-center justify-center border-r border-grid-border transition ${
+          notesOpen ? 'text-primary' : 'text-secondary hover:text-primary'
+        }`}
+      >
+        <NotebookPen size={17} strokeWidth={1.75} aria-hidden="true" />
+      </button>
+
+      {showColumns && (
+        <div ref={scrollRef} className="h-[66px] flex-1 overflow-x-auto overflow-y-hidden">
+          <div className="relative flex h-full min-w-max items-center gap-3 px-4">
+            <div
+              className="pointer-events-none absolute inset-x-4 top-1/2 h-0 -translate-y-1/2 border-t border-dashed"
+              style={{ borderColor: 'color-mix(in srgb, var(--color-secondary) 35%, transparent)' }}
+              aria-hidden="true"
+            />
+            {columns.map((col) => {
+              const hasBackground = Boolean(col.background);
+              return (
+                <button
+                  key={col.id}
+                  ref={(el) => {
+                    if (el) itemRefs.current.set(col.id, el);
+                    else itemRefs.current.delete(col.id);
+                  }}
+                  type="button"
+                  onClick={() => scrollToColumn(col.id)}
+                  title={col.label}
+                  style={hasBackground ? { background: col.background } : undefined}
+                  className={`relative z-10 shrink-0 whitespace-nowrap rounded-full border px-4 py-2.5 text-xs font-medium transition ${
+                    col.isSpecial
+                      ? 'special-project-header special-project-border text-neutral-800 hover:brightness-95'
+                      : hasBackground
+                        ? 'border-transparent text-neutral-800 hover:brightness-95'
+                        : 'border-grid-border text-secondary hover:border-primary hover:text-primary'
+                  }`}
+                >
+                  {col.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

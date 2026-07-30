@@ -1748,6 +1748,30 @@ export async function createDbProject(
 }
 
 /**
+ * Contenitore di task personali "appunti" (is_system_generated=true, system_source='personal_notes'),
+ * uno per utente, senza job collegato. Creato al primo utilizzo della sidebar Appunti.
+ */
+export async function getOrCreatePersonalNotesProject(userId: string): Promise<Project> {
+  const { data: existing, error: selectError } = await supabaseServer
+    .from('projects')
+    .select('*, jobs(title)')
+    .eq('assigned_to', userId)
+    .eq('system_source', 'personal_notes')
+    .is('deleted_at', null)
+    .maybeSingle();
+  if (selectError) throw selectError;
+  if (existing) return projectRowToProject(existing);
+
+  return createDbProject({
+    title: 'Appunti',
+    assignedTo: userId,
+    createdBy: userId,
+    isSystemGenerated: true,
+    systemSource: 'personal_notes',
+  });
+}
+
+/**
  * Tutti i progetti (non eliminati) con l'assegnatario valorizzato, per la board Team.
  * I progetti demo sono esclusi (vedi getUsers).
  */
