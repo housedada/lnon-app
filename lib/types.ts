@@ -13,6 +13,7 @@ export interface User {
   isDemo?: boolean;
   createdAt: Date;
   updatedAt: Date;
+  deletedAt?: Date;
 }
 
 export const USER_TAG_COLORS = [
@@ -28,6 +29,10 @@ export const USER_TAG_COLORS = [
   '#FFDAC1',
   '#C7CEEA',
   '#B8E0D2',
+  '#FFB4A2',
+  '#A0D2EB',
+  '#CDEAC0',
+  '#F1C0E8',
 ] as const;
 
 export interface Client {

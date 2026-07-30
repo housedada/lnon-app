@@ -46,6 +46,7 @@ const { handlers, auth: realAuth, signIn, signOut } = NextAuth({
           .from('users')
           .select('*')
           .eq('email', email)
+          .is('deleted_at', null)
           .single();
 
         if (fetchError && fetchError.code === 'PGRST116') {

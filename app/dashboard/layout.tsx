@@ -32,7 +32,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="flex min-h-screen flex-col">
-      <TopBar role={user.role} userName={user.name ?? user.email ?? ''} userImage={user.image} userColor={dbUser?.color} />
+      <TopBar role={user.role} userName={user.name ?? user.email ?? ''} userImage={user.image} />
       <div className="content-area flex flex-1 flex-col pt-[50px] md:flex-row">
         <Sidebar role={user.role} />
         <main className="min-w-0 flex-1">

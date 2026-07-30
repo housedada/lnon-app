@@ -111,7 +111,7 @@ export default function TaskBoardBottomNav() {
         aria-label={notesOpen ? 'Chiudi Appunti' : 'Apri Appunti'}
         aria-pressed={notesOpen}
         title="Appunti"
-        className={`flex h-[66px] w-[66px] shrink-0 items-center justify-center border-r border-grid-border transition ${
+        className={`flex h-[66px] w-[50px] shrink-0 items-center justify-center border-r border-grid-border transition ${
           notesOpen ? 'text-primary' : 'text-secondary hover:text-primary'
         }`}
       >

@@ -10,7 +10,6 @@ import type { UserRole } from '@/lib/types';
 import { getRoleLabel } from '@/lib/permissions';
 import ThemeToggle from '@/components/ThemeToggle';
 import Popover from '@/components/Popover';
-import UserColorPicker from '@/components/UserColorPicker';
 import AudioPlayerToggle from '@/components/AudioPlayerToggle';
 import ZenNoiseToggle from '@/components/ZenNoiseToggle';
 import SpaceInvaderIcon from '@/components/SpaceInvaderIcon';
@@ -25,12 +24,10 @@ export default function TopBar({
   role,
   userName,
   userImage,
-  userColor,
 }: {
   role: UserRole;
   userName: string;
   userImage?: string | null;
-  userColor?: string;
 }) {
   const pathname = usePathname();
   const isContractsPage = pathname?.startsWith('/dashboard/contracts');
@@ -163,9 +160,6 @@ export default function TopBar({
               {roleLabelText}
             </p>
           </div>
-          <div className="my-1 border-t border-grid-border" />
-          <p className="px-3 pt-1 text-[10px] font-medium uppercase tracking-wide text-secondary">Colore tag</p>
-          <UserColorPicker currentColor={userColor} />
           <div className="my-1 border-t border-grid-border" />
           <button
             type="button"

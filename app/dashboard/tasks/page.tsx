@@ -22,7 +22,6 @@ import TaskBoardBottomNav from '@/components/TaskBoardBottomNav';
 import DemoDataControls from '@/components/DemoDataControls';
 import NewProjectButton from '@/components/NewProjectButton';
 import NotesSidebar from '@/components/NotesSidebar';
-import NotesSidebarToggle from '@/components/NotesSidebarToggle';
 import type { Project, ProjectTask } from '@/lib/types';
 
 export const metadata = { title: 'Task' };
@@ -51,7 +50,6 @@ export default async function TasksPage({
   return (
     <div className="flex h-[calc(100vh-50px)] flex-col">
       <div className="task-toolbar-border flex shrink-0 items-center gap-1 px-4 py-2">
-        <NotesSidebarToggle />
         <TaskBoardModeTabs mode={mode} />
         <TaskBoardExpandToggle />
         <div className="ml-auto flex items-center gap-2">

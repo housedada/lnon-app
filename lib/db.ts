@@ -85,6 +85,7 @@ function userRowToUser(row: Record<string, any>): User {
     isDemo: row.is_demo ?? false,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
+    deletedAt: row.deleted_at ? new Date(row.deleted_at) : undefined,
   };
 }
 
@@ -95,7 +96,12 @@ function userRowToUser(row: Record<string, any>): User {
  * escluse per sicurezza.
  */
 export async function getUsers(): Promise<User[]> {
-  const { data, error } = await supabaseServer.from('users').select('*').eq('is_demo', false).order('name', { ascending: true });
+  const { data, error } = await supabaseServer
+    .from('users')
+    .select('*')
+    .eq('is_demo', false)
+    .is('deleted_at', null)
+    .order('name', { ascending: true });
 
   if (error) throw error;
   return (data ?? []).map(userRowToUser);
@@ -105,10 +111,71 @@ export async function getUsers(): Promise<User[]> {
  * Ottieni un utente per email
  */
 export async function getUserByEmail(email: string): Promise<User | null> {
-  const { data, error } = await supabaseServer.from('users').select('*').eq('email', email).maybeSingle();
+  const { data, error } = await supabaseServer.from('users').select('*').eq('email', email).is('deleted_at', null).maybeSingle();
 
   if (error) throw error;
   return data ? userRowToUser(data) : null;
+}
+
+/**
+ * Crea un utente direttamente da admin (import manuale): l'account si attiva
+ * da solo al primo login Google con la stessa email (vedi lib/auth.ts, ramo
+ * "existingUser" — nessun invito necessario per questo flusso).
+ */
+export async function createUserRecord(input: {
+  email: string;
+  name: string;
+  role: User['role'];
+  color: string;
+}): Promise<User> {
+  const { data, error } = await supabaseServer
+    .from('users')
+    .insert([{ email: input.email, name: input.name, role: input.role, color: input.color, is_active: true }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return userRowToUser(data);
+}
+
+/**
+ * Modifica anagrafica/ruolo/colore di un utente esistente.
+ */
+export async function updateUserRecord(
+  userId: string,
+  patch: Partial<Pick<User, 'name' | 'email' | 'role' | 'color'>>
+): Promise<User> {
+  const row: Record<string, any> = {};
+  if (patch.name !== undefined) row.name = patch.name;
+  if (patch.email !== undefined) row.email = patch.email;
+  if (patch.role !== undefined) row.role = patch.role;
+  if (patch.color !== undefined) row.color = patch.color;
+
+  const { data, error } = await supabaseServer.from('users').update(row).eq('id', userId).select().single();
+  if (error) throw error;
+  return userRowToUser(data);
+}
+
+/**
+ * Sospende o riattiva un account (non blocca solo la UI: is_active viene
+ * controllato anche in lib/auth.ts per negare il login).
+ */
+export async function setUserActive(userId: string, isActive: boolean): Promise<User> {
+  const { data, error } = await supabaseServer.from('users').update({ is_active: isActive }).eq('id', userId).select().single();
+  if (error) throw error;
+  return userRowToUser(data);
+}
+
+/**
+ * Cancellazione soft: l'email torna disponibile per una nuova creazione, ma
+ * la riga resta per storicità (createdBy/assignedTo su job/progetti/task).
+ */
+export async function softDeleteUser(userId: string): Promise<void> {
+  const { error } = await supabaseServer
+    .from('users')
+    .update({ deleted_at: new Date().toISOString(), is_active: false })
+    .eq('id', userId);
+  if (error) throw error;
 }
 
 /**
@@ -118,21 +185,6 @@ export async function updateUserRole(userId: string, role: User['role']): Promis
   const { data, error } = await supabaseServer
     .from('users')
     .update({ role })
-    .eq('id', userId)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return userRowToUser(data);
-}
-
-/**
- * Aggiorna il colore tag scelto dall'utente
- */
-export async function updateUserColor(userId: string, color: string): Promise<User> {
-  const { data, error } = await supabaseServer
-    .from('users')
-    .update({ color })
     .eq('id', userId)
     .select()
     .single();
