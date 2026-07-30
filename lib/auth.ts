@@ -60,7 +60,7 @@ const { handlers, auth: realAuth, signIn, signOut } = NextAuth({
 
           if (invitation) {
             // Crea nuovo utente dal database con il ruolo dell'invito
-            const { error: createError } = await supabaseServer
+            const { data: newUser, error: createError } = await supabaseServer
               .from('users')
               .insert([
                 {
@@ -70,16 +70,18 @@ const { handlers, auth: realAuth, signIn, signOut } = NextAuth({
                   role: invitation.role,
                   is_active: true,
                 },
-              ]);
+              ])
+              .select()
+              .single();
 
-            if (!createError) {
+            if (!createError && newUser) {
               // Segna l'invito come usato
               await supabaseServer
                 .from('invitations')
                 .update({ used: true })
                 .eq('id', invitation.id);
 
-              token.userId = user.id;
+              token.userId = newUser.id;
               token.role = invitation.role;
               token.active = true;
             }
