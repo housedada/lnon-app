@@ -62,7 +62,7 @@ export default function NoteChip({
       <span
         ref={dragHandleRef}
         {...dragHandleProps}
-        className="absolute left-1 top-1 z-10 flex h-4 w-4 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
+        className="absolute left-2 top-1.5 z-10 flex h-4 w-4 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
         aria-label="Trascina per riordinare"
       >
         <GripVertical size={12} strokeWidth={1.75} className="text-secondary opacity-30 transition-opacity group-hover/note:opacity-70" aria-hidden="true" />
@@ -73,7 +73,7 @@ export default function NoteChip({
         onClick={onDelete}
         aria-label="Elimina nota"
         title="Elimina nota"
-        className="absolute right-1 top-1 z-10 flex h-4 w-4 shrink-0 items-center justify-center text-secondary opacity-0 transition-opacity group-hover/note:opacity-70 hover:!opacity-100"
+        className="absolute right-2 top-1.5 z-10 flex h-4 w-4 shrink-0 items-center justify-center text-secondary opacity-0 transition-opacity group-hover/note:opacity-70 hover:!opacity-100"
       >
         <Trash2 size={12} strokeWidth={1.75} aria-hidden="true" />
       </button>
@@ -92,13 +92,13 @@ export default function NoteChip({
           }}
           maxLength={NOTE_MAX_LENGTH}
           className="notebook-paper w-full resize-none rounded-lg px-2.5 py-2 text-primary outline-none"
-          style={{ paddingLeft: 30, paddingRight: 26, height: 76 }}
+          style={{ height: 76 }}
         />
       ) : (
         <div
           onClick={handleBodyClick}
           className="notebook-paper line-clamp-3 cursor-text overflow-hidden rounded-lg px-2.5 py-2 text-primary"
-          style={{ paddingLeft: 30, paddingRight: 26, minHeight: 76 }}
+          style={{ minHeight: 76 }}
         >
           {task.title || <span className="text-secondary/60 italic">Nota vuota — clicca per scrivere</span>}
         </div>

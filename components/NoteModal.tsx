@@ -72,13 +72,11 @@ export default function NoteModal({
               maxLength={NOTE_MAX_LENGTH}
               rows={10}
               className="notebook-paper field-input w-full resize-none rounded-md px-4 py-2 text-[13px] text-primary"
-              style={{ paddingLeft: 34 }}
             />
           ) : (
             <div
               onClick={() => setEditing(true)}
               className="notebook-paper max-h-[50vh] min-h-[220px] cursor-text overflow-y-auto whitespace-pre-wrap rounded-md px-4 py-2 text-[13px] text-primary"
-              style={{ paddingLeft: 34 }}
               title="Clicca per modificare"
             >
               {task.title || <span className="text-secondary/60 italic">Nota vuota — clicca per scrivere</span>}

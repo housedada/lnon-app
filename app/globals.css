@@ -38,8 +38,8 @@
 
   /* Nota "quaderno di scuola": rosa antico, riga di margine e righe orizzontali */
   --color-note-bg: #f6e9e7;
-  --color-note-border: #dcb9b4;
-  --color-note-line: rgba(163, 104, 98, 0.22);
+  --color-note-border: #e6cac5;
+  --color-note-line: rgba(163, 104, 98, 0.16);
   --color-note-margin: rgba(178, 60, 60, 0.4);
 }
 
@@ -86,8 +86,8 @@
     --color-popover-grad-b: #201b28;
 
     --color-note-bg: #372724;
-    --color-note-border: #5a3f3a;
-    --color-note-line: rgba(230, 170, 160, 0.16);
+    --color-note-border: #6b4c46;
+    --color-note-line: rgba(230, 170, 160, 0.11);
     --color-note-margin: rgba(220, 110, 100, 0.35);
   }
 }
@@ -114,8 +114,8 @@
   --color-popover-grad-b: #f5f5f4;
 
   --color-note-bg: #f6e9e7;
-  --color-note-border: #dcb9b4;
-  --color-note-line: rgba(163, 104, 98, 0.22);
+  --color-note-border: #e6cac5;
+  --color-note-line: rgba(163, 104, 98, 0.16);
   --color-note-margin: rgba(178, 60, 60, 0.4);
 }
 
@@ -141,8 +141,8 @@
   --color-popover-grad-b: #201b28;
 
   --color-note-bg: #372724;
-  --color-note-border: #5a3f3a;
-  --color-note-line: rgba(230, 170, 160, 0.16);
+  --color-note-border: #6b4c46;
+  --color-note-line: rgba(230, 170, 160, 0.11);
   --color-note-margin: rgba(220, 110, 100, 0.35);
 }
 
@@ -431,19 +431,23 @@ textarea::placeholder {
 
 /* Nota "quaderno di scuola": righe orizzontali ogni 20px allineate al
    line-height del testo (stessa misura, altrimenti le righe stampate
-   scivolano rispetto alle righe di testo scritte sopra) più una riga di
-   margine verticale rossastra, come un vecchio quaderno a righe. Il
-   background-attachment:local fa scorrere le righe insieme al testo
-   quando il contenitore è scrollabile (textarea o blocco lungo nel modale).
-   L'assenza di line-clamp è intenzionale nella variante scrollabile: la
-   applica il chiamante quando vuole l'anteprima troncata. */
+   scivolano rispetto alle righe di testo scritte sopra), spostate di 11px
+   così cadono SOTTO il testo (come un rigo vero) invece di tagliarlo a
+   metà. Una seconda trama diagonale, molto tenue, incrocia le righe
+   orizzontali a un'angolazione non allineata al periodo di 20px: dove le
+   due si sovrappongono il rigo sembra "consumato" in modo irregolare
+   invece che uniforme su tutta la lunghezza. Il background-attachment:local
+   fa scorrere le righe insieme al testo quando il contenitore è scrollabile
+   (textarea o blocco lungo nel modale). L'assenza di line-clamp è
+   intenzionale nella variante scrollabile: la applica il chiamante quando
+   vuole l'anteprima troncata. */
 .notebook-paper {
   background-color: var(--color-note-bg);
   border: 1px solid var(--color-note-border);
   line-height: 20px;
   background-attachment: local;
-  background-image: linear-gradient(to right, transparent 27px, var(--color-note-margin) 27px, var(--color-note-margin) 28px, transparent 28px),
-    repeating-linear-gradient(to bottom, transparent 0, transparent 19px, var(--color-note-line) 19px, var(--color-note-line) 20px);
+  background-image: repeating-linear-gradient(58deg, var(--color-note-line) 0, var(--color-note-line) 1px, transparent 1px, transparent 67px),
+    repeating-linear-gradient(to bottom, transparent 0, transparent 10px, var(--color-note-line) 10px, var(--color-note-line) 11px, transparent 11px, transparent 20px);
 }
 
 /* Hover righe liste: ingrandimento testo via transform (non font-size, per
