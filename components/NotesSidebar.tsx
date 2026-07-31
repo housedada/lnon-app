@@ -1,9 +1,8 @@
 'use client';
 
-import { useRef } from 'react';
-import { NotebookPen, X, StickyNote } from 'lucide-react';
+import { NotebookPen, StickyNote, X } from 'lucide-react';
 import { useNotesSidebarStore } from '@/lib/store/notesSidebarStore';
-import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/ProjectTaskList';
+import ProjectTaskList from '@/components/ProjectTaskList';
 import type { Project, ProjectTask } from '@/lib/types';
 
 const HEADER_HEIGHT = 'h-[49px]';
@@ -19,11 +18,11 @@ export default function NotesSidebar({
 }) {
   const open = useNotesSidebarStore((s) => s.open);
   const toggle = useNotesSidebarStore((s) => s.toggle);
-  const listRef = useRef<ProjectTaskListHandle>(null);
 
   const items = initialTasks.filter((t) => t.kind !== 'note');
   const activeCount = items.filter((t) => t.status !== 'completed').length;
   const completedCount = items.filter((t) => t.status === 'completed').length;
+  const noteCount = initialTasks.filter((t) => t.kind === 'note').length;
 
   if (!open) {
     return (
@@ -45,6 +44,15 @@ export default function NotesSidebar({
           <span className="flex flex-col items-center gap-0.5" title="Appunti completati">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
             <span className="text-[11px] font-semibold text-secondary">{completedCount}</span>
+          </span>
+          <span className="flex flex-col items-center gap-0.5" title="Note">
+            <span
+              className="flex h-3.5 w-3.5 items-center justify-center rounded-full"
+              style={{ background: 'var(--color-note-bg)', border: '1px solid var(--color-note-border)' }}
+            >
+              <StickyNote size={8} strokeWidth={2.25} style={{ color: 'var(--color-note-margin)' }} aria-hidden="true" />
+            </span>
+            <span className="text-[11px] font-semibold text-secondary">{noteCount}</span>
           </span>
         </div>
       </div>
@@ -71,21 +79,19 @@ export default function NotesSidebar({
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
             {completedCount}
           </span>
+          <span className="flex items-center gap-1" title="Note">
+            <span
+              className="flex h-3.5 w-3.5 items-center justify-center rounded-full"
+              style={{ background: 'var(--color-note-bg)', border: '1px solid var(--color-note-border)' }}
+            >
+              <StickyNote size={8} strokeWidth={2.25} style={{ color: 'var(--color-note-margin)' }} aria-hidden="true" />
+            </span>
+            {noteCount}
+          </span>
         </div>
       </button>
-      <div className="flex shrink-0 justify-end border-b border-grid-border px-3 py-2">
-        <button
-          type="button"
-          onClick={() => listRef.current?.createNote()}
-          className="flex items-center gap-1.5 rounded-md border border-dashed px-2.5 py-1 text-[11px] font-medium transition hover:border-solid"
-          style={{ borderColor: 'var(--color-note-margin)', color: 'var(--color-note-margin)', background: 'color-mix(in srgb, var(--color-note-bg) 55%, transparent)' }}
-        >
-          <StickyNote size={12} strokeWidth={2} aria-hidden="true" />
-          Aggiungi Nota
-        </button>
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto p-3">
-        <ProjectTaskList ref={listRef} projectId={project.id} initialTasks={initialTasks} userOptions={userOptions} />
+      <div className="min-h-0 flex-1 overflow-y-auto py-3 pl-3 pr-4">
+        <ProjectTaskList projectId={project.id} initialTasks={initialTasks} userOptions={userOptions} allowNotes />
       </div>
     </div>
   );

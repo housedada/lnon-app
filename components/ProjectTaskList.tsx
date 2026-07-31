@@ -13,7 +13,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { Plus } from 'lucide-react';
+import { Plus, StickyNote } from 'lucide-react';
 import TaskChip from '@/components/TaskChip';
 import NoteChip from '@/components/NoteChip';
 import SortableColumn from '@/components/SortableColumn';
@@ -40,14 +40,14 @@ const NEXT_STATUS: Record<ProjectTaskStatus, ProjectTaskStatus> = {
 export interface ProjectTaskListHandle {
   openTrash: () => void;
   setAllCollapsed: (collapse: boolean) => void;
-  createNote: () => void;
 }
 
 const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
   projectId: string;
   initialTasks: ProjectTask[];
   userOptions: { id: string; name: string; color?: string }[];
-}>(function ProjectTaskList({ projectId, initialTasks, userOptions }, ref) {
+  allowNotes?: boolean;
+}>(function ProjectTaskList({ projectId, initialTasks, userOptions, allowNotes = false }, ref) {
   const [tasks, setTasks] = useState<ProjectTask[]>(initialTasks);
   const [creatingFor, setCreatingFor] = useState<string | null | undefined>(undefined);
   const [title, setTitle] = useState('');
@@ -83,17 +83,18 @@ const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
       const parentIds = tasks.filter((t) => (childrenByParent.get(t.id)?.length ?? 0) > 0).map((t) => t.id);
       setCollapsed(new Set(parentIds));
     },
-    createNote: () => {
-      startTransition(async () => {
-        const res = await createProjectNoteAction(projectId);
-        if (res.success && res.task) {
-          setTasks((prev) => [...prev, res.task!]);
-        } else {
-          notify(res.message);
-        }
-      });
-    },
   }));
+
+  function handleCreateNote() {
+    startTransition(async () => {
+      const res = await createProjectNoteAction(projectId);
+      if (res.success && res.task) {
+        setTasks((prev) => [...prev, res.task!]);
+      } else {
+        notify(res.message);
+      }
+    });
+  }
 
   async function handleNoteSave(task: ProjectTask, text: string) {
     setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, title: text } : t)));
@@ -246,12 +247,14 @@ const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
             {({ setNodeRef, setActivatorNodeRef, style, attributes, listeners, isDragging }) => (
               <NoteChip
                 task={task}
+                userOptions={userOptions}
                 isDragging={isDragging}
                 dragRef={setNodeRef}
                 dragStyle={style}
                 dragHandleRef={setActivatorNodeRef}
                 dragHandleProps={{ ...attributes, ...listeners }}
                 onSaveText={(text) => handleNoteSave(task, text)}
+                onToggleAssignee={(userId) => handleToggleAssignee(task, userId)}
                 onDelete={() => handleDelete(task)}
               />
             )}
@@ -326,6 +329,22 @@ const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
           </button>
         )}
 
+        {allowNotes && (
+          <button
+            type="button"
+            onClick={handleCreateNote}
+            className="flex items-center justify-center gap-1 rounded border border-dashed py-1.5 text-[11px] transition hover:border-solid"
+            style={{
+              borderColor: 'var(--color-note-border)',
+              color: 'var(--color-note-margin)',
+              background: 'color-mix(in srgb, var(--color-note-bg) 55%, transparent)',
+            }}
+          >
+            <StickyNote size={12} strokeWidth={2} aria-hidden="true" />
+            Aggiungi Nota
+          </button>
+        )}
+
         {showTrash && (
           <ProjectTaskTrashModal
             projectId={projectId}
@@ -337,7 +356,9 @@ const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
 
       <DragOverlay>
         {activeTask && (
-          <div className="rounded border border-grid-border bg-card-bg px-2 py-1.5 text-xs text-primary shadow-lg">{activeTask.title}</div>
+          <div className="max-w-[240px] truncate rounded border border-grid-border bg-card-bg px-2 py-1.5 text-xs text-primary shadow-lg">
+            {activeTask.kind === 'note' ? activeTask.title.split('\n')[0] || 'Nota vuota' : activeTask.title}
+          </div>
         )}
       </DragOverlay>
     </DndContext>

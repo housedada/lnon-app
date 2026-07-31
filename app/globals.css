@@ -462,6 +462,32 @@ textarea::placeholder {
     repeating-linear-gradient(to bottom, transparent 0, transparent 10px, var(--color-note-line) 10px, var(--color-note-line) 11px, transparent 11px, transparent 20px);
 }
 
+/* Variante "espansa" (NoteModal): font più grande quindi rigo più alto
+   (24px invece di 20px, stessa proporzione ~metà rigo prima della riga
+   stampata). Gli elenchi puntati/numerati restano al rigo di base (20px,
+   vedi leading-5 in lib/noteMarkup.tsx): le righe di sfondo, essendo un
+   unico pattern ripetuto sul contenitore, restano quindi allineate solo
+   ai paragrafi normali, non alle liste — compromesso accettato per non
+   dover disegnare due pattern sovrapposti. */
+.notebook-paper-lg {
+  line-height: 24px;
+  background-image: linear-gradient(
+      to right,
+      transparent 0%, transparent 6%,
+      var(--color-note-line) 6%, var(--color-note-line) 9%,
+      transparent 9%, transparent 22%,
+      var(--color-note-line) 22%, var(--color-note-line) 24%,
+      transparent 24%, transparent 41%,
+      var(--color-note-line) 41%, var(--color-note-line) 45%,
+      transparent 45%, transparent 63%,
+      var(--color-note-line) 63%, var(--color-note-line) 65%,
+      transparent 65%, transparent 84%,
+      var(--color-note-line) 84%, var(--color-note-line) 88%,
+      transparent 88%, transparent 100%
+    ),
+    repeating-linear-gradient(to bottom, transparent 0, transparent 12px, var(--color-note-line) 12px, var(--color-note-line) 13px, transparent 13px, transparent 24px);
+}
+
 /* Hover righe liste: ingrandimento testo via transform (non font-size, per
    non far ricalcolare le colonne della grid ed evitare qualsiasi movimento
    laterale delle celle), sempre animato in/out senza scatti. */
