@@ -64,7 +64,7 @@ export default async function TasksPage({
 
       <div className="flex min-h-0 flex-1">
         {notesProject && <NotesSidebar project={notesProject} initialTasks={notesTasks} userOptions={userOptions} />}
-        <div className="relative min-h-0 flex-1">
+        <div className="relative min-h-0 min-w-0 flex-1">
           {mode === 'team' ? (
             <TeamView currentUserId={userId} canManageInvoices={canManageInvoices} includeDemo={includeDemo} />
           ) : (

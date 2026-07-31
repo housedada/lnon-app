@@ -84,7 +84,7 @@ export default function TaskChip({
     <div
       ref={dragRef}
       className={`group/task relative flex items-center gap-1.5 rounded border px-2 py-1.5 text-xs transition-[opacity,background-color,border-color] duration-150 ${STATUS_STYLE[task.status]} ${level > 0 ? 'border-l-2 border-l-secondary/30' : ''} ${isDragging ? 'opacity-40' : 'opacity-100'}`}
-      style={{ ...dragStyle, marginLeft: level * 16, width: `calc(100% - ${level * 16}px)`, paddingRight: hasChildren ? 168 : 148 }}
+      style={{ ...dragStyle, marginLeft: level * 16, width: `calc(100% - ${level * 16}px)`, paddingRight: hasChildren ? 188 : 168 }}
     >
       <span
         ref={dragHandleRef}
@@ -183,6 +183,16 @@ export default function TaskChip({
             <ChevronRight size={12} strokeWidth={2} className={`transition-transform ${collapsed ? '' : 'rotate-90'}`} aria-hidden="true" />
           </button>
         )}
+
+        <button
+          type="button"
+          onClick={onDelete}
+          aria-label="Elimina task"
+          title="Elimina task"
+          className="flex h-4 w-4 shrink-0 items-center justify-center text-secondary opacity-0 transition-opacity group-hover/task:opacity-70 hover:!opacity-100"
+        >
+          <Trash2 size={12} strokeWidth={1.75} aria-hidden="true" />
+        </button>
       </div>
     </div>
     </RowContextMenu>
