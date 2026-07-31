@@ -166,7 +166,7 @@ const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
     );
     startTransition(async () => {
       const res = await toggleProjectTaskAssigneeAction(task.id, userId);
-      if (!res.success) notify(res.message);
+      notify(res.message);
     });
   }
 
@@ -188,7 +188,7 @@ const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
     setTasks((prev) => prev.filter((t) => !idsToRemove.has(t.id)));
     startTransition(async () => {
       const res = await deleteProjectTaskAction(task.id);
-      if (!res.success) notify(res.message);
+      notify(res.message);
     });
   }
 
