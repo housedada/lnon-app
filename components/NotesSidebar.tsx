@@ -1,8 +1,9 @@
 'use client';
 
-import { NotebookPen, X } from 'lucide-react';
+import { useRef } from 'react';
+import { NotebookPen, X, StickyNote } from 'lucide-react';
 import { useNotesSidebarStore } from '@/lib/store/notesSidebarStore';
-import ProjectTaskList from '@/components/ProjectTaskList';
+import ProjectTaskList, { type ProjectTaskListHandle } from '@/components/ProjectTaskList';
 import type { Project, ProjectTask } from '@/lib/types';
 
 const HEADER_HEIGHT = 'h-[49px]';
@@ -18,9 +19,11 @@ export default function NotesSidebar({
 }) {
   const open = useNotesSidebarStore((s) => s.open);
   const toggle = useNotesSidebarStore((s) => s.toggle);
+  const listRef = useRef<ProjectTaskListHandle>(null);
 
-  const activeCount = initialTasks.filter((t) => t.status !== 'completed').length;
-  const completedCount = initialTasks.filter((t) => t.status === 'completed').length;
+  const items = initialTasks.filter((t) => t.kind !== 'note');
+  const activeCount = items.filter((t) => t.status !== 'completed').length;
+  const completedCount = items.filter((t) => t.status === 'completed').length;
 
   if (!open) {
     return (
@@ -70,8 +73,19 @@ export default function NotesSidebar({
           </span>
         </div>
       </button>
+      <div className="flex shrink-0 justify-end border-b border-grid-border px-3 py-2">
+        <button
+          type="button"
+          onClick={() => listRef.current?.createNote()}
+          className="flex items-center gap-1.5 rounded-md border border-dashed px-2.5 py-1 text-[11px] font-medium transition hover:border-solid"
+          style={{ borderColor: 'var(--color-note-margin)', color: 'var(--color-note-margin)', background: 'color-mix(in srgb, var(--color-note-bg) 55%, transparent)' }}
+        >
+          <StickyNote size={12} strokeWidth={2} aria-hidden="true" />
+          Aggiungi Nota
+        </button>
+      </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-3">
-        <ProjectTaskList projectId={project.id} initialTasks={initialTasks} userOptions={userOptions} />
+        <ProjectTaskList ref={listRef} projectId={project.id} initialTasks={initialTasks} userOptions={userOptions} />
       </div>
     </div>
   );

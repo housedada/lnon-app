@@ -95,7 +95,7 @@ export default function TaskChip({
         <GripVertical
           size={12}
           strokeWidth={1.75}
-          className="text-secondary opacity-0 transition-opacity group-hover/task:opacity-60"
+          className="text-secondary opacity-30 transition-opacity group-hover/task:opacity-70"
           aria-hidden="true"
         />
       </span>

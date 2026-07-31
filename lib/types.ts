@@ -289,6 +289,7 @@ export interface HourlyWorkEntry {
 }
 
 export type ProjectTaskStatus = 'todo' | 'in_progress' | 'completed';
+export type ProjectTaskKind = 'task' | 'note';
 
 export interface ProjectTask {
   id: string;
@@ -296,6 +297,7 @@ export interface ProjectTask {
   parentTaskId?: string;
   title: string;
   status: ProjectTaskStatus;
+  kind: ProjectTaskKind;
   position: number;
   createdBy: string;
   createdAt: Date;

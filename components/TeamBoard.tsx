@@ -215,7 +215,7 @@ export default function TeamBoard({
                         {...listeners}
                         onClick={(e) => e.stopPropagation()}
                         aria-label="Trascina per riordinare"
-                        className="absolute left-4 top-4 z-10 flex h-5 w-5 shrink-0 cursor-grab touch-none items-center justify-center opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100 active:cursor-grabbing"
+                        className="absolute left-4 top-4 z-10 flex h-5 w-5 shrink-0 cursor-grab touch-none items-center justify-center opacity-30 transition-opacity duration-200 ease-out group-hover:opacity-100 active:cursor-grabbing"
                       >
                         <GripVertical size={14} strokeWidth={1.75} className={headerTextClass} aria-hidden="true" />
                       </span>

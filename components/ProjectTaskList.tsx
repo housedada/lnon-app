@@ -15,6 +15,7 @@ import {
 import { SortableContext, arrayMove, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { Plus } from 'lucide-react';
 import TaskChip from '@/components/TaskChip';
+import NoteChip from '@/components/NoteChip';
 import SortableColumn from '@/components/SortableColumn';
 import ProjectTaskTrashModal from '@/components/ProjectTaskTrashModal';
 import {
@@ -24,6 +25,8 @@ import {
   updateProjectTaskTitleAction,
   reorderProjectTasksAction,
   deleteProjectTaskAction,
+  createProjectNoteAction,
+  updateProjectNoteTextAction,
 } from '@/lib/actions/projectTasks';
 import { notify } from '@/lib/notify';
 import type { ProjectTask, ProjectTaskStatus } from '@/lib/types';
@@ -37,6 +40,7 @@ const NEXT_STATUS: Record<ProjectTaskStatus, ProjectTaskStatus> = {
 export interface ProjectTaskListHandle {
   openTrash: () => void;
   setAllCollapsed: (collapse: boolean) => void;
+  createNote: () => void;
 }
 
 const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
@@ -79,7 +83,24 @@ const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
       const parentIds = tasks.filter((t) => (childrenByParent.get(t.id)?.length ?? 0) > 0).map((t) => t.id);
       setCollapsed(new Set(parentIds));
     },
+    createNote: () => {
+      startTransition(async () => {
+        const res = await createProjectNoteAction(projectId);
+        if (res.success && res.task) {
+          setTasks((prev) => [...prev, res.task!]);
+        } else {
+          notify(res.message);
+        }
+      });
+    },
   }));
+
+  async function handleNoteSave(task: ProjectTask, text: string) {
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, title: text } : t)));
+    const res = await updateProjectNoteTextAction(task.id, text);
+    if (!res.success) notify(res.message);
+    return res;
+  }
 
   function toggleCollapse(taskId: string) {
     setCollapsed((prev) => {
@@ -218,6 +239,27 @@ const ProjectTaskList = forwardRef<ProjectTaskListHandle, {
   }
 
   function renderNode(task: ProjectTask, level: number): React.ReactNode {
+    if (task.kind === 'note') {
+      return (
+        <div key={task.id}>
+          <SortableColumn id={task.id}>
+            {({ setNodeRef, setActivatorNodeRef, style, attributes, listeners, isDragging }) => (
+              <NoteChip
+                task={task}
+                isDragging={isDragging}
+                dragRef={setNodeRef}
+                dragStyle={style}
+                dragHandleRef={setActivatorNodeRef}
+                dragHandleProps={{ ...attributes, ...listeners }}
+                onSaveText={(text) => handleNoteSave(task, text)}
+                onDelete={() => handleDelete(task)}
+              />
+            )}
+          </SortableColumn>
+        </div>
+      );
+    }
+
     const children = childrenByParent.get(task.id) ?? [];
     const isCollapsed = collapsed.has(task.id);
     return (

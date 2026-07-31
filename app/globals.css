@@ -35,6 +35,12 @@
   --accent-text: #ffffff;
   --color-popover-grad-a: #ffffff;
   --color-popover-grad-b: #f5f5f4;
+
+  /* Nota "quaderno di scuola": rosa antico, riga di margine e righe orizzontali */
+  --color-note-bg: #f6e9e7;
+  --color-note-border: #dcb9b4;
+  --color-note-line: rgba(163, 104, 98, 0.22);
+  --color-note-margin: rgba(178, 60, 60, 0.4);
 }
 
 @theme inline {
@@ -78,6 +84,11 @@
     --accent-text: #ffffff;
     --color-popover-grad-a: #131017;
     --color-popover-grad-b: #201b28;
+
+    --color-note-bg: #372724;
+    --color-note-border: #5a3f3a;
+    --color-note-line: rgba(230, 170, 160, 0.16);
+    --color-note-margin: rgba(220, 110, 100, 0.35);
   }
 }
 
@@ -101,6 +112,11 @@
   --accent-text: #ffffff;
   --color-popover-grad-a: #ffffff;
   --color-popover-grad-b: #f5f5f4;
+
+  --color-note-bg: #f6e9e7;
+  --color-note-border: #dcb9b4;
+  --color-note-line: rgba(163, 104, 98, 0.22);
+  --color-note-margin: rgba(178, 60, 60, 0.4);
 }
 
 :root[data-theme='dark'] {
@@ -123,6 +139,11 @@
   --accent-text: #ffffff;
   --color-popover-grad-a: #131017;
   --color-popover-grad-b: #201b28;
+
+  --color-note-bg: #372724;
+  --color-note-border: #5a3f3a;
+  --color-note-line: rgba(230, 170, 160, 0.16);
+  --color-note-margin: rgba(220, 110, 100, 0.35);
 }
 
 body {
@@ -406,6 +427,23 @@ textarea::placeholder {
 .field-input:focus {
   outline: none;
   box-shadow: 0 0 0 3px rgba(111, 95, 146, 0.16), 0 0 0 1px rgba(111, 95, 146, 0.35);
+}
+
+/* Nota "quaderno di scuola": righe orizzontali ogni 20px allineate al
+   line-height del testo (stessa misura, altrimenti le righe stampate
+   scivolano rispetto alle righe di testo scritte sopra) più una riga di
+   margine verticale rossastra, come un vecchio quaderno a righe. Il
+   background-attachment:local fa scorrere le righe insieme al testo
+   quando il contenitore è scrollabile (textarea o blocco lungo nel modale).
+   L'assenza di line-clamp è intenzionale nella variante scrollabile: la
+   applica il chiamante quando vuole l'anteprima troncata. */
+.notebook-paper {
+  background-color: var(--color-note-bg);
+  border: 1px solid var(--color-note-border);
+  line-height: 20px;
+  background-attachment: local;
+  background-image: linear-gradient(to right, transparent 27px, var(--color-note-margin) 27px, var(--color-note-margin) 28px, transparent 28px),
+    repeating-linear-gradient(to bottom, transparent 0, transparent 19px, var(--color-note-line) 19px, var(--color-note-line) 20px);
 }
 
 /* Hover righe liste: ingrandimento testo via transform (non font-size, per

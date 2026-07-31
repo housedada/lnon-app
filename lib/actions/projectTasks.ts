@@ -26,6 +26,30 @@ async function requireCanManage() {
   return userId;
 }
 
+const NOTE_MAX_LENGTH = 1000;
+
+export async function createProjectNoteAction(projectId: string): Promise<{ success: boolean; message: string; task?: ProjectTask }> {
+  try {
+    const userId = await requireCanManage();
+    const task = await createProjectTask({ projectId, title: '', createdBy: userId, kind: 'note' });
+    revalidatePath('/dashboard/tasks');
+    return { success: true, message: 'Nota creata.', task };
+  } catch (err) {
+    return { success: false, message: err instanceof Error ? err.message : 'Errore nella creazione della nota.' };
+  }
+}
+
+export async function updateProjectNoteTextAction(taskId: string, text: string): Promise<{ success: boolean; message: string; task?: ProjectTask }> {
+  try {
+    await requireCanManage();
+    const task = await updateProjectTaskTitle(taskId, text.slice(0, NOTE_MAX_LENGTH));
+    revalidatePath('/dashboard/tasks');
+    return { success: true, message: 'Nota salvata.', task };
+  } catch (err) {
+    return { success: false, message: err instanceof Error ? err.message : 'Errore nel salvataggio della nota.' };
+  }
+}
+
 export async function createProjectTaskAction(
   projectId: string,
   title: string,

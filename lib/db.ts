@@ -18,6 +18,7 @@ import type {
   Project,
   ProjectTask,
   ProjectTaskStatus,
+  ProjectTaskKind,
   HourlyContract,
   HourlyWorkEntry,
   HourlyRateType,
@@ -2043,6 +2044,7 @@ function projectTaskRowToProjectTask(row: Record<string, any>): ProjectTask {
     parentTaskId: row.parent_task_id ?? undefined,
     title: row.title,
     status: row.status,
+    kind: row.kind === 'note' ? 'note' : 'task',
     position: row.position,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at),
@@ -2096,7 +2098,13 @@ export async function getProjectTasks(projectId: string): Promise<ProjectTask[]>
 /**
  * Crea un nuovo sotto task (o sotto-sotto task) per un progetto, in coda al gruppo di pari livello
  */
-export async function createProjectTask(data: { projectId: string; title: string; createdBy: string; parentTaskId?: string | null }): Promise<ProjectTask> {
+export async function createProjectTask(data: {
+  projectId: string;
+  title: string;
+  createdBy: string;
+  parentTaskId?: string | null;
+  kind?: ProjectTaskKind;
+}): Promise<ProjectTask> {
   let positionQuery = supabaseServer
     .from('project_tasks')
     .select('position')
@@ -2111,7 +2119,16 @@ export async function createProjectTask(data: { projectId: string; title: string
 
   const { data: row, error } = await supabaseServer
     .from('project_tasks')
-    .insert([{ project_id: data.projectId, title: data.title, created_by: data.createdBy, position: nextPosition, parent_task_id: data.parentTaskId ?? null }])
+    .insert([
+      {
+        project_id: data.projectId,
+        title: data.title,
+        created_by: data.createdBy,
+        position: nextPosition,
+        parent_task_id: data.parentTaskId ?? null,
+        kind: data.kind ?? 'task',
+      },
+    ])
     .select('*')
     .single();
 
