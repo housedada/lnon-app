@@ -433,20 +433,32 @@ textarea::placeholder {
    line-height del testo (stessa misura, altrimenti le righe stampate
    scivolano rispetto alle righe di testo scritte sopra), spostate di 11px
    così cadono SOTTO il testo (come un rigo vero) invece di tagliarlo a
-   metà. Una seconda trama diagonale, molto tenue, incrocia le righe
-   orizzontali a un'angolazione non allineata al periodo di 20px: dove le
-   due si sovrappongono il rigo sembra "consumato" in modo irregolare
-   invece che uniforme su tutta la lunghezza. Il background-attachment:local
-   fa scorrere le righe insieme al testo quando il contenitore è scrollabile
-   (textarea o blocco lungo nel modale). L'assenza di line-clamp è
-   intenzionale nella variante scrollabile: la applica il chiamante quando
-   vuole l'anteprima troncata. */
+   metà. Una sfumatura orizzontale con fasce irregolari (niente diagonali)
+   attenua/rinforza le righe a tratti lungo la larghezza, per un effetto
+   "consumato" non uniforme. Il background-attachment:local fa scorrere le
+   righe insieme al testo quando il contenitore è scrollabile (textarea o
+   blocco lungo nel modale). L'assenza di line-clamp è intenzionale nella
+   variante scrollabile: la applica il chiamante quando vuole l'anteprima
+   troncata. */
 .notebook-paper {
   background-color: var(--color-note-bg);
   border: 1px solid var(--color-note-border);
   line-height: 20px;
   background-attachment: local;
-  background-image: repeating-linear-gradient(58deg, var(--color-note-line) 0, var(--color-note-line) 1px, transparent 1px, transparent 67px),
+  background-image: linear-gradient(
+      to right,
+      transparent 0%, transparent 6%,
+      var(--color-note-line) 6%, var(--color-note-line) 9%,
+      transparent 9%, transparent 22%,
+      var(--color-note-line) 22%, var(--color-note-line) 24%,
+      transparent 24%, transparent 41%,
+      var(--color-note-line) 41%, var(--color-note-line) 45%,
+      transparent 45%, transparent 63%,
+      var(--color-note-line) 63%, var(--color-note-line) 65%,
+      transparent 65%, transparent 84%,
+      var(--color-note-line) 84%, var(--color-note-line) 88%,
+      transparent 88%, transparent 100%
+    ),
     repeating-linear-gradient(to bottom, transparent 0, transparent 10px, var(--color-note-line) 10px, var(--color-note-line) 11px, transparent 11px, transparent 20px);
 }
 
