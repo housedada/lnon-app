@@ -59,6 +59,7 @@ export async function createProjectAction(formData: FormData): Promise<{ success
 
   revalidatePath('/dashboard/tasks');
   revalidatePath('/dashboard/jobs');
+  revalidatePath('/dashboard', 'layout');
   return { success: true, message: 'Progetto creato.' };
 }
 
@@ -98,6 +99,7 @@ export async function createProjectFromJobAction(
 
   revalidatePath('/dashboard/tasks');
   revalidatePath('/dashboard/jobs');
+  revalidatePath('/dashboard', 'layout');
   return { success: true, message: `Progetto "${title}" creato da questo lavoro.`, project };
 }
 
@@ -119,6 +121,7 @@ export async function updateProjectAction(id: string, formData: FormData): Promi
   });
 
   revalidatePath('/dashboard/tasks');
+  revalidatePath('/dashboard', 'layout');
   return { success: true, message: 'Progetto aggiornato.' };
 }
 
@@ -132,6 +135,7 @@ export async function deleteProjectAction(id: string): Promise<{ success: boolea
 
   await softDeleteProject(id);
   revalidatePath('/dashboard/tasks');
+  revalidatePath('/dashboard', 'layout');
   return { success: true, message: 'Progetto eliminato.' };
 }
 
@@ -152,6 +156,7 @@ export async function markProjectCompletedAction(projectId: string): Promise<{ s
 
   await markProjectCompleted(projectId);
   revalidatePath('/dashboard/tasks');
+  revalidatePath('/dashboard', 'layout');
   return { success: true, message: 'Progetto segnato come completato.' };
 }
 
