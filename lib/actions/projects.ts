@@ -30,6 +30,7 @@ const ProjectSchema = z.object({
   description: z.string().optional().or(z.literal('')),
   assignedTo: z.string().min(1, 'Assegna il progetto a qualcuno.'),
   jobId: z.string().optional().or(z.literal('')),
+  productIds: z.array(z.string()).optional(),
 });
 
 export async function createProjectAction(formData: FormData): Promise<{ success: boolean; message: string }> {
@@ -41,7 +42,7 @@ export async function createProjectAction(formData: FormData): Promise<{ success
     return { success: false, message: 'Non hai il permesso di creare progetti.' };
   }
 
-  const raw = Object.fromEntries(formData.entries());
+  const raw = { ...Object.fromEntries(formData.entries()), productIds: formData.getAll('productIds') };
   const parsed = ProjectSchema.safeParse(raw);
   if (!parsed.success) {
     return { success: false, message: parsed.error.issues[0]?.message ?? 'Dati non validi.' };
@@ -52,6 +53,7 @@ export async function createProjectAction(formData: FormData): Promise<{ success
     description: parsed.data.description || undefined,
     assignedTo: parsed.data.assignedTo || undefined,
     jobId: parsed.data.jobId || undefined,
+    productIds: parsed.data.productIds,
     createdBy: userId,
   });
 
@@ -102,7 +104,7 @@ export async function createProjectFromJobAction(
 export async function updateProjectAction(id: string, formData: FormData): Promise<{ success: boolean; message: string }> {
   await requireRole('projects', 'update');
 
-  const raw = Object.fromEntries(formData.entries());
+  const raw = { ...Object.fromEntries(formData.entries()), productIds: formData.getAll('productIds') };
   const parsed = ProjectSchema.safeParse(raw);
   if (!parsed.success) {
     return { success: false, message: parsed.error.issues[0]?.message ?? 'Dati non validi.' };
@@ -113,6 +115,7 @@ export async function updateProjectAction(id: string, formData: FormData): Promi
     description: parsed.data.description || undefined,
     assignedTo: parsed.data.assignedTo || undefined,
     jobId: parsed.data.jobId || undefined,
+    productIds: parsed.data.productIds,
   });
 
   revalidatePath('/dashboard/tasks');

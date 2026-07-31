@@ -6,10 +6,17 @@ import { createPortal } from 'react-dom';
 import { Plus, X, Loader2 } from 'lucide-react';
 import ParticleCanvasHeader from '@/components/ParticleCanvasHeader';
 import AssignedToPicker from '@/components/AssignedToPicker';
+import ProductTagPicker from '@/components/ProductTagPicker';
 import { createProjectAction } from '@/lib/actions/projects';
 import { notify } from '@/lib/notify';
 
-export default function NewProjectButton({ userOptions }: { userOptions: { id: string; name: string; color?: string }[] }) {
+export default function NewProjectButton({
+  userOptions,
+  productOptions,
+}: {
+  userOptions: { id: string; name: string; color?: string }[];
+  productOptions: { id: string; name: string }[];
+}) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -73,6 +80,11 @@ export default function NewProjectButton({ userOptions }: { userOptions: { id: s
 
                 <div className="mt-6">
                   <AssignedToPicker userOptions={userOptions} required />
+                </div>
+
+                <div className="mt-6">
+                  <p className="detail-label mb-2">Prodotti/servizi coinvolti</p>
+                  <ProductTagPicker productOptions={productOptions} />
                 </div>
               </div>
 

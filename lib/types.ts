@@ -212,6 +212,7 @@ export interface Project {
   // Popolati solo in lettura, se collegati
   jobTitle?: string;
   assignedToName?: string;
+  productIds?: string[];
 }
 
 export interface FixedExpenseCategory {

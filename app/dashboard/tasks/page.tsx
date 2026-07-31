@@ -9,6 +9,7 @@ import {
   getProjectTasks,
   getOpenHourlyWorkEntriesCount,
   getOrCreatePersonalNotesProject,
+  getAllProductNames,
 } from '@/lib/db';
 import { hasPermission } from '@/lib/permissions';
 import { DEMO_USERS, DEMO_PROJECTS, DEMO_TASKS_BY_PROJECT, DEMO_PRODUCT_COLORS_BY_JOB } from '@/lib/demoData';
@@ -41,7 +42,11 @@ export default async function TasksPage({
   const canCreateProjects = hasPermission(role, 'projects', 'create');
   const includeDemo = canManageInvoices && demo === '1';
 
-  const [allUsers, openHourlyCount] = await Promise.all([getUsers(), getOpenHourlyWorkEntriesCount()]);
+  const [allUsers, openHourlyCount, productOptions] = await Promise.all([
+    getUsers(),
+    getOpenHourlyWorkEntriesCount(),
+    canCreateProjects ? getAllProductNames() : Promise.resolve([]),
+  ]);
   const userOptions = allUsers.filter((u) => u.isActive).map((u) => ({ id: u.id, name: u.name, color: u.color }));
 
   const notesProject = userId ? await getOrCreatePersonalNotesProject(userId) : null;
@@ -58,7 +63,7 @@ export default async function TasksPage({
           <div className="[&>div]:!ml-0">
             <TaskBoardViewToggle />
           </div>
-          {canCreateProjects && <NewProjectButton userOptions={userOptions} />}
+          {canCreateProjects && <NewProjectButton userOptions={userOptions} productOptions={productOptions} />}
         </div>
       </div>
 

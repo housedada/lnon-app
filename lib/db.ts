@@ -746,6 +746,32 @@ export async function getJobProductIds(jobId: string): Promise<string[]> {
 }
 
 /**
+ * Imposta i prodotti associati a un progetto (sostituisce l'elenco esistente).
+ * Serve per i progetti standalone creati da Task, senza un Job da cui
+ * ereditare i prodotti.
+ */
+export async function setProjectProducts(projectId: string, productIds: string[]): Promise<void> {
+  const { error: deleteError } = await supabaseServer.from('project_products').delete().eq('project_id', projectId);
+  if (deleteError) throw deleteError;
+
+  if (productIds.length === 0) return;
+
+  const { error: insertError } = await supabaseServer
+    .from('project_products')
+    .insert(productIds.map((productId) => ({ project_id: projectId, product_id: productId })));
+  if (insertError) throw insertError;
+}
+
+/**
+ * Ottieni gli id dei prodotti collegati a un progetto
+ */
+export async function getProjectProductIds(projectId: string): Promise<string[]> {
+  const { data, error } = await supabaseServer.from('project_products').select('product_id').eq('project_id', projectId);
+  if (error) throw error;
+  return (data ?? []).map((row) => row.product_id);
+}
+
+/**
  * Sostituisce l'elenco dei contratti collegati a un lavoro (un job può
  * essere collegato a più contratti web)
  */
@@ -1797,6 +1823,9 @@ export async function createDbProject(
 ): Promise<Project> {
   const { data, error } = await supabaseServer.from('projects').insert([projectToRow(projectData)]).select().single();
   if (error) throw error;
+  if (projectData.productIds !== undefined) {
+    await setProjectProducts(data.id, projectData.productIds);
+  }
   return projectRowToProject(data);
 }
 
@@ -1901,6 +1930,9 @@ export async function updateDbProject(
 ): Promise<Project> {
   const { data, error } = await supabaseServer.from('projects').update(projectToRow(projectData)).eq('id', id).select().single();
   if (error) throw error;
+  if (projectData.productIds !== undefined) {
+    await setProjectProducts(id, projectData.productIds);
+  }
   return projectRowToProject(data);
 }
 
