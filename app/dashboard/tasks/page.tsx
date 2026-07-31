@@ -169,9 +169,12 @@ async function PersonalView({
 
   const projects = includeDemo ? [...realProjects, ...DEMO_PROJECTS] : realProjects;
   const byId = new Map(projects.map((p) => [p.id, p]));
+  // I progetti non ancora presenti nell'ordine salvato (drag&drop) sono i più
+  // recenti (projects arriva già ordinato per created_at desc): li mettiamo
+  // in cima invece che in coda, così un progetto appena creato è subito visibile.
   const orderedProjects = [
-    ...savedOrder.filter((id) => byId.has(id)).map((id) => byId.get(id)!),
     ...projects.filter((p) => !savedOrder.includes(p.id)),
+    ...savedOrder.filter((id) => byId.has(id)).map((id) => byId.get(id)!),
   ];
 
   return (
